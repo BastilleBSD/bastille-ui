@@ -28,4 +28,12 @@ func BastilleStop(name string) error     { return runBastille("stop", name) }
 func BastilleRestart(name string) error  { return runBastille("restart", name) }
 func BastilleRename(old, new string) error { return runBastille("rename", old, new) }
 func BastilleUpgrade(name string) error  { return runBastille("upgrade", name) }
+func BastilleList() (string, error)  {
+	cmd := exec.Command("bastille", "list", "all")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("bastille list failed: %v\n%s", err, output)
+	}
+	return string(output), nil
+}
 

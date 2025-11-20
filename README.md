@@ -29,7 +29,7 @@ the go module.
 
 ```shell
 go mod init bastille-api
-got mod tidy
+go mod tidy
 ```
 
 Now run the API on your server:

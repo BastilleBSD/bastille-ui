@@ -14,6 +14,7 @@ func main() {
 	http.HandleFunc("/jails/restart", restartHandler)
 	http.HandleFunc("/jails/rename", renameHandler)
 	http.HandleFunc("/jails/upgrade", upgradeHandler)
+	http.HandleFunc("/jails/list", listHandler)
 
 	log.Println("✅ BastilleBSD API running on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
