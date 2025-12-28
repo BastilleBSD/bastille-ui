@@ -5,35 +5,16 @@ import (
 	"os/exec"
 )
 
-func runBastille(args ...string) error {
+func BastilleCommand(args ...string) (string, error) {
+
 	cmd := exec.Command("bastille", args...)
-	output, err := cmd.CombinedOutput()
+	out, err := cmd.CombinedOutput()
+	output := string(out)
+
 	if err != nil {
-		return fmt.Errorf("bastille %v failed: %v\n%s", args, err, output)
+		return output, fmt.Errorf("Bastille %v failed: %v\n%s", args, err, output)
 	}
-	return nil
-}
 
-func BastilleCreate(name, release, ip, interface string) error {
-	args := []string{"create", name, release, ip}
-	if interface != "" {
-		args = append(args, interface)
-	}
-	return runBastille(args...)
-}
+	return output, nil
 
-func BastilleDestroy(name string) error  { return runBastille("destroy","-y", options, name) }
-func BastilleStart(name string) error    { return runBastille("start", options, name) }
-func BastilleStop(name string) error     { return runBastille("stop", name) }
-func BastilleRestart(name string) error  { return runBastille("restart", name) }
-func BastilleRename(old, new string) error { return runBastille("rename", old, new) }
-func BastilleUpgrade(name string) error  { return runBastille("upgrade", name) }
-func BastilleList() (string, error)  {
-	cmd := exec.Command("bastille", "list")
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", fmt.Errorf("bastille list failed: %v\n%s", err, output)
-	}
-	return string(output), nil
 }
-

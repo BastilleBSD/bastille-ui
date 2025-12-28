@@ -7,15 +7,13 @@ import (
 )
 
 func main() {
-	http.HandleFunc("/jails/create", createHandler)
-	http.HandleFunc("/jails/destroy", destroyHandler)
-	http.HandleFunc("/jails/start", startHandler)
-	http.HandleFunc("/jails/stop", stopHandler)
-	http.HandleFunc("/jails/restart", restartHandler)
-	http.HandleFunc("/jails/rename", renameHandler)
-	http.HandleFunc("/jails/upgrade", upgradeHandler)
-	http.HandleFunc("/jails/list", listHandler)
+	http.HandleFunc("/bastille/bootstrap", BastilleBootstrapHandler)
+	http.HandleFunc("/bastille/create", BastilleCreateHandler)
+	http.HandleFunc("/bastille/destroy", BastilleDestroyHandler)
+	http.HandleFunc("/bastille/restart", BastilleRestartHandler)
+	http.HandleFunc("/bastille/start", BastilleStartHandler)
+	http.HandleFunc("/bastille/stop", BastilleStopHandler)
 
-	log.Println("✅ BastilleBSD API running on http://localhost:8080")
+	log.Println("BastilleBSD API running on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

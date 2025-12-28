@@ -20,7 +20,6 @@ restart
 
 rename
 
-
 Setup
 -----
 
@@ -46,7 +45,7 @@ Now you are ready to run requests.  Here are some sample requests:
 ```shell
 Create a jail
 -------------
-curl "http://localhost:8080/jails/create?name=testjail&release=14.2-RELEASE&ip=192.168.0.10&iface=em0"
+curl "http://localhost:8080/jails/create?options=-V+-M+--gateway+192.168.1.1&name=testjail&release=14.2-RELEASE&ip=192.168.0.10&iface=em0"
 
 Start jail
 ------------
@@ -54,7 +53,7 @@ curl "http://localhost:8080/jails/start?name=testjail"
 
 Rename jail
 -----------
-curl "http://localhost:8080/jails/rename?old=testjail&new=myjail"
+curl "http://localhost:8080/jails/rename?target=testjail&new_name=myjail"
 
 Restart jail
 ------------
