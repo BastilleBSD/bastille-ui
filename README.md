@@ -27,8 +27,8 @@ Fist clone the repo then cd into bastille-api.  Now you uneed to initialize
 the go module.
 
 ```shell
-go mod init bastille-api
-go mod tidy
+go build
+./bastille-api
 ```
 
 Now run the API on your server:
@@ -45,27 +45,27 @@ Now you are ready to run requests.  Here are some sample requests:
 ```shell
 Create a jail
 -------------
-curl "http://localhost:8080/jails/create?options=-V+-M+--gateway+192.168.1.1&name=testjail&release=14.2-RELEASE&ip=192.168.0.10&iface=em0"
+curl "http://localhost:8080/bastille/create?options=-V+-M+--gateway+192.168.1.1&name=testjail&release=14.2-RELEASE&ip=192.168.0.10&iface=em0"
 
 Start jail
 ------------
-curl "http://localhost:8080/jails/start?name=testjail"
+curl "http://localhost:8080/bastille/start?name=testjail"
 
 Rename jail
 -----------
-curl "http://localhost:8080/jails/rename?target=testjail&new_name=myjail"
+curl "http://localhost:8080/bastille/rename?target=testjail&new_name=myjail"
 
 Restart jail
 ------------
-curl "http://localhost:8080/jails/restart?name=myjail"
+curl "http://localhost:8080/bastille/restart?name=myjail"
 
 Stop jail
 ---------
-curl "http://localhost:8080/jails/stop?name=myjail"
+curl "http://localhost:8080/bastille/stop?name=myjail"
 
 Destroy jail
 ------------
-curl "http://localhost:8080/jails/destroy?name=myjail"
+curl "http://localhost:8080/bastille/destroy?name=myjail"
 ```
 
 

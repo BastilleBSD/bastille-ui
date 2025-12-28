@@ -10,6 +10,7 @@ func main() {
 	http.HandleFunc("/bastille/bootstrap", BastilleBootstrapHandler)
 	http.HandleFunc("/bastille/create", BastilleCreateHandler)
 	http.HandleFunc("/bastille/destroy", BastilleDestroyHandler)
+	http.HandleFunc("/bastille/restart", BastilleRenameHandler)
 	http.HandleFunc("/bastille/restart", BastilleRestartHandler)
 	http.HandleFunc("/bastille/start", BastilleStartHandler)
 	http.HandleFunc("/bastille/stop", BastilleStopHandler)
