@@ -11,12 +11,12 @@ func getParam(r *http.Request, key string) string {
 
 func createHandler(w http.ResponseWriter, r *http.Request) {
 	name, release, ip := getParam(r, "name"), getParam(r, "release"), getParam(r, "ip")
-	iface := getParam(r, "iface")
+	interface := getParam(r, "interface")
 	if name == "" || release == "" || ip == "" {
 		http.Error(w, "Missing name, release, or ip", 400)
 		return
 	}
-	if err := BastilleCreate(name, release, ip, iface); err != nil {
+	if err := BastilleCreate(name, release, ip, interface); err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
@@ -24,6 +24,7 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func destroyHandler(w http.ResponseWriter, r *http.Request) {
+    options := getParam(r, "options")
 	name := getParam(r, "name")
 	if name == "" {
 		http.Error(w, "Missing name", 400)

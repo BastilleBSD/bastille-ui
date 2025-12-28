@@ -14,22 +14,22 @@ func runBastille(args ...string) error {
 	return nil
 }
 
-func BastilleCreate(name, release, ip, iface string) error {
+func BastilleCreate(name, release, ip, interface string) error {
 	args := []string{"create", name, release, ip}
-	if iface != "" {
-		args = append(args, iface)
+	if interface != "" {
+		args = append(args, interface)
 	}
 	return runBastille(args...)
 }
 
-func BastilleDestroy(name string) error  { return runBastille("destroy","-y", name) }
-func BastilleStart(name string) error    { return runBastille("start", name) }
+func BastilleDestroy(name string) error  { return runBastille("destroy","-y", options, name) }
+func BastilleStart(name string) error    { return runBastille("start", options, name) }
 func BastilleStop(name string) error     { return runBastille("stop", name) }
 func BastilleRestart(name string) error  { return runBastille("restart", name) }
 func BastilleRename(old, new string) error { return runBastille("rename", old, new) }
 func BastilleUpgrade(name string) error  { return runBastille("upgrade", name) }
 func BastilleList() (string, error)  {
-	cmd := exec.Command("bastille", "list", "all")
+	cmd := exec.Command("bastille", "list")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("bastille list failed: %v\n%s", err, output)
