@@ -6,7 +6,7 @@ API Interface for Bastille (https://bastillebsd.org/)
 Commands
 ========
 
-This API currently does the following commands:
+The UI currently does the following commands:
 
 create
 
@@ -23,22 +23,17 @@ rename
 Setup
 -----
 
-Fist clone the repo then cd into bastille-api.  Now you uneed to initialize 
+Fist clone the repo then cd into bastille-ui.  Now you uneed to initialize 
 the go module.
 
 ```shell
 go build
-./bastille-api
-```
-
-Now run the API on your server:
-```sne..
-go run .
+./bastille-ui
 ```
 
 You should see:
 ```shell
-✅ BastilleBSD API running on http://localhost:8080
+BastilleBSD UI started on http://localhost:8080
 ```
 
 Now you are ready to run requests.  Here are some sample requests:
@@ -67,5 +62,5 @@ Destroy jail
 ------------
 curl "http://localhost:8080/bastille/destroy?name=myjail"
 ```
-
+For the WebUI, visit http://localhost:8080 and play with it.
 
