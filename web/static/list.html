@@ -1,0 +1,10 @@
+{{define "content"}}
+<form method="post">
+    <button type="submit">Run</button>
+</form>
+
+{{if .Output}}<pre>{{.Output}}</pre>{{end}}
+{{if .Error}}<div class="error">{{.Error}}</div>{{end}}
+
+<a class="button" href="/">Back</a>
+{{end}}

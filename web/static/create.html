@@ -1,0 +1,66 @@
+{{define "content"}}
+<form method="post" onsubmit="updateOptions()">
+    <!-- Basic fields -->
+    <input name="jail" placeholder="Jail name" required>
+    <input name="release" placeholder="Release (14.0-RELEASE)" required>
+    <input name="ip" placeholder="IP address" required>
+    
+    <!-- Optional interface -->
+    <input name="iface" placeholder="Interface (optional)">
+
+    <!-- Hidden options field -->
+    <input type="hidden" name="options" id="options">
+
+    <!-- Checkboxes for options -->
+    <label>
+        <input type="checkbox" class="option-checkbox" value="-B"> Bridged VNET (-B)
+    </label>
+    <label>
+        <input type="checkbox" class="option-checkbox" value="-V"> VNET (-V)
+    </label>
+    <label>
+        <input type="checkbox" class="option-checkbox" value="-M"> Static MAC (-M)
+    </label>
+
+    <!-- Gateway checkbox -->
+    <label>
+        <input type="checkbox" id="gatewayCheckbox"> Add Gateway
+    </label>
+    <!-- Gateway input, hidden by default -->
+    <div id="gatewayDiv" style="display:none; margin-left:20px;">
+        <input type="text" name="gateway" placeholder="Gateway IP">
+    </div>
+
+    <button type="submit">Create</button>
+</form>
+
+<script>
+function updateOptions() {
+    // Collect selected checkboxes
+    const checked = Array.from(document.querySelectorAll('.option-checkbox:checked'));
+    const values = checked.map(c => c.value);
+
+    // If gateway checkbox is checked, append the value
+    const gatewayCheckbox = document.getElementById('gatewayCheckbox');
+    const gatewayInput = document.querySelector('input[name="gateway"]');
+    if (gatewayCheckbox.checked && gatewayInput.value.trim() !== "") {
+        values.push("-g " + gatewayInput.value.trim());
+    }
+
+    // Set hidden options field
+    document.getElementById('options').value = values.join(' ');
+}
+
+// Toggle gateway input visibility
+document.getElementById('gatewayCheckbox').addEventListener('change', function() {
+    const div = document.getElementById('gatewayDiv');
+    div.style.display = this.checked ? 'block' : 'none';
+});
+</script>
+
+{{/* Output area */}}
+{{if .Output}}<pre>{{.Output}}</pre>{{end}}
+{{if .Error}}<div class="error">{{.Error}}</div>{{end}}
+
+<a class="button" href="/">Back</a>
+{{end}}
