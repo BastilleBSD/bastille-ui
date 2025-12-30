@@ -68,84 +68,49 @@ func home(w http.ResponseWriter, r *http.Request) {
 	render(w, "home", PageData{Title: "Bastille Web UI"})
 }
 
-func startJail(w http.ResponseWriter, r *http.Request) {
-	data := PageData{Title: "Start Jail"}
-	if r.Method == http.MethodPost {
-		jail := r.FormValue("jail")
-		out, err := callBastilleAPI("/bastille/start", map[string]string{
-			"target": jail,
-		})
-		data.Output = out
-		if err != nil {
-			data.Error = err.Error()
-		}
+func bastilleHandler(w http.ResponseWriter, r *http.Request) {
+	data := PageData{
+		Title: r.URL.Path,
 	}
-	render(w, "start", data)
-}
-
-func stopJail(w http.ResponseWriter, r *http.Request) {
-	data := PageData{Title: "Stop Jail"}
-	if r.Method == http.MethodPost {
-		jail := r.FormValue("jail")
-		out, err := callBastilleAPI("/bastille/stop", map[string]string{
-			"target": jail,
-		})
-		data.Output = out
-		if err != nil {
-			data.Error = err.Error()
-		}
-	}
-	render(w, "stop", data)
-}
-
-func createJail(w http.ResponseWriter, r *http.Request) {
-	data := PageData{Title: "Create Jail"}
 
 	if r.Method == http.MethodPost {
-		// Get form values
-		jail := r.FormValue("jail")
-		release := r.FormValue("release")
-		ip := r.FormValue("ip")
-		iface := r.FormValue("iface")     // optional
-		options := r.FormValue("options") // checkbox options as "-B -V"
+		r.ParseForm()
 
-		// Build query parameters for the API
-		params := map[string]string{
-			"name":    jail,
-			"release": release,
-			"ip":      ip,
+		// Extract subcommand from the URL
+		// Example: /bastille/start -> apiPath = /api/v1/bastille/start
+		subcommand := r.URL.Path[len("/bastille/"):]
+		apiPath := "/api/v1/bastille/" + subcommand
+
+		// Collect form values as params
+		params := map[string]string{}
+		for k, v := range r.PostForm {
+			params[k] = v[0]
 		}
 
-		if options != "" {
-			params["options"] = options
-		}
-		if iface != "" {
-			params["iface"] = iface
-		}
-
-		// Call API
-		out, err := callBastilleAPI("/bastille/create", params)
+		out, err := callBastilleAPI(apiPath, params)
 		data.Output = out
 		if err != nil {
 			data.Error = err.Error()
 		}
 	}
 
-	render(w, "create", data)
+	render(w, "result", data)
 }
 
 
 // --- Main function ---
 func Start() {
-	apiKey = "testingkey" // or os.Getenv("BASTILLE_API_KEY")
+	apiKey = "testingkey"
 	if apiKey == "" {
 		log.Fatal("BASTILLE_API_KEY not set")
 	}
+
 	http.HandleFunc("/", home)
-	http.HandleFunc("/start", startJail)
-	http.HandleFunc("/stop", stopJail)
-	http.HandleFunc("/create", createJail)
+
+	// Catch-all for any /bastille/<subcommand>
+	http.HandleFunc("/bastille/", bastilleHandler)
 
 	http.Handle("/static/", http.StripPrefix("/static/",
 		http.FileServer(http.Dir("static"))))
 }
+

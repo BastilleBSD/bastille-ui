@@ -1,10 +1,25 @@
-{{define "content"}}
-<form method="post">
-    <button type="submit">Run</button>
+<!-- Save as web/static/list.html -->
+<h1>List Jails / Items</h1>
+
+<form method="post" action="/bastille/list">
+    <label for="options">Options:</label>
+    <input type="text" id="options" name="options" placeholder="-a -l"><br><br>
+
+    <label for="item">Item:</label>
+    <input type="text" id="item" name="item" placeholder="Optional"><br><br>
+
+    <button type="submit">List</button>
 </form>
 
-{{if .Output}}<pre>{{.Output}}</pre>{{end}}
-{{if .Error}}<div class="error">{{.Error}}</div>{{end}}
+{{if .Error}}
+<div style="color:red;">
+    <strong>Error:</strong> {{.Error}}
+</div>
+{{end}}
 
-<a class="button" href="/">Back</a>
+{{if .Output}}
+<div style="margin-top:20px; white-space: pre-wrap; border: 1px solid #ccc; padding: 10px;">
+    <strong>Output:</strong>
+    <pre>{{.Output}}</pre>
+</div>
 {{end}}
