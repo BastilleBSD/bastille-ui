@@ -1,25 +1,64 @@
-<!-- Save as web/static/list.html -->
-<h1>List Jails / Items</h1>
+{{define "content"}}
+<h1>{{.Title}}</h1>
 
-<form method="post" action="/bastille/list">
-    <label for="options">Options:</label>
-    <input type="text" id="options" name="options" placeholder="-a -l"><br><br>
+<form method="post">
 
-    <label for="item">Item:</label>
-    <input type="text" id="item" name="item" placeholder="Optional"><br><br>
+    <!-- Item dropdown on top -->
+    <div style="margin-bottom:20px;">
+        <label for="item">Select Item:</label><br>
+        <select id="item" name="item" size="10" style="width:300px;">
+            <option value="">default</option>
+            <option value="all">all</option>
+            <option value="backup">backup</option>
+            <option value="export">export</option>
+            <option value="import">import</option>
+            <option value="ip">ip</option>
+            <option value="jail">jail</option>
+            <option value="limit">limit</option>
+            <option value="log">log</option>
+            <option value="path">path</option>
+            <option value="port">port</option>
+            <option value="priority">priority</option>
+            <option value="release">release</option>
+            <option value="snapshot">snapshot</option>
+            <option value="state">state</option>
+            <option value="template">template</option>
+            <option value="type">type</option>
+        </select>
+    </div>
 
-    <button type="submit">List</button>
+    <!-- Options checkboxes -->
+    <fieldset style="margin-bottom:20px;">
+        <legend>Options:</legend>
+        <input type="checkbox" id="down" name="options" value="-d">
+        <label for="down">-d | --down : List stopped jails only</label><br>
+
+        <input type="checkbox" id="json" name="options" value="-j">
+        <label for="json">-j | --json : List jails or sub-arg(s) in JSON format</label><br>
+
+        <input type="checkbox" id="pretty" name="options" value="-p">
+        <label for="pretty">-p | --pretty : Print JSON in columns</label><br>
+
+        <input type="checkbox" id="up" name="options" value="-u">
+        <label for="up">-u | --up : List running jails only</label><br>
+
+        <input type="checkbox" id="debug" name="options" value="-x">
+        <label for="debug">-x | --debug : Enable debug mode</label>
+    </fieldset>
+
+    <button type="submit">Run List</button>
 </form>
 
-{{if .Error}}
-<div style="color:red;">
-    <strong>Error:</strong> {{.Error}}
-</div>
+<!-- Display output -->
+{{if .Output}}
+<h2>Output:</h2>
+<pre>{{.Output}}</pre>
 {{end}}
 
-{{if .Output}}
-<div style="margin-top:20px; white-space: pre-wrap; border: 1px solid #ccc; padding: 10px;">
-    <strong>Output:</strong>
-    <pre>{{.Output}}</pre>
-</div>
+<!-- Display error -->
+{{if .Error}}
+<h2 style="color:red;">Error:</h2>
+<p>{{.Error}}</p>
+{{end}}
+<a class="button" href="/">Back</a>
 {{end}}

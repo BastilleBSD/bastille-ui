@@ -1,64 +1,98 @@
 {{define "content"}}
 <form method="post" onsubmit="updateOptions()">
+
     <!-- Basic fields -->
-    <input name="jail" placeholder="Jail name" required>
+    <input name="name" placeholder="Jail Name" required>
     <input name="release" placeholder="Release (14.0-RELEASE)" required>
     <input name="ip" placeholder="IP address" required>
-    
-    <!-- Optional interface -->
     <input name="iface" placeholder="Interface (optional)">
 
-    <!-- Hidden options field -->
+    <!-- Hidden options field to submit all flags -->
     <input type="hidden" name="options" id="options">
 
-    <!-- Checkboxes for options -->
-    <label>
-        <input type="checkbox" class="option-checkbox" value="-B"> Bridged VNET (-B)
-    </label>
-    <label>
-        <input type="checkbox" class="option-checkbox" value="-V"> VNET (-V)
-    </label>
-    <label>
-        <input type="checkbox" class="option-checkbox" value="-M"> Static MAC (-M)
-    </label>
+    <fieldset style="margin:20px 0; border:none;">
+        <legend>Options:</legend>
 
-    <!-- Gateway checkbox -->
-    <label>
-        <input type="checkbox" id="gatewayCheckbox"> Add Gateway
-    </label>
-    <!-- Gateway input, hidden by default -->
-    <div id="gatewayDiv" style="display:none; margin-left:20px;">
-        <input type="text" name="gateway" placeholder="Gateway IP">
-    </div>
+        <!-- Simple checkboxes -->
+        <label><input type="checkbox" class="option-checkbox" value="-B"> Enable VNET. INTERFACE must be a bridge</label><br>
+        <label><input type="checkbox" class="option-checkbox" value="-C"> Create a clone jail (ZFS only)</label><br>
+        <label><input type="checkbox" class="option-checkbox" value="-D"> Use dual IPv4+6 networking</label><br>
+        <label><input type="checkbox" class="option-checkbox" value="-E"> Create an empty jail</label><br>
+        <label><input type="checkbox" class="option-checkbox" id="gatewayCheckbox" value="-g"> Specify a default router/gateway</label>
+        <div id="gatewayDiv" style="display:none; margin-left:20px;">
+            <input type="text" name="gateway" placeholder="Gateway IP">
+        </div>
+        <label><input type="checkbox" class="option-checkbox" value="-L"> Create a Linux jail</label><br>
+        <label><input type="checkbox" class="option-checkbox" value="-M"> Use static/persistent MAC address</label><br>
+        <label><input type="checkbox" class="option-checkbox" value="--no-validate"> Do not validate release name</label><br>
+        <label><input type="checkbox" class="option-checkbox" value="--no-boot"> Set boot=off</label><br>
+        <label><input type="checkbox" class="option-checkbox" value="-P"> Enable VNET with interface as-is</label><br>
+        <label><input type="checkbox" class="option-checkbox" value="-p" id="priorityCheckbox"> Set priority value</label>
+        <div id="priorityDiv" style="display:none; margin-left:20px;">
+            <input type="text" name="priority" placeholder="Priority value">
+        </div>
+        <label><input type="checkbox" class="option-checkbox" value="-T"> Create a thick jail</label><br>
+        <label><input type="checkbox" class="option-checkbox" value="-V"> Enable VNET. Interface must be a physical interface</label><br>
+        <label><input type="checkbox" class="option-checkbox" value="-v" id="vlanCheckbox"> Set VLAN ID (VNET only)</label>
+        <div id="vlanDiv" style="display:none; margin-left:20px;">
+            <input type="text" name="vlan" placeholder="VLAN ID">
+        </div>
+        <label><input type="checkbox" class="option-checkbox" value="-x"> Enable debug mode</label><br>
+        <label><input type="checkbox" class="option-checkbox" id="zfsCheckbox"> Custom zfs options. Comma-separated</label>
+        <div id="zfsDiv" style="display:none; margin-left:20px;">
+            <input type="text" name="zfs" placeholder="ZFS options (comma-separated)">
+        </div>
+
+    </fieldset>
 
     <button type="submit">Create</button>
 </form>
 
 <script>
+// Merge all checked options and their parameters into the hidden field
 function updateOptions() {
-    // Collect selected checkboxes
-    const checked = Array.from(document.querySelectorAll('.option-checkbox:checked'));
-    const values = checked.map(c => c.value);
+    const checkboxes = document.querySelectorAll('.option-checkbox');
+    const optionsInput = document.getElementById('options');
+    let opts = [];
 
-    // If gateway checkbox is checked, append the value
-    const gatewayCheckbox = document.getElementById('gatewayCheckbox');
-    const gatewayInput = document.querySelector('input[name="gateway"]');
-    if (gatewayCheckbox.checked && gatewayInput.value.trim() !== "") {
-        values.push("-g " + gatewayInput.value.trim());
-    }
+    checkboxes.forEach(cb => {
+        if(cb.checked) {
+            opts.push(cb.value);
+        }
+    });
 
-    // Set hidden options field
-    document.getElementById('options').value = values.join(' ');
+    // Add values from conditional inputs
+    const gateway = document.querySelector('input[name="gateway"]');
+    if(gateway && gateway.value) opts.push(gateway.value);
+
+    const priority = document.querySelector('input[name="priority"]');
+    if(priority && priority.value) opts.push(priority.value);
+
+    const vlan = document.querySelector('input[name="vlan"]');
+    if(vlan && vlan.value) opts.push(vlan.value);
+
+    const zfs = document.querySelector('input[name="zfs"]');
+    if(zfs && zfs.value) opts.push(zfs.value);
+
+    optionsInput.value = opts.join(' ');
 }
 
-// Toggle gateway input visibility
+// Toggle inputs visibility
 document.getElementById('gatewayCheckbox').addEventListener('change', function() {
-    const div = document.getElementById('gatewayDiv');
-    div.style.display = this.checked ? 'block' : 'none';
+    document.getElementById('gatewayDiv').style.display = this.checked ? 'block' : 'none';
+});
+document.getElementById('priorityCheckbox').addEventListener('change', function() {
+    document.getElementById('priorityDiv').style.display = this.checked ? 'block' : 'none';
+});
+document.getElementById('vlanCheckbox').addEventListener('change', function() {
+    document.getElementById('vlanDiv').style.display = this.checked ? 'block' : 'none';
+});
+document.getElementById('zfsCheckbox').addEventListener('change', function() {
+    document.getElementById('zfsDiv').style.display = this.checked ? 'block' : 'none';
 });
 </script>
 
-{{/* Output area */}}
+<!-- Output area -->
 {{if .Output}}<pre>{{.Output}}</pre>{{end}}
 {{if .Error}}<div class="error">{{.Error}}</div>{{end}}
 

@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 // --- Data structure for templates ---
@@ -49,7 +50,7 @@ func callBastilleAPI(path string, params map[string]string) (string, error) {
 // --- Template renderer ---
 func render(w http.ResponseWriter, page string, data PageData) {
 	tmpl, err := template.ParseFiles(
-		"web/static/layout.html",
+		"web/static/default.html",
 		"web/static/"+page+".html",
 	)
 	if err != nil {
@@ -57,7 +58,7 @@ func render(w http.ResponseWriter, page string, data PageData) {
 		return
 	}
 
-	err = tmpl.ExecuteTemplate(w, "layout", data)
+	err = tmpl.ExecuteTemplate(w, "default", data)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 	}
@@ -68,35 +69,41 @@ func home(w http.ResponseWriter, r *http.Request) {
 	render(w, "home", PageData{Title: "Bastille Web UI"})
 }
 
-func bastilleHandler(w http.ResponseWriter, r *http.Request) {
-	data := PageData{
-		Title: r.URL.Path,
-	}
+func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
+    // Extract subcommand from the URL
+    // Example: /bastille/list -> subcommand = "list"
+    subcommand := r.URL.Path[len("/bastille/"):]
+    apiPath := "/api/v1/bastille/" + subcommand
 
-	if r.Method == http.MethodPost {
-		r.ParseForm()
+    data := PageData{
+        Title: "Bastille " + subcommand,
+    }
 
-		// Extract subcommand from the URL
-		// Example: /bastille/start -> apiPath = /api/v1/bastille/start
-		subcommand := r.URL.Path[len("/bastille/"):]
-		apiPath := "/api/v1/bastille/" + subcommand
+    if r.Method == http.MethodPost {
+        r.ParseForm()
 
-		// Collect form values as params
-		params := map[string]string{}
-		for k, v := range r.PostForm {
-			params[k] = v[0]
-		}
+        // Collect options
+        selectedOptions := r.PostForm["options"]
+        optionsParam := strings.Join(selectedOptions, " ")
 
-		out, err := callBastilleAPI(apiPath, params)
-		data.Output = out
-		if err != nil {
-			data.Error = err.Error()
-		}
-	}
+        // Collect item ("" if default)
+        item := r.PostFormValue("item")
 
-	render(w, "result", data)
+        params := map[string]string{
+            "options": optionsParam,
+            "item":    item,
+        }
+
+        out, err := callBastilleAPI(apiPath, params)
+        data.Output = out
+        if err != nil {
+            data.Error = err.Error()
+        }
+    }
+
+    // Render the corresponding template
+    render(w, subcommand, data)
 }
-
 
 // --- Main function ---
 func Start() {
@@ -108,9 +115,9 @@ func Start() {
 	http.HandleFunc("/", home)
 
 	// Catch-all for any /bastille/<subcommand>
-	http.HandleFunc("/bastille/", bastilleHandler)
+	http.HandleFunc("/bastille/", bastilleWebHandler)
 
 	http.Handle("/static/", http.StripPrefix("/static/",
-		http.FileServer(http.Dir("static"))))
+		http.FileServer(http.Dir("web/static"))))
 }
 
