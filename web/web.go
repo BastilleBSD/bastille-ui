@@ -57,49 +57,52 @@ func render(w http.ResponseWriter, page string, data PageData) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-
 	err = tmpl.ExecuteTemplate(w, "default", data)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 	}
 }
 
-// --- Handlers ---
+// --- Home Page ---
 func home(w http.ResponseWriter, r *http.Request) {
 	render(w, "home", PageData{Title: "Bastille Web UI"})
 }
 
+// --- Handle Submitted Forms ---
 func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
-    // Extract subcommand from the URL
-    // Example: /bastille/list -> subcommand = "list"
-    subcommand := r.URL.Path[len("/bastille/"):]
-    apiPath := "/api/v1/bastille/" + subcommand
+	// Extract subcommand from the URL
+	// Example: /bastille/list -> subcommand = "list"
+	subcommand := r.URL.Path[len("/bastille/"):]
+	apiPath := "/api/v1/bastille/" + subcommand
 
-    data := PageData{
-        Title: "Bastille " + subcommand,
-    }
+	// Set default page header
+	data := PageData{
+		Title: "Bastille " + subcommand,
+	}
 
-    if r.Method == http.MethodPost {
-        r.ParseForm()
+	// Parse submitted form
+	if r.Method == http.MethodPost {
+		r.ParseForm()
+		// Collect all form parameters dynamically
+		params := map[string]string{}
 
-        // Collect options
-        selectedOptions := r.PostForm["options"]
-        optionsParam := strings.Join(selectedOptions, " ")
-
-        // Collect item ("" if default)
-        item := r.PostFormValue("item")
-
-        params := map[string]string{
-            "options": optionsParam,
-            "item":    item,
-        }
-
-        out, err := callBastilleAPI(apiPath, params)
-        data.Output = out
-        if err != nil {
-            data.Error = err.Error()
-        }
-    }
+		for key, values := range r.PostForm {
+			if len(values) > 0 {
+				// If the field is "options", join multiple values into a single string
+				if key == "options" {
+					params[key] = strings.Join(values, " ")
+				} else {
+					params[key] = values[0]
+				}
+			}
+		}
+		// Call the API
+		out, err := callBastilleAPI(apiPath, params)
+		data.Output = out
+		if err != nil {
+			data.Error = err.Error()
+		}
+	}
 
     // Render the corresponding template
     render(w, subcommand, data)
@@ -107,16 +110,20 @@ func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
 
 // --- Main function ---
 func Start() {
+
+	// Set test api key for now
 	apiKey = "testingkey"
 	if apiKey == "" {
 		log.Fatal("BASTILLE_API_KEY not set")
 	}
 
+	// Handle home page
 	http.HandleFunc("/", home)
 
 	// Catch-all for any /bastille/<subcommand>
 	http.HandleFunc("/bastille/", bastilleWebHandler)
 
+	// Serve log from web/static
 	http.Handle("/static/", http.StripPrefix("/static/",
 		http.FileServer(http.Dir("web/static"))))
 }

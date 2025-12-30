@@ -1,16 +1,22 @@
-{{define "h2"}}Stop Jail(s){end}}
+{{define "h2"}}Bootstrap a Release or Template(s){{end}}
 {{define "content"}}
 <form method="post" onsubmit="updateOptions()">
 
-    <input name="target" placeholder="Jail Name" required>
+    <input name="target" placeholder="Release or Template URL" required>
+    <input name="arch" placeholder="Arch (Optional)">
     <input type="hidden" name="options" id="options">
 
     <fieldset>
         <legend>Options:</legend>
 
         <div class="option-row">
-            <input type="checkbox" class="option-checkbox" value="-v">
-            <label>Enable verbose mode.</label>
+            <input type="checkbox" class="option-checkbox" value="-p">
+            <label>Bootstrap using pkgbase (FreeBSD 15.0-RELEASE and above).</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-u">
+            <label>Update the release after bootstrap.</label>
         </div>
 
         <div class="option-row">
@@ -20,7 +26,7 @@
 
     </fieldset>
 
-    <button type="submit">Stop</button>
+    <button type="submit">Bootstrap</button>
 </form>
 
 <script>

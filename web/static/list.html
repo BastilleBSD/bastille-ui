@@ -1,64 +1,74 @@
+{{define "h2"}}List...{{end}}
 {{define "content"}}
-<h1>{{.Title}}</h1>
+<form method="post" onsubmit="updateOptions()">
 
-<form method="post">
+    <button type="submit" name="item" value="">Default</button>
+	<button type="submit" name="item" value="all">All</button>
+    <button type="submit" name="item" value="backup">Backups</button>
+    <button type="submit" name="item" value="ip">Ips</button>
+    <button type="submit" name="item" value="jail">Jails</button>
+    <button type="submit" name="item" value="limit">Limits</button>
+    <button type="submit" name="item" value="log">Logs</button>
+    <button type="submit" name="item" value="path">Paths</button>
+    <button type="submit" name="item" value="port">Ports</button>
+    <button type="submit" name="item" value="priority">Priority</button>
+    <button type="submit" name="item" value="release">Releases</button>
+    <button type="submit" name="item" value="snapshot">Snapshots</button>
+    <button type="submit" name="item" value="state">States</button>
+    <button type="submit" name="item" value="template">Templates</button>
+    <button type="submit" name="item" value="type">Type</button>
+    <input type="hidden" name="options" id="options">
 
-    <!-- Item dropdown on top -->
-    <div style="margin-bottom:20px;">
-        <label for="item">Select Item:</label><br>
-        <select id="item" name="item" size="10" style="width:300px;">
-            <option value="">default</option>
-            <option value="all">all</option>
-            <option value="backup">backup</option>
-            <option value="export">export</option>
-            <option value="import">import</option>
-            <option value="ip">ip</option>
-            <option value="jail">jail</option>
-            <option value="limit">limit</option>
-            <option value="log">log</option>
-            <option value="path">path</option>
-            <option value="port">port</option>
-            <option value="priority">priority</option>
-            <option value="release">release</option>
-            <option value="snapshot">snapshot</option>
-            <option value="state">state</option>
-            <option value="template">template</option>
-            <option value="type">type</option>
-        </select>
-    </div>
-
-    <!-- Options checkboxes -->
-    <fieldset style="margin-bottom:20px;">
+    <fieldset>
         <legend>Options:</legend>
-        <input type="checkbox" id="down" name="options" value="-d">
-        <label for="down">-d | --down : List stopped jails only</label><br>
 
-        <input type="checkbox" id="json" name="options" value="-j">
-        <label for="json">-j | --json : List jails or sub-arg(s) in JSON format</label><br>
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-d">
+            <label>List stopped jails only.</label>
+        </div>
 
-        <input type="checkbox" id="pretty" name="options" value="-p">
-        <label for="pretty">-p | --pretty : Print JSON in columns</label><br>
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-j">
+            <label>List jails or sub-arg(s) in json format.</label>
+        </div>
 
-        <input type="checkbox" id="up" name="options" value="-u">
-        <label for="up">-u | --up : List running jails only</label><br>
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-p">
+            <label>Print JSON in columns.</label></label>
+        </div>
 
-        <input type="checkbox" id="debug" name="options" value="-x">
-        <label for="debug">-x | --debug : Enable debug mode</label>
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-u">
+            <label>List running jails only.</label>
+        </div>
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-x">
+            <label>Enable debug mode.</label>
+        </div>
+
     </fieldset>
 
-    <button type="submit">Run List</button>
 </form>
 
-<!-- Display output -->
-{{if .Output}}
-<h2>Output:</h2>
-<pre>{{.Output}}</pre>
-{{end}}
+<script>
+function updateOptions() {
+    const checkboxes = document.querySelectorAll('.option-checkbox');
+    const optionsInput = document.getElementById('options');
+    let opts = [];
 
-<!-- Display error -->
-{{if .Error}}
-<h2 style="color:red;">Error:</h2>
-<p>{{.Error}}</p>
-{{end}}
-<a class="button" href="/">Back</a>
+    // Simple flags
+    checkboxes.forEach(cb => {
+        if (cb.checked && cb.value) {
+            opts.push(cb.value);
+        }
+    });
+
+    optionsInput.value = opts.join(' ');
+}
+</script>
+
+{{if .Output}}<pre>{{.Output}}</pre>{{end}}
+{{if .Error}}<div class="error">{{.Error}}</div>{{end}}
+
+<a class="button" href="/">Home</a>
 {{end}}

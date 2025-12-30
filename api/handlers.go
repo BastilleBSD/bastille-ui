@@ -35,7 +35,7 @@ func BastilleBootstrapHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleCloneHandler(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +71,7 @@ func BastilleCloneHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleCmdHandler(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +101,7 @@ func BastilleCmdHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleConfigHandler(w http.ResponseWriter, r *http.Request) {
@@ -141,7 +141,7 @@ func BastilleConfigHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleConsoleHandler(w http.ResponseWriter, r *http.Request) {
@@ -168,7 +168,7 @@ func BastilleConsoleHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleConvertHandler(w http.ResponseWriter, r *http.Request) {
@@ -200,7 +200,7 @@ func BastilleConvertHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleCpHandler(w http.ResponseWriter, r *http.Request) {
@@ -236,7 +236,7 @@ func BastilleCpHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleCreateHandler(w http.ResponseWriter, r *http.Request) {
@@ -276,7 +276,7 @@ func BastilleCreateHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleDestroyHandler(w http.ResponseWriter, r *http.Request) {
@@ -285,6 +285,7 @@ func BastilleDestroyHandler(w http.ResponseWriter, r *http.Request) {
 
 	options := getParam(r, "options")
 	target := getParam(r, "target")
+	fmt.Println("DEBUG options:", options)
 
 	if options != "" {
 		options = options + " -ay"
@@ -304,7 +305,7 @@ func BastilleDestroyHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleEditHandler(w http.ResponseWriter, r *http.Request) {
@@ -332,7 +333,7 @@ func BastilleEditHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleEtcupdateHandler(w http.ResponseWriter, r *http.Request) {
@@ -379,7 +380,7 @@ func BastilleEtcupdateHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleExportHandler(w http.ResponseWriter, r *http.Request) {
@@ -408,7 +409,7 @@ func BastilleExportHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleHtopHandler(w http.ResponseWriter, r *http.Request) {
@@ -432,7 +433,7 @@ func BastilleHtopHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleImportHandler(w http.ResponseWriter, r *http.Request) {
@@ -460,7 +461,7 @@ func BastilleImportHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleJcpHandler(w http.ResponseWriter, r *http.Request) {
@@ -502,7 +503,7 @@ func BastilleJcpHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleLimitsHandler(w http.ResponseWriter, r *http.Request) {
@@ -559,7 +560,7 @@ func BastilleLimitsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleListHandler(w http.ResponseWriter, r *http.Request) {
@@ -581,7 +582,7 @@ func BastilleListHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleMigrateHandler(w http.ResponseWriter, r *http.Request) {
@@ -611,7 +612,7 @@ func BastilleMigrateHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleMonitorHandler(w http.ResponseWriter, r *http.Request) {
@@ -651,7 +652,7 @@ func BastilleMonitorHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleMountHandler(w http.ResponseWriter, r *http.Request) {
@@ -710,7 +711,7 @@ func BastilleMountHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleNetworkHandler(w http.ResponseWriter, r *http.Request) {
@@ -755,7 +756,7 @@ func BastilleNetworkHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastillePkgHandler(w http.ResponseWriter, r *http.Request) {
@@ -785,7 +786,7 @@ func BastillePkgHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleRcpHandler(w http.ResponseWriter, r *http.Request) {
@@ -821,7 +822,7 @@ func BastilleRcpHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleRdrHandler(w http.ResponseWriter, r *http.Request) {
@@ -874,7 +875,7 @@ func BastilleRdrHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleRenameHandler(w http.ResponseWriter, r *http.Request) {
@@ -907,7 +908,7 @@ func BastilleRenameHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleRestartHandler(w http.ResponseWriter, r *http.Request) {
@@ -931,7 +932,7 @@ func BastilleRestartHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleServiceHandler(w http.ResponseWriter, r *http.Request) {
@@ -967,7 +968,7 @@ func BastilleServiceHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleSetupHandler(w http.ResponseWriter, r *http.Request) {
@@ -993,7 +994,7 @@ func BastilleSetupHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleStartHandler(w http.ResponseWriter, r *http.Request) {
@@ -1017,7 +1018,7 @@ func BastilleStartHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleStopHandler(w http.ResponseWriter, r *http.Request) {
@@ -1041,7 +1042,7 @@ func BastilleStopHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleSysrcHandler(w http.ResponseWriter, r *http.Request) {
@@ -1071,7 +1072,7 @@ func BastilleSysrcHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleTagsHandler(w http.ResponseWriter, r *http.Request) {
@@ -1111,7 +1112,7 @@ func BastilleTagsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleTemplateHandler(w http.ResponseWriter, r *http.Request) {
@@ -1151,7 +1152,7 @@ func BastilleTemplateHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleTopHandler(w http.ResponseWriter, r *http.Request) {
@@ -1175,7 +1176,7 @@ func BastilleTopHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleUmountHandler(w http.ResponseWriter, r *http.Request) {
@@ -1205,7 +1206,7 @@ func BastilleUmountHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleUpdateHandler(w http.ResponseWriter, r *http.Request) {
@@ -1229,7 +1230,7 @@ func BastilleUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleUpgradeHandler(w http.ResponseWriter, r *http.Request) {
@@ -1264,7 +1265,7 @@ func BastilleUpgradeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleVerifyHandler(w http.ResponseWriter, r *http.Request) {
@@ -1288,7 +1289,7 @@ func BastilleVerifyHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }
 
 func BastilleZfsHandler(w http.ResponseWriter, r *http.Request) {
@@ -1351,5 +1352,5 @@ func BastilleZfsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "Success: %s", output)
+	fmt.Fprintf(w, "%s", output)
 }

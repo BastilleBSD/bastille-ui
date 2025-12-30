@@ -1,11 +1,73 @@
+{{define "h2"}}Start Jail(s){{end}}
 {{define "content"}}
-<form method="post">
-    <input name="jail" placeholder="Jail name">
+<form method="post" onsubmit="updateOptions()">
+
+    <input name="target" placeholder="Jail Name" required>
+    <input type="hidden" name="options" id="options">
+
+    <fieldset>
+        <legend>Options:</legend>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-b">
+            <label>Respect jail boot setting.</label>
+        </div>
+
+        <div class="option-block">
+            <div class="option-row">
+                <input type="checkbox" class="option-checkbox" id="delayCheckbox" value="-d">
+                <label for="delayCheckbox">Time (seconds) to wait after starting each jail.</label>
+            </div>
+            <div id="delayDiv" class="option-sub">
+                <input type="text" name="delay" placeholder="Delay (seconds)">
+            </div>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-v">
+            <label>Enable verbose mode.</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-x">
+            <label>Enable debug mode.</label>
+        </div>
+
+    </fieldset>
+
     <button type="submit">Start</button>
 </form>
+
+<script>
+function updateOptions() {
+    const checkboxes = document.querySelectorAll('.option-checkbox');
+    const optionsInput = document.getElementById('options');
+    let opts = [];
+
+	const valueFlags = ['delay'];
+
+	checkboxes.forEach(cb => {
+		if (cb.checked && cb.value && !valueFlags.includes(cb.id.replace('Checkbox',''))) {
+			opts.push(cb.value); // push only simple checkboxes
+		}
+	});
+
+	valueFlags.forEach(name => {
+		const cb = document.getElementById(name + 'Checkbox');
+		const el = document.querySelector(`input[name="${name}"]`);
+		if (cb.checked && el && el.value.trim() !== "") {
+			opts.push(cb.value + ' ' + el.value.trim()); // push combined
+		}
+	});
+
+    optionsInput.value = opts.join(' ');
+}
+
+delayCheckbox.onchange = () => delayDiv.style.display = delayCheckbox.checked ? 'block' : 'none';
+</script>
 
 {{if .Output}}<pre>{{.Output}}</pre>{{end}}
 {{if .Error}}<div class="error">{{.Error}}</div>{{end}}
 
-<a class="button" href="/">Back</a>
+<a class="button" href="/">Home</a>
 {{end}}
