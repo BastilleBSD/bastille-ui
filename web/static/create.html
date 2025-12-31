@@ -32,14 +32,16 @@
             <label>Create an empty jail</label>
         </div>
 
-        <div class="option-block">
-            <div class="option-row">
-                <input type="checkbox" class="option-checkbox" id="gatewayCheckbox" value="-g">
-                <label for="gatewayCheckbox">Specify a default router/gateway</label>
-            </div>
-            <div id="gatewayDiv" class="option-sub">
-                <input type="text" name="gateway" placeholder="Gateway IP">
-            </div>
+        <div class="option-row">
+            <input type="checkbox"
+                   class="option-checkbox"
+                   value="-g"
+                   data-has-value="true"
+                   data-target="gatewayInput">
+            <label>Specify a default router/gateway.</label>
+        </div>
+        <div class="option-sub" id="gatewayInput" style="display:none;">
+            <input type="text" placeholder="Gateway/Router">
         </div>
 
         <div class="option-row">
@@ -51,6 +53,19 @@
             <input type="checkbox" class="option-checkbox" value="-M">
             <label>Use static/persistent MAC address</label>
         </div>
+
+        <div class="option-row">
+            <input type="checkbox"
+                   class="option-checkbox"
+                   value="-n"
+                   data-has-value="true"
+                   data-target="nameserverInput">
+            <label>Specify nameserver(s) for the jail. Comma-separated.</label>
+        </div>
+        <div class="option-sub" id="nameserverInput" style="display:none;">
+            <input type="text" placeholder="Nameserver">
+        </div>
+
 
         <div class="option-row">
             <input type="checkbox" class="option-checkbox" value="--no-validate">
@@ -67,14 +82,16 @@
             <label>Enable VNET with interface as-is</label>
         </div>
 
-        <div class="option-block">
-            <div class="option-row">
-                <input type="checkbox" class="option-checkbox" id="priorityCheckbox" value="-p">
-                <label for="priorityCheckbox">Set priority value</label>
-            </div>
-            <div id="priorityDiv" class="option-sub">
-                <input type="text" name="priority" placeholder="Priority value">
-            </div>
+        <div class="option-row">
+            <input type="checkbox"
+                   class="option-checkbox"
+                   value="-p"
+                   data-has-value="true"
+                   data-target="priorityInput">
+            <label>Set priority value.</label>
+        </div>
+        <div class="option-sub" id="priorityInput" style="display:none;">
+            <input type="text" placeholder="Priority">
         </div>
 
         <div class="option-row">
@@ -87,14 +104,16 @@
             <label>Enable VNET. Interface must be a physical interface</label>
         </div>
 
-        <div class="option-block">
-            <div class="option-row">
-                <input type="checkbox" class="option-checkbox" id="vlanCheckbox" value="-v">
-                <label for="vlanCheckbox">Set VLAN ID (VNET only)</label>
-            </div>
-            <div id="vlanDiv" class="option-sub">
-                <input type="text" name="vlan" placeholder="VLAN ID">
-            </div>
+        <div class="option-row">
+            <input type="checkbox"
+                   class="option-checkbox"
+                   value="-v"
+                   data-has-value="true"
+                   data-target="vlanInput">
+            <label>Set VLAN ID (VNET only).</label>
+        </div>
+        <div class="option-sub" id="vlanInput" style="display:none;">
+            <input type="text" placeholder="VLAN ID">
         </div>
 
         <div class="option-row">
@@ -102,54 +121,23 @@
             <label>Enable debug mode</label>
         </div>
 
-        <div class="option-block">
-            <div class="option-row">
-                <input type="checkbox" class="option-checkbox" id="zfsCheckbox">
-                <label for="zfsCheckbox">Custom zfs options. Comma-separated</label>
-            </div>
-            <div id="zfsDiv" class="option-sub">
-                <input type="text" name="zfs" placeholder="ZFS options (comma-separated)">
-            </div>
+        <div class="option-row">
+            <input type="checkbox"
+                   class="option-checkbox"
+                   value="-Z"
+                   data-has-value="true"
+                   data-target="zfsInput">
+            <label>Custom ZFS options. Comma-separated.</label>
+        </div>
+        <div class="option-sub" id="zfsInput" style="display:none;">
+            <input type="text" placeholder="zfs,options">
         </div>
 
     </fieldset>
 
-    <button type="submit">Create</button>
+    <button type="submit">GO!</button>
 </form>
-
-<script>
-function updateOptions() {
-    const checkboxes = document.querySelectorAll('.option-checkbox');
-    const optionsInput = document.getElementById('options');
-    let opts = [];
-
-	const valueFlags = ['gateway', 'priority', 'vlan', 'zfs'];
-
-	checkboxes.forEach(cb => {
-		if (cb.checked && cb.value && !valueFlags.includes(cb.id.replace('Checkbox',''))) {
-			opts.push(cb.value); // push only simple checkboxes
-		}
-	});
-
-	valueFlags.forEach(name => {
-		const cb = document.getElementById(name + 'Checkbox');
-		const el = document.querySelector(`input[name="${name}"]`);
-		if (cb.checked && el && el.value.trim() !== "") {
-			opts.push(cb.value + ' ' + el.value.trim()); // push combined
-		}
-	});
-
-    optionsInput.value = opts.join(' ');
-}
-
-gatewayCheckbox.onchange = () => gatewayDiv.style.display = gatewayCheckbox.checked ? 'block' : 'none';
-priorityCheckbox.onchange = () => priorityDiv.style.display = priorityCheckbox.checked ? 'block' : 'none';
-vlanCheckbox.onchange = () => vlanDiv.style.display = vlanCheckbox.checked ? 'block' : 'none';
-zfsCheckbox.onchange = () => zfsDiv.style.display = zfsCheckbox.checked ? 'block' : 'none';
-</script>
 
 {{if .Output}}<pre>{{.Output}}</pre>{{end}}
 {{if .Error}}<div class="error">{{.Error}}</div>{{end}}
-
-<a class="button" href="/">Back</a>
 {{end}}

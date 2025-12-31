@@ -1,0 +1,72 @@
+{{define "h2"}}Manage Jail Networks{{end}}
+{{define "content"}}
+<form method="post" onsubmit="updateOptions()">
+
+    <input name="target" placeholder="Jail Name" required>
+    <select name="action" required>
+        <option value="">Select action</option>
+        <option value="add">Add</option>
+        <option value="remove">Remove</option>
+    </select>
+    <input name="iface" placeholder="Interface" required>
+    <input name="ip" placeholder="IP Address">
+    <input type="hidden" name="options" id="options">
+
+    <fieldset>
+        <legend>Options:</legend>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-a">
+            <label>Auto mode. Start/stop jail(s) if required.</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-B">
+            <label>Add a bridge interface.</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-M">
+            <label>Use a static/persistent MAC address (VNET only).</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-n">
+            <label>Create interface without an IP (VNET only).</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-P">
+            <label>Add a raw interface.</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-V">
+            <label>Add a physical interface.</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox"
+                   class="option-checkbox"
+                   value="-v"
+                   data-has-value="true"
+                   data-target="vlanInput">
+            <label>Assign VLANID to interface (VNET only).</label>
+        </div>
+        <div class="option-sub" id="vlanInput" style="display:none;">
+            <input type="text" placeholder="VLAN ID">
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-x">
+            <label>Enable debug mode.</label>
+        </div>
+
+    </fieldset>
+
+    <button type="submit">GO!</button>
+</form>
+
+{{if .Output}}<pre>{{.Output}}</pre>{{end}}
+{{if .Error}}<div class="error">{{.Error}}</div>{{end}}
+{{end}}

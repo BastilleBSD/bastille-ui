@@ -5,114 +5,21 @@
     <meta charset="utf-8">
     <title>{{block "title" .}}{{.Title}}{{end}}</title>
 
-    <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-            font-family: system-ui, sans-serif;
-            background: #0b0b0b;
-            color: #eee;
-        }
-
- 	body {
-		display: flex;
-		flex-direction: column;
-		min-height: 100vh; /* ensures full viewport height */
-		justify-content: flex-start; /* start from top */
-		align-items: center;
-		text-align: center;
-		background-image: url('/static/bastille-logo.png');
-		background-repeat: no-repeat;
-		background-position: center;
-		background-size: contain;
-		padding-top: 60px; /* optional: space below top of page */
-	}
-
-	.panel {
-		/* Semi-transparent panel floating above the logo */
-		background: rgba(0, 0, 0, 0.75);
-		backdrop-filter: blur(6px);
-		padding: 30px 40px;
-		border-radius: 10px;
-		width: 600px;
-		text-align: center;
-		box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
-	}
-
-        a.button, button {
-            display: block;
-            padding: 10px;
-            margin: 10px 0;
-            background: #cc0000;
-            color: #fff;
-            text-decoration: none;
-            border-radius: 4px;
-            border: none;
-            cursor: pointer;
-        }
-
-        a.button:hover, button:hover {
-            background: #ff3333;
-        }
-
-	.option-row {
-    		display: flex;
-    		align-items: flex-start;
-    		gap: 10px;
-    		margin-bottom: 8px;
-	}
-
-	.option-row input[type="checkbox"] {
-    		margin-top: 3px;
-	}
-
-	.option-row label {
-    		cursor: pointer;
-	}
-
-	.option-sub {
-		display: none;
- 	   	margin-left: 28px;
-    		margin-bottom: 8px;
-	}
-
-        input {
-            width: 100%;
-            padding: 8px;
-            margin: 5px 0;
-            border-radius: 4px;
-            border: none;
-        }
-
-	input[type="checkbox"] {
-	    width: auto;
-	}
-
-        pre {
-            background: #111;
-            padding: 10px;
-            margin-top: 15px;
-            max-height: 300px;
-            overflow: auto;
-            text-align: left;
-            border-radius: 4px;
-        }
-
-	form {
-		text-align: left;
-	}
-
-        .error {
-            color: #ff6666;
-        }
-    </style>
+    <!-- Link external CSS -->
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
-<div class="panel">
-    <h2>{{block "h2" .}}{{.Title}}{{end}}</h2>
-    {{template "content" .}}
-</div>
+    {{template "navbar" .}}
+    {{template "sidebar" .}}
+    {{template "parse-options" .}}
+
+    <div class="main-content">
+        <div class="panel">
+            <h2>{{block "h2" .}}{{.Title}}{{end}}</h2>
+            {{template "content" .}}
+        </div>
+    </div>
 </body>
 </html>
 {{end}}

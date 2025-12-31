@@ -1,4 +1,4 @@
-{{define "h2"}}Stop Jail(s){end}}
+{{define "h2"}}Stop Jail(s){{end}}
 {{define "content"}}
 <form method="post" onsubmit="updateOptions()">
 
@@ -20,28 +20,9 @@
 
     </fieldset>
 
-    <button type="submit">Stop</button>
+    <button type="submit">GO!</button>
 </form>
-
-<script>
-function updateOptions() {
-    const checkboxes = document.querySelectorAll('.option-checkbox');
-    const optionsInput = document.getElementById('options');
-    let opts = [];
-
-    // Simple flags
-    checkboxes.forEach(cb => {
-        if (cb.checked && cb.value) {
-            opts.push(cb.value);
-        }
-    });
-
-    optionsInput.value = opts.join(' ');
-}
-</script>
 
 {{if .Output}}<pre>{{.Output}}</pre>{{end}}
 {{if .Error}}<div class="error">{{.Error}}</div>{{end}}
-
-<a class="button" href="/">Home</a>
 {{end}}

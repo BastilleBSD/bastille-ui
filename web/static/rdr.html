@@ -1,0 +1,81 @@
+{{define "h2"}}Manage Redirects{{end}}
+{{define "content"}}
+<form method="post" onsubmit="updateOptions()">
+
+    <input name="target" placeholder="Jail Name" required>
+    <select name="action" required>
+        <option value="">Select action</option>
+        <option value="clear">Clear</option>
+        <option value="reset">Reset</option>
+        <option value="list">List</option>
+        <option value="log">Log</option>
+    </select>
+    <input name="host_port" placeholder="Host Port">
+    <input name="jail_port" placeholder="Jail Port">
+    <input name="log_options" placeholder="Log Options">
+    <input type="hidden" name="options" id="options">
+
+    <fieldset>
+        <legend>Options:</legend>
+
+        <div class="option-row">
+            <input type="checkbox"
+                   class="option-checkbox"
+                   value="-d"
+                   data-has-value="true"
+                   data-target="destinationInput">
+            <label>Limit rdr to a destination IP.</label>
+        </div>
+        <div class="option-sub" id="destinationInput" style="display:none;">
+            <input type="text" placeholder="Destination">
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox"
+                   class="option-checkbox"
+                   value="-i"
+                   data-has-value="true"
+                   data-target="ifaceInput">
+            <label>Specify interface(s) to apply rule to. Comma-separated.</label>
+        </div>
+        <div class="option-sub" id="ifaceInput" style="display:none;">
+            <input type="text" placeholder="Interface">
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox"
+                   class="option-checkbox"
+                   value="-s"
+                   data-has-value="true"
+                   data-target="sourceInput">
+            <label>Limit rdr to a source IP or table.</label>
+        </div>
+        <div class="option-sub" id="sourceInput" style="display:none;">
+            <input type="text" placeholder="Source">
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox"
+                   class="option-checkbox"
+                   value="-t"
+                   data-has-value="true"
+                   data-target="typeInput">
+            <label>Specify IP type. Must be used if '-s' or '-d' are used. Defaults to both.</label>
+        </div>
+        <div class="option-sub" id="typeInput" style="display:none;">
+            <input type="text" placeholder="Type">
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-x">
+            <label>Enable debug mode.</label>
+        </div>
+
+    </fieldset>
+
+    <button type="submit">GO!</button>
+</form>
+
+{{if .Output}}<pre>{{.Output}}</pre>{{end}}
+{{if .Error}}<div class="error">{{.Error}}</div>{{end}}
+{{end}}

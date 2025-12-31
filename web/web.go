@@ -51,6 +51,9 @@ func callBastilleAPI(path string, params map[string]string) (string, error) {
 func render(w http.ResponseWriter, page string, data PageData) {
 	tmpl, err := template.ParseFiles(
 		"web/static/default.html",
+		"web/static/sidebar.html",
+		"web/static/navbar.html",
+		"web/static/parse-options.html",
 		"web/static/"+page+".html",
 	)
 	if err != nil {
@@ -64,8 +67,26 @@ func render(w http.ResponseWriter, page string, data PageData) {
 }
 
 // --- Home Page ---
-func home(w http.ResponseWriter, r *http.Request) {
-	render(w, "home", PageData{Title: "Bastille Web UI"})
+func homePageHandler(w http.ResponseWriter, r *http.Request) {
+    // Prepare the data struct
+    data := PageData{
+        Title: "Bastille WebUI",
+    }
+
+    // Automatically fetch the list from the API
+    params := map[string]string{
+        "item":    "", // default
+        "options": "",
+    }
+
+    out, err := callBastilleAPI("/api/v1/bastille/list", params)
+    data.Output = out
+    if err != nil {
+        data.Error = err.Error()
+    }
+
+    // Render the home template
+    render(w, "home", data)
 }
 
 // --- Handle Submitted Forms ---
@@ -118,7 +139,7 @@ func Start() {
 	}
 
 	// Handle home page
-	http.HandleFunc("/", home)
+	http.HandleFunc("/", homePageHandler)
 
 	// Catch-all for any /bastille/<subcommand>
 	http.HandleFunc("/bastille/", bastilleWebHandler)
