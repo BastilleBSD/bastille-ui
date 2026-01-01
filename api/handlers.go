@@ -779,7 +779,7 @@ func BastillePkgHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "[ERROR]: Missing args parameter", http.StatusBadRequest)
 		return
 	}
-	cmdArgs = append(cmdArgs, args...)
+	cmdArgs = append(cmdArgs, strings.Fields(args)...)
 
 	output, err := BastilleCommand(cmdArgs...)
 	if err != nil {
