@@ -92,8 +92,10 @@ func homePageActionHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    target := r.FormValue("target")
-    action := r.FormValue("action") // start / stop / restart
+	params := map[string]string{
+    	"target": r.FormValue("target"),
+    	"action": r.FormValue("action"),
+	}
 
 	// Call the API
 	out, err := callBastilleAPI(apiPath, target, action)
