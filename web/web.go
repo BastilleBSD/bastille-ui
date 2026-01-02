@@ -86,6 +86,11 @@ func render(w http.ResponseWriter, page string, data PageData) {
 }
 
 func homePageActionHandler(w http.ResponseWriter, r *http.Request) {
+
+	data := PageData{
+		Title: "Bastille " + subcommand,
+	}
+
     if r.Method != http.MethodPost {
         http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
         return
@@ -98,6 +103,7 @@ func homePageActionHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Call the API
 	out, err := callBastilleAPI("/api/v1/bastille", params)
+	data.Error = err.Error()
 	if err != nil {
 		data.Error = err.Error()
 	}
