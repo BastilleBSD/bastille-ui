@@ -98,7 +98,6 @@ func homePageActionHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Call the API
 	out, err := callBastilleAPI("/api/v1/bastille", params)
-	data.Output = out
 	if err != nil {
 		data.Error = err.Error()
 	}
