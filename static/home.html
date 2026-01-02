@@ -1,0 +1,63 @@
+{{ define "content" }}
+
+{{ if .Error }}
+	<div class="error">{{ .Error }}</div>
+{{ end }}
+
+{{ if .Jails }}
+<table class="jails-table">
+    <thead>
+        <tr>
+            <th>JID</th>
+            <th>Name</th>
+            <th>Boot</th>
+            <th>Prio</th>
+            <th>State</th>
+            <th>Type</th>
+            <th>IP</th>
+            <th>Ports</th>
+            <th>Release</th>
+            <th>Tags</th>
+            <th>Action</th> <!-- New column for form -->
+        </tr>
+    </thead>
+    <tbody>
+        {{ range .Jails }}
+        <tr>
+            <td>{{ .Jail.JID }}</td>
+            <td>{{ .Jail.Name }}</td>
+            <td>{{ .Jail.Boot }}</td>
+            <td>{{ .Jail.Prio }}</td>
+            <td>{{ .Jail.State }}</td>
+            <td>{{ .Jail.Type }}</td>
+            <td>{{ .Jail.IP }}</td>
+            <td>{{ .Jail.Ports }}</td>
+            <td>{{ .Jail.Release }}</td>
+            <td>{{ .Jail.Tags }}</td>
+			<td>
+				<form action="/bastille/quickaction" method="POST" style="display:inline-block; margin-right:2px;">
+					<input type="hidden" name="target" value="{{.Jail.Name}}">
+					<input type="hidden" name="action" value="start">
+					<button type="submit" class="start-button">Start</button>
+				</form>
+
+				<form action="/bastille/quickaction" method="POST" style="display:inline-block; margin-right:2px;">
+					<input type="hidden" name="target" value="{{.Jail.Name}}">
+					<input type="hidden" name="action" value="stop">
+					<button type="submit" class="stop-button">Stop</button>
+				</form>
+
+				<form action="/bastille/quickaction" method="POST" style="display:inline-block;">
+					<input type="hidden" name="target" value="{{.Jail.Name}}">
+					<input type="hidden" name="action" value="restart">
+					<button type="submit" class="restart-button">Restart</button>
+				</form>
+			</td>
+        </tr>
+        {{ end }}
+    </tbody>
+</table>
+{{ else }}
+	<pre>{{ .Output }}</pre>
+{{ end }}
+{{ end }}
