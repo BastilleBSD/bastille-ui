@@ -36,6 +36,17 @@ body {
     gap: 10px;
 }
 
+.navbar-left a {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-right {
+    display: flex;
+}
+
 .navbar-logo {
     height: 45px;
 }
@@ -43,6 +54,7 @@ body {
 .navbar-title {
     font-size: 1.2em;
     font-weight: bold;
+    margin: 10px;
 }
 
 .navbar-right a.button {
@@ -85,6 +97,17 @@ body {
     background-color: #dd544b;
 }
 
+.list-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.list-buttons button {
+    width: fit-content;
+    padding: 10px;
+}
+
 /* Main content */
 .main-content {
     margin-left: 240px; /* space for sidebar */
@@ -123,8 +146,8 @@ a.button:hover, button:hover {
 
 input {
     width: auto;
-	max-width: 100%;
-	display: block;
+    max-width: 100%;
+    display: block;
     padding: 8px;
     margin: 5px 0;
     border-radius: 4px;
@@ -168,6 +191,49 @@ pre {
 
 .option-row input[type="checkbox"] {
     margin-top: 0;        /* remove manual top margin */
+}
+
+/* Table styling */
+/* Table container */
+.jails-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1em;
+  font-family: Arial, sans-serif;
+}
+
+/* Table headers */
+.jails-table th {
+  background-color: #ff3333;
+  color: black;
+  padding: 10px;
+  text-align: left;
+  font-weight: bold;
+  border-bottom: 2px solid #34495e;
+}
+
+/* Table cells */
+.jails-table td {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+/* General button style */
+.jails-table button {
+	display: flex;
+    padding: 4px 10px;
+    margin: 0 2px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.85em;
+    cursor: pointer;
+    color: white;
+    transition: background-color 0.2s ease-in-out;
+}
+
+/* Optional: responsive scroll */
+.table-container {
+  overflow-x: auto;
 }
 
 .error {

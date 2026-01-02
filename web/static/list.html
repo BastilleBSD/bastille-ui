@@ -2,6 +2,7 @@
 {{define "content"}}
 <form method="post" onsubmit="updateOptions()">
 
+  <div class="list-buttons">
     <button type="submit" name="item" value="">Default</button>
     <button type="submit" name="item" value="all">All</button>
     <button type="submit" name="item" value="backup">Backups</button>
@@ -17,6 +18,7 @@
     <button type="submit" name="item" value="state">States</button>
     <button type="submit" name="item" value="template">Templates</button>
     <button type="submit" name="item" value="type">Type</button>
+  </div>
     <input type="hidden" name="options" id="options">
 
     <fieldset>

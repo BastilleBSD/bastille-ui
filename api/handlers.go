@@ -94,7 +94,7 @@ func BastilleCmdHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "[ERROR]: Missing command parameter", http.StatusBadRequest)
 		return
 	}
-	cmdArgs = append(cmdArgs, command)
+	cmdArgs = append(cmdArgs, strings.Fields(command)...)
 	
 	output, err := BastilleCommand(cmdArgs...)
 	if err != nil {
@@ -285,7 +285,6 @@ func BastilleDestroyHandler(w http.ResponseWriter, r *http.Request) {
 
 	options := getParam(r, "options")
 	target := getParam(r, "target")
-	fmt.Println("DEBUG options:", options)
 
 	if options != "" {
 		options = options + " -ay"
@@ -961,7 +960,7 @@ func BastilleServiceHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "[ERROR]: Missing args parameter", http.StatusBadRequest)
 		return
 	}
-	cmdArgs = append(cmdArgs, args)
+	cmdArgs = append(cmdArgs, strings.Fields(args)...)
 
 	output, err := BastilleCommand(cmdArgs...)
 	if err != nil {
@@ -1065,7 +1064,7 @@ func BastilleSysrcHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "[ERROR]: Missing args parameter", http.StatusBadRequest)
 		return
 	}
-	cmdArgs = append(cmdArgs, args)
+	cmdArgs = append(cmdArgs, strings.Fields(args)...)
 
 	output, err := BastilleCommand(cmdArgs...)
 	if err != nil {

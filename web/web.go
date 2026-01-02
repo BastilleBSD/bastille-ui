@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"bufio"
+	"os/exec"
 )
 
 // --- Data structure for templates ---
@@ -15,6 +17,24 @@ type PageData struct {
 	Title  string
 	Output string
 	Error  string
+	Jails []Jails
+}
+
+type JailSettings struct {
+	JID     string
+	Name    string
+	Boot    string
+	Prio    string
+	State   string
+	Type    string
+	IP      string
+	Ports   string
+	Release string
+	Tags    string
+}
+
+type Jails struct {
+	Jail JailSettings
 }
 
 // --- Global API key ---
@@ -66,28 +86,92 @@ func render(w http.ResponseWriter, page string, data PageData) {
 	}
 }
 
+func homePageActionHandler(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
+    target := r.FormValue("target")
+    action := r.FormValue("action") // start / stop / restart
+
+	// Call the API
+	out, err := callBastilleAPI(apiPath, target, action)
+	data.Output = out
+	if err != nil {
+		data.Error = err.Error()
+	}
+
+    // Redirect back to main page so the table reloads
+    http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
 // --- Home Page ---
 func homePageHandler(w http.ResponseWriter, r *http.Request) {
-    // Prepare the data struct
-    data := PageData{
-        Title: "Bastille WebUI",
-    }
 
-    // Automatically fetch the list from the API
-    params := map[string]string{
-        "item":    "", // default
-        "options": "",
-    }
+	var jails []Jails
 
-    out, err := callBastilleAPI("/api/v1/bastille/list", params)
-    data.Output = out
-    if err != nil {
-        data.Error = err.Error()
-    }
+	data := PageData {
+		Title: "Bastille WebUI",
+	}
 
-    // Render the home template
-    render(w, "home", data)
+	params := map[string]string{
+		"item":    "",
+		"options": "",
+	}
+
+	// Call API
+	out, err := callBastilleAPI("/api/v1/bastille/list", params)
+	if err != nil {
+		data.Error = err.Error()
+		render(w, "home", data)
+		return
+	}
+
+	data.Output = out // optional: keep raw output
+
+	scanner := bufio.NewScanner(strings.NewReader(out))
+	firstLine := true
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+
+		// Skip header line
+		if firstLine {
+			firstLine = false
+			continue
+		}
+
+		fields := strings.Fields(line)
+		if len(fields) < 10 {
+			continue
+		}
+
+	jails = append(jails, Jails {
+		Jail: JailSettings {
+			JID:     fields[0],
+			Name:    fields[1],
+			Boot:    fields[2],
+			Prio:    fields[3],
+			State:   fields[4],
+			Type:    fields[5],
+			IP:      fields[6],
+			Ports:   fields[7],
+			Release: fields[8],
+			Tags:    fields[9],
+		},
+	})
+	}
+
+	if err := scanner.Err(); err != nil {
+		data.Error = err.Error()
+	}
+	data.Jails = jails
+	render(w, "home", data)
 }
+
 
 // --- Handle Submitted Forms ---
 func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -140,6 +224,8 @@ func Start() {
 
 	// Handle home page
 	http.HandleFunc("/", homePageHandler)
+
+    http.HandleFunc("/bastille/quickaction", homePageActionHandler)
 
 	// Catch-all for any /bastille/<subcommand>
 	http.HandleFunc("/bastille/", bastilleWebHandler)
