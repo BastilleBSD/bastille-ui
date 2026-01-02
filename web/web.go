@@ -92,13 +92,14 @@ func homePageActionHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+	action := r.FormValue("action")
+	target := r.FormValue("target")
 	params := map[string]string{
-    	"target": r.FormValue("target"),
-    	"action": r.FormValue("action"),
+		"target": target,
 	}
 
 	// Call the API
-	callBastilleAPI("/api/v1/bastille", params)
+	callBastilleAPI("/api/v1/bastille/"+action, params)
 
     // Redirect back to main page so the table reloads
     http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -112,12 +113,12 @@ func homePageHandler(w http.ResponseWriter, r *http.Request) {
 	data := PageData {
 		Title: "Bastille WebUI",
 	}
-
+	options := ""
+	item := ""
 	params := map[string]string{
-		"item":    "",
-		"options": "",
+		"options": options,
+		"item": item,
 	}
-
 	// Call API
 	out, err := callBastilleAPI("/api/v1/bastille/list", params)
 	if err != nil {
