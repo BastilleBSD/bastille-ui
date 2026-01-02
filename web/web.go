@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"strings"
 	"bufio"
-	"os/exec"
 )
 
 // --- Data structure for templates ---
@@ -98,7 +97,7 @@ func homePageActionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Call the API
-	out, err := callBastilleAPI(apiPath, target, action)
+	out, err := callBastilleAPI(apiPath, params)
 	data.Output = out
 	if err != nil {
 		data.Error = err.Error()
