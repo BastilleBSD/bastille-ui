@@ -1,0 +1,16 @@
+{{ define "navbar" }}
+<nav class="navbar">
+  <div class="navbar-left">
+    <a href="https://bastillebsd.org">
+      <img src="/static/bastille-logo.png" alt="Bastille Logo" class="navbar-logo">
+      <span class="navbar-title">BastilleBSD</span>
+    </a>
+  </div>
+  <div class="navbar-right">
+    <a href="/" class="button">Home</a>
+    <a href="https://bastille.readthedocs.io" class="button" target="_blank">Docs</a>
+    <a href="/settings" class="button">Settings</a>
+    <a href="/logout" class="button">Logout</a> <!-- Added logout button -->
+  </div>
+</nav>
+{{ end }}
