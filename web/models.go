@@ -1,10 +1,15 @@
 package web
 
+import (
+	"bastille-ui/config"
+)
+
 type PageData struct {
 	Title  string
 	Output string
 	Error  string
 	Jails []Jails
+	Config *config.Config
 }
 
 type JailSettings struct {

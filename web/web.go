@@ -1,27 +1,17 @@
 package web
 
 import (
+	"bastille-ui/api"
+	"bastille-ui/config"
 	"fmt"
 	"html/template"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"bufio"
+	"log"
 )
-
-// --- Global API key ---
-var apiKey string
-var apiUrl string
-
-func SetAPIKey(key string) {
-	apiKey = key
-}
-
-func SetAPIUrl(ip, port string) {
-	apiUrl = fmt.Sprintf("http://%s:%s", ip, port)
-}
 
 func callBastilleAPI(path string, params map[string]string) (string, error) {
 	u, _ := url.Parse(apiUrl + path)
@@ -57,6 +47,7 @@ func render(w http.ResponseWriter, page string, data PageData) {
 		"web/static/navbar.html",
 		"web/static/parse-options.html",
 		"web/static/login.html",
+		"web/static/settings.html",
 		"web/static/"+page+".html",
 	)
 	if err != nil {
@@ -155,6 +146,35 @@ func homePageHandler(w http.ResponseWriter, r *http.Request) {
 	render(w, "home", data)
 }
 
+func settingsPageHandler(w http.ResponseWriter, r *http.Request) {
+	cfg := config.LoadConfig()
+
+	data := PageData {
+		Title: "Settings",
+		Config: &cfg,
+	}
+
+	if r.Method == http.MethodPost {
+		r.ParseForm()
+		cfg.Username = r.FormValue("username")
+		cfg.Password = r.FormValue("password")
+		cfg.Address  = r.FormValue("address")
+		cfg.WebPort  = r.FormValue("webPort")
+		cfg.APIPort  = r.FormValue("apiPort")
+		cfg.APIKey   = r.FormValue("apiKey")
+
+		if err := config.SaveConfig(cfg); err != nil {
+			data.Error = err.Error()
+		} else {
+			SetCredentials(cfg.Username, cfg.Password)
+			SetAPIKey(cfg.APIKey)
+			api.SetAPIKey(cfg.APIKey)
+			data.Config = &cfg
+		}
+	}
+
+	render(w, "settings", data)
+}
 
 // --- Handle Submitted Forms ---
 func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -196,23 +216,26 @@ func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
     render(w, subcommand, data)
 }
 
-// --- Main function ---
-// Start the web server
-// --- Main web.Start ---
 func Start(addr string) {
+	loadRoutes()
+    log.Println("Starting BastilleBSD WebUI server on", addr)
+    log.Fatal(http.ListenAndServe(addr, nil))
+}
+
+// Handle routes
+func loadRoutes() {
+
+	// Handle built in pages
+	http.HandleFunc("/login", loginHandler)
+	http.Handle("/settings", loggingMiddleware(requireLogin(settingsPageHandler)))
+	http.Handle("/logout", loggingMiddleware(requireLogin(logoutHandler)))
+
 	// Register handlers with middleware applied manually
 	http.Handle("/", loggingMiddleware(requireLogin(homePageHandler)))
 	http.Handle("/bastille/quickaction", loggingMiddleware(requireLogin(homePageActionHandler)))
 	http.Handle("/bastille/", loggingMiddleware(requireLogin(bastilleWebHandler)))
-	http.HandleFunc("/login", loginHandler)
-	http.HandleFunc("/logout", logoutHandler)
 
 	// Serve static files
 	http.Handle("/static/", http.StripPrefix("/static/",
 		http.FileServer(http.Dir("web/static"))))
-
-	log.Println("Starting BastilleBSD WebUI server on", addr)
-	log.Fatal(http.ListenAndServe(addr, nil))
 }
-
-

@@ -1,17 +1,23 @@
 package api
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 )
 
-var apiKey string
+var apiKey, apiUrl string
 
+// Set API key
 func SetAPIKey(key string) {
 	apiKey = key
 }
 
-// API key verification middleware
+func SetAPIAddress(address, port string) {
+	apiUrl = fmt.Sprintf("http://%s:%s", address, port)
+}
+
+// Validate API key in request header
 func apiKeyMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") != "Bearer "+apiKey {
@@ -22,10 +28,10 @@ func apiKeyMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// Logging middleware
+// Log all API requests
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("%s %s %s", r.Method, r.URL.String(), r.RemoteAddr)
+		log.Printf("[API] %s %s %s", r.Method, r.URL.String(), r.RemoteAddr)
 		next.ServeHTTP(w, r)
 	})
 }

@@ -6,26 +6,25 @@ import (
 	"time"
 )
 
-// --- Web login credentials from config ---
-var webUser, webPass string
+var username, password string
 
+// Set credentials from config file
 func SetCredentials(user, pass string) {
-	webUser = user
-	webPass = pass
+	username = user
+	password = pass
 }
 
-// --- Show login page ---
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := PageData{}
 
 	if r.Method == http.MethodPost {
 		r.ParseForm()
-		user := r.FormValue("username")
-		pass := r.FormValue("password")
+		u := r.FormValue("username")
+		p := r.FormValue("password")
 
-		if user == webUser && pass == webPass {
-			// Login success: set session cookie
+		if u == username && p == password {
+			// Set session cookie for 24 hours
 			http.SetCookie(w, &http.Cookie{
 				Name:     "bastille-web-auth",
 				Value:    "authenticated",
@@ -40,6 +39,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Login page needs its own template
 	tmpl := "web/static/login.html"
 	t, err := template.ParseFiles(tmpl)
 	if err != nil {
@@ -49,9 +49,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, data)
 }
 
-// --- Logout handler ---
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	// Remove the cookie
+	// Remove the session cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:     "bastille-web-auth",
 		Value:    "",
@@ -62,7 +61,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
-// --- Middleware to enforce login ---
+// Enforce login cookie on every request
 func requireLogin(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("bastille-web-auth")

@@ -5,14 +5,15 @@ import (
 	"net/http"
 )
 
+// Start
 func Start(addr string) {
-	log.Println("Starting BastilleBSD API server on", addr)
-	loadHandlers()
-	log.Fatal(http.ListenAndServe(addr, nil))
+	loadRoutes()
+    log.Println("Starting BastilleBSD API server on", addr)
+    log.Fatal(http.ListenAndServe(addr, nil))
 }
 
-// Load all routes and wrap them with logging + API key middleware
-func loadHandlers() {
+// Handle valid routes to the API
+func loadRoutes() {
 	routes := map[string]http.HandlerFunc{
 		"/api/v1/bastille/bootstrap": BastilleBootstrapHandler,
 		"/api/v1/bastille/clone":     BastilleCloneHandler,
@@ -55,9 +56,9 @@ func loadHandlers() {
 		"/api/v1/bastille/zfs":       BastilleZfsHandler,
 	}
 
+	// Log first, then auth, then actual
 	for path, handler := range routes {
-		// Wrap with logging first, then API key middleware
-		wrapped := loggingMiddleware(apiKeyMiddleware(http.HandlerFunc(handler)))
-		http.Handle(path, wrapped)
+		cmd := loggingMiddleware(apiKeyMiddleware(http.HandlerFunc(handler)))
+		http.Handle(path, cmd)
 	}
 }
