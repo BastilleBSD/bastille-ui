@@ -1,3 +1,3 @@
-module bastille-api
+module bastille-ui
 
-go 1.24.6
+go 1.24.9

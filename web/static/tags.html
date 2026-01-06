@@ -1,0 +1,31 @@
+{{define "h2"}}Manage Tags{{end}}
+{{define "content"}}
+<form method="post" onsubmit="updateOptions()">
+
+    <input name="target" placeholder="Jail Name" required>
+    <!-- Dropdown for action -->
+    <select name="action" required>
+        <option value="">Select action</option>
+        <option value="add">Add</option>
+        <option value="delete">Delete</option>
+        <option value="list">List</option>
+    </select>
+    <input name="tags" placeholder="Tag(s)" required>
+    <input type="hidden" name="options" id="options">
+
+    <fieldset>
+        <legend>Options:</legend>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-x">
+            <label>Enable debug mode.</label>
+        </div>
+
+    </fieldset>
+
+    <button type="submit">GO!</button>
+</form>
+
+{{if .Output}}<pre>{{.Output}}</pre>{{end}}
+{{if .Error}}<div class="error">{{.Error}}</div>{{end}}
+{{end}}

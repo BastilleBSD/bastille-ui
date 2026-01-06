@@ -1,0 +1,43 @@
+{{define "h2"}}Destroy a Jail or Release{{end}}
+{{define "content"}}
+<form method="post" onsubmit="updateOptions()">
+
+    <input name="target" placeholder="Jail Name or Release" required>
+    <input type="hidden" name="options" id="options">
+
+    <fieldset>
+        <legend>Options:</legend>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-a">
+            <label>Auto mode. Start/stop jail(s) if required.</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-c">
+            <label>Do not destroy cache when destroying a release (legacy releases).</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-f">
+            <label>Force unmount any mounted datasets when destroying a jail or release (ZFS only).</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-y">
+            <label>Do not prompt. Assume always yes.</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-x">
+            <label>Enable debug mode.</label>
+        </div>
+
+    </fieldset>
+
+    <button type="submit">GO!</button>
+</form>
+
+{{if .Output}}<pre>{{.Output}}</pre>{{end}}
+{{if .Error}}<div class="error">{{.Error}}</div>{{end}}
+{{end}}

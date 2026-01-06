@@ -1,0 +1,255 @@
+/* style.css */
+
+html, body {
+    height: 100%;
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: #0b0b0b;
+    color: #eee;
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Navbar styles */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background-color: #111;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.navbar-left {
+    display: flex;
+    margin: 10px;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar-left a {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-right {
+    display: flex;
+}
+
+.navbar-logo {
+    height: 45px;
+}
+
+.navbar-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin: 10px;
+}
+
+.navbar-right a.button {
+    padding: 8px 15px;
+    margin: 10px;
+    background-color: #cc0000;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+.navbar-right a.button:hover {
+    background-color: #ff3333;
+}
+
+/* Sidebar styles */
+.sidebar {
+    position: fixed;
+    top: 60px; /* below navbar */
+    left: 0;
+    width: 200px;
+    bottom: 0;
+    background-color: #222;
+    color: #fff;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.sidebar a.button {
+    display: block;
+    padding: 8px 10px;
+    margin-bottom: 5px;
+    background-color: #333;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 3px;
+}
+
+.sidebar a.button:hover {
+    background-color: #dd544b;
+}
+
+.list-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.list-buttons button {
+    width: fit-content;
+    padding: 10px;
+}
+
+/* Main content */
+.main-content {
+    margin-left: 240px; /* space for sidebar */
+    margin-top: 60px;   /* space for navbar */
+    padding: 20px;
+    flex: 1;
+}
+
+/* Panel styles */
+.panel {
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(6px);
+    padding: 30px 40px;
+    border-radius: 10px;
+    max-width: 1000px;
+    margin: 0 auto;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+    text-align: left;
+}
+
+a.button, button {
+    display: block;
+    padding: 10px;
+    margin: 10px 0;
+    background: #cc0000;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+a.button:hover, button:hover {
+    background: #ff3333;
+}
+
+input {
+    width: auto;
+    max-width: 100%;
+    display: block;
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 4px;
+    border: none;
+}
+
+input[type="hidden"] {
+    display: none;
+}
+
+input[type="checkbox"] {
+    width: auto;       /* default small size */
+    height: auto;
+    margin: 0;         /* adjust if needed */
+}
+
+pre {
+    background: #111;
+    font-size: 1.2em;
+    color: #14c514;
+    padding: 10px;
+    margin-top: 15px;
+    max-height: 300px;
+    overflow: auto;
+    border-radius: 4px;
+}
+
+/* Optional sub-options (like the delay field) */
+.option-sub {
+    display: none; /* hidden by default */
+    margin-left: 28px;
+    margin-bottom: 8px;
+}
+
+.option-row {
+    display: flex;
+    align-items: left;  /* <-- aligns checkbox and label vertically */
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.option-row input[type="checkbox"] {
+    margin-top: 0;        /* remove manual top margin */
+}
+
+/* Table styling */
+/* Table container */
+.jails-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1em;
+  font-family: Arial, sans-serif;
+}
+
+/* Table headers */
+.jails-table th {
+  background-color: #ff3333;
+  color: black;
+  padding: 10px;
+  text-align: left;
+  font-weight: bold;
+  border-bottom: 2px solid #34495e;
+}
+
+/* Table cells */
+.jails-table td {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+/* General button style */
+.jails-table button {
+    display: flex;
+    padding: 4px 10px;
+    margin: 0 2px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.85em;
+    cursor: pointer;
+    color: white;
+    transition: background-color 0.2s ease-in-out;
+}
+
+/* Optional: responsive scroll */
+.table-container {
+  overflow-x: auto;
+}
+
+.homepage-stop-button,
+.homepage-start-button,
+.homepage-restart-button {
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
+    padding: 0;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.error {
+    color: #ff6666;
+}
