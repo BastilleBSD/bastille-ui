@@ -35,13 +35,13 @@
             <td>{{ .Jail.Release }}</td>
             <td>{{ .Jail.Tags }}</td>
 			<td>
-				<form action="/bastille/quickaction" method="POST" style="display:inline-block; margin-right:2px;">
+				<form action="/bastille/quickaction" method="POST" style="display:inline-block;">
 					<input type="hidden" name="target" value="{{.Jail.Name}}">
 					<input type="hidden" name="action" value="stop">
 					<button type="submit" class="homepage-stop-button">■</button>
 				</form>
 
-				<form action="/bastille/quickaction" method="POST" style="display:inline-block; margin-right:2px;">
+				<form action="/bastille/quickaction" method="POST" style="display:inline-block;">
 					<input type="hidden" name="target" value="{{.Jail.Name}}">
 					<input type="hidden" name="action" value="start">
 					<button type="submit" class="homepage-start-button">▶</button>

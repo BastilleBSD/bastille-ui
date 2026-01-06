@@ -236,10 +236,19 @@ pre {
   overflow-x: auto;
 }
 
+.homepage-stop-button,
+.homepage-start-button,
 .homepage-restart-button {
-  font-family: "Segoe UI Symbol", "Arial Unicode MS", sans-serif;
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
+    padding: 0;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
 }
-
 
 .error {
     color: #ff6666;
