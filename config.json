@@ -1,8 +1,8 @@
 {
-  "username": "bastille",
+  "username": "admin",
   "password": "admin",
-  "address": "192.168.1.222",
+  "address": "localhost",
   "WebPort": "8080",
   "apiPort": "8181",
-  "apiKey": "dsafasdfasdf"
+  "apiKey": "test-api-key"
 }
