@@ -8,6 +8,8 @@ import (
 
 func main() {
 
+	var host string
+	
 	// Load and set config variables
 	cfg := config.LoadConfig()
 	api.SetAPIKey(cfg.APIKey)
@@ -16,8 +18,14 @@ func main() {
 	web.SetAPIAddress(cfg.Address, cfg.WebPort)
 	web.SetCredentials(cfg.Username, cfg.Password)
 
-	addrAPI := cfg.Address + ":" + cfg.APIPort
-	addrWeb := cfg.Address + ":" + cfg.WebPort
+	if cfg.Address == "0.0.0.0" || cfg.Address == "localhost" || cfg.Address == "" {
+		host = "localhost"
+	} else {
+		host = cfg.Address
+	}
+	
+	addrAPI := host + ":" + cfg.APIPort
+	addrWeb := host + ":" + cfg.WebPort
 	go api.Start(addrAPI)
 	go web.Start(addrWeb)
 	select {}
