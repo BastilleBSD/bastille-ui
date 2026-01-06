@@ -56,6 +56,7 @@ func render(w http.ResponseWriter, page string, data PageData) {
 		"web/static/sidebar.html",
 		"web/static/navbar.html",
 		"web/static/parse-options.html",
+		"web/static/login.html",
 		"web/static/"+page+".html",
 	)
 	if err != nil {
@@ -197,17 +198,21 @@ func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
 
 // --- Main function ---
 // Start the web server
+// --- Main web.Start ---
 func Start(addr string) {
-	// Register handlers
-	http.HandleFunc("/", homePageHandler)
-	http.HandleFunc("/bastille/quickaction", homePageActionHandler)
-	http.HandleFunc("/bastille/", bastilleWebHandler)
+	// Register handlers with middleware applied manually
+	http.Handle("/", loggingMiddleware(requireLogin(homePageHandler)))
+	http.Handle("/bastille/quickaction", loggingMiddleware(requireLogin(homePageActionHandler)))
+	http.Handle("/bastille/", loggingMiddleware(requireLogin(bastilleWebHandler)))
+	http.HandleFunc("/login", loginHandler)
+	http.HandleFunc("/logout", logoutHandler)
 
 	// Serve static files
 	http.Handle("/static/", http.StripPrefix("/static/",
-	http.FileServer(http.Dir("web/static"))))
+		http.FileServer(http.Dir("web/static"))))
 
 	log.Println("Starting BastilleBSD WebUI server on", addr)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
+
 

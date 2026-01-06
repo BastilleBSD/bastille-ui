@@ -1,4 +1,6 @@
 {
+  "user": "bastille",
+  "pass": "bastille",
   "address": "localhost",
   "api_port": "8081",
   "web_port": "8080",

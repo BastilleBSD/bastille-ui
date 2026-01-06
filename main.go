@@ -9,6 +9,8 @@ import (
 )
 
 type Config struct {
+	WebUser string `json:"user"`
+	WebPass string `json:"pass"`
 	IP string `json:"address"`
 	APIPort string `json:"api_port"`
 	WebPort string `json:"web_port"`
@@ -33,6 +35,7 @@ func main() {
 	api.SetAPIKey(cfg.APIKey)
 	web.SetAPIKey(cfg.APIKey)
 	web.SetAPIUrl(cfg.IP, cfg.APIPort)
+	web.SetCredentials(cfg.WebUser, cfg.WebPass)
 	go api.Start(":" + cfg.APIPort)
 	go web.Start(":" + cfg.WebPort)
 	select {}
