@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-var apiKey, apiUrl string
+var apiKey, apiUrl, apiAddress string
 
 // Set API key
 func SetAPIKey(key string) {
