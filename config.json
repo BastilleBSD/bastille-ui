@@ -2,7 +2,7 @@
   "username": "admin",
   "password": "admin",
   "address": "localhost",
-  "WebPort": "8080",
+  "webPort": "8080",
   "apiPort": "8181",
   "apiKey": "test-api-key"
 }
