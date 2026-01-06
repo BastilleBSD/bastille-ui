@@ -11,37 +11,20 @@ import (
 	"bufio"
 )
 
-// --- Data structure for templates ---
-type PageData struct {
-	Title  string
-	Output string
-	Error  string
-	Jails []Jails
-}
-
-type JailSettings struct {
-	JID     string
-	Name    string
-	Boot    string
-	Prio    string
-	State   string
-	Type    string
-	IP      string
-	Ports   string
-	Release string
-	Tags    string
-}
-
-type Jails struct {
-	Jail JailSettings
-}
-
 // --- Global API key ---
 var apiKey string
+var apiUrl string
+
+func SetAPIKey(key string) {
+	apiKey = key
+}
+
+func SetAPIUrl(ip, port string) {
+	apiUrl = fmt.Sprintf("http://%s:%s", ip, port)
+}
 
 func callBastilleAPI(path string, params map[string]string) (string, error) {
-	base := "http://localhost:8080"
-	u, _ := url.Parse(base + path)
+	u, _ := url.Parse(apiUrl + path)
 
 	q := u.Query()
 	for k, v := range params {
@@ -213,24 +196,18 @@ func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // --- Main function ---
-func Start() {
-
-	// Set test api key for now
-	apiKey = "testingkey"
-	if apiKey == "" {
-		log.Fatal("BASTILLE_API_KEY not set")
-	}
-
-	// Handle home page
+// Start the web server
+func Start(addr string) {
+	// Register handlers
 	http.HandleFunc("/", homePageHandler)
-
-    http.HandleFunc("/bastille/quickaction", homePageActionHandler)
-
-	// Catch-all for any /bastille/<subcommand>
+	http.HandleFunc("/bastille/quickaction", homePageActionHandler)
 	http.HandleFunc("/bastille/", bastilleWebHandler)
 
-	// Serve log from web/static
+	// Serve static files
 	http.Handle("/static/", http.StripPrefix("/static/",
-		http.FileServer(http.Dir("web/static"))))
+	http.FileServer(http.Dir("web/static"))))
+
+	log.Println("Starting BastilleBSD WebUI server on", addr)
+	log.Fatal(http.ListenAndServe(addr, nil))
 }
 

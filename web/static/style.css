@@ -220,7 +220,7 @@ pre {
 
 /* General button style */
 .jails-table button {
-	display: flex;
+    display: flex;
     padding: 4px 10px;
     margin: 0 2px;
     border: none;
@@ -235,6 +235,11 @@ pre {
 .table-container {
   overflow-x: auto;
 }
+
+.homepage-restart-button {
+  font-family: "Segoe UI Symbol", "Arial Unicode MS", sans-serif;
+}
+
 
 .error {
     color: #ff6666;

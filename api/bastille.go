@@ -5,6 +5,7 @@ import (
 	"os/exec"
 )
 
+// Runs the main Bastille command after everything has been validated
 func BastilleCommand(args ...string) (string, error) {
 
 	cmd := exec.Command("bastille", args...)
