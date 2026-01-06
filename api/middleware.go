@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-var apiKey, apiUrl, apiAddress string
+var apiKey, apiUrl string
 
 // Set API key
 func SetAPIKey(key string) {
@@ -14,12 +14,7 @@ func SetAPIKey(key string) {
 }
 
 func SetAPIAddress(address, port string) {
-	if address == "0.0.0.0" || address == "localhost" || address == "" {
-		apiAddress = "localhost"
-	} else {
-		apiAddress = address
-	}
-	apiUrl = fmt.Sprintf("http://%s:%s", apiAddress, port)
+	apiUrl = fmt.Sprintf("http://%s:%s", address, port)
 }
 
 // Validate API key in request header
