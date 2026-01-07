@@ -1,14 +1,14 @@
 # BastilleBSD API + UI
 
-Commands
-========
+## Commands
 
 The API handles all bastille commands, and is consistent with
 the syntax of the CLI. Any parameter passed via the CLI is named
-the same in the API.
+the same in the API, with some exceptions. Any command that supports
+both a jail or a release, will only accept a `target` parameter. See
+the `destroy` example below.
 
-Setup
------
+## Setup
 
 You can either build and run, or just run the package.
 
@@ -28,8 +28,7 @@ the program starts, and can also be changed via the webui.
 The `config.json` file also contains a default username and password to log in via the
 webui. Simply visit http://host:port to get started.
 
-API Examples
-============
+## API Examples
 
 Create a jail
 ```
