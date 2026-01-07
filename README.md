@@ -1,7 +1,4 @@
-# bastille-api
-
-API Interface for Bastille (https://bastillebsd.org/)
-
+# BastilleBSD API + UI
 
 Commands
 ========
@@ -13,44 +10,34 @@ the same in the API.
 Setup
 -----
 
-Fist clone the repo then cd into bastille-ui.  Now you uneed to initialize 
-the go module.
+You can either build and run, or just run the package.
 
 ```shell
 go build
 ./bastille-ui
 ```
-
-You should see:
-```shell
-BastilleBSD UI started on http://localhost:8080
+or
+```
+go run .
 ```
 
-Now you are ready to run requests.  Here are some sample requests:
-```shell
+Request made via the API must contain an `Authorization: Bearer API_KEY` header. The
+`API_KEY` can be set inside the `config.json` file. The `API_KEY` is set every time
+the program starts, and can also be changed via the webui.
+
+The `config.json` file also contains a default username and password to log in via the
+webui. Simply visit http://host:port to get started.
+
+API Examples
+============
+
 Create a jail
--------------
-curl "http://localhost:8080/api/v1/bastille/create?options=-V+-M+--gateway+192.168.1.1&name=testjail&release=14.2-RELEASE&ip=192.168.0.10&iface=em0"
-
-Start jail
-------------
-curl "http://localhost:8080/api/v1/bastille/start?name=testjail"
-
-Rename jail
------------
-curl "http://localhost:8080/api/v1/bastille/rename?target=testjail&new_name=myjail"
-
-Restart jail
-------------
-curl "http://localhost:8080/api/v1/bastille/restart?name=myjail"
-
-Stop jail
----------
-curl "http://localhost:8080/api/v1/bastille/stop?name=myjail"
-
-Destroy jail
-------------
-curl "http://localhost:8080/api/v1/bastille/destroy?name=myjail"
 ```
-For the WebUI, visit http://localhost:8080 and play with it.
+curl "http://ip:port/api/v1/bastille/create?name=test&release=15.0-release&ip=10.0.0.12&iface=vtnet0" -H "Authorization: Bearer API_KEY"
+```
+
+Destroy a jail
+```
+curl "http://ip:port/api/v1/bastille/destroy?target=test" -H "Authorization: Bearer API_KEY"
+```
 
