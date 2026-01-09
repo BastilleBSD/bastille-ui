@@ -19,11 +19,9 @@
         <td>{{ .Name }}</td>
         <td>{{ .IP }}</td>
         <td>{{ .Port }}</td>
-        <td class="apikey-cell" data-apikey="{{ .APIKey }}">
-          <span class="apikey-mask">••••••••</span>
-        </td>
+        <td>{{ .APIKey }}</td>
         <td>
-          <form method="POST" action="/api/v1/node/delete">
+          <form method="POST" action="/api/v1/node/delete" style="margin:0;">
             <input type="hidden" name="node" value="{{ .Name }}">
             <button type="submit" class="button">Delete</button>
           </form>
