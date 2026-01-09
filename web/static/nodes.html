@@ -6,7 +6,7 @@
     <th>Name</th>
     <th>IP</th>
     <th>Port</th>
-    <th>Action</th>
+    <th>API Key</th>
   </tr>
 
   {{ range .Nodes }}
@@ -14,7 +14,7 @@
     <td>{{ .Name }}</td>
     <td>{{ .IP }}</td>
     <td>{{ .Port }}</td>
-    <td>{{ .APIKey }}</td>
+    <td>{{ if .APIKey }}••••••{{ else }}(global){{ end }}</td>
     <td>
       <form method="POST" action="/api/v1/node/delete" style="margin:0;">
         <input type="hidden" name="node" value="{{ .Name }}">
