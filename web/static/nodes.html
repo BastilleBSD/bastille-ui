@@ -1,54 +1,55 @@
 {{ define "content" }}
+
 <h1>Managed Nodes</h1>
 
-<div class="nodes-table-wrapper">
-  <table class="nodes-table">
+{{ if .Nodes }}
+<table class="jails-table">
     <thead>
-      <tr>
-        <th>Name</th>
-        <th>IP</th>
-        <th>Port</th>
-        <th>API Key</th>
-        <th>Actions</th>
-      </tr>
+        <tr>
+            <th>Name</th>
+            <th>IP</th>
+            <th>Port</th>
+            <th>API Key</th>
+            <th>Actions</th>
+        </tr>
     </thead>
-
     <tbody>
-      {{ range .Nodes }}
-      <tr>
-        <td>{{ .Name }}</td>
-        <td>{{ .IP }}</td>
-        <td>{{ .Port }}</td>
-        <td>{{ .APIKey }}</td>
-        <td>
-          <form method="POST" action="/api/v1/node/delete" style="margin:0;">
-            <input type="hidden" name="node" value="{{ .Name }}">
-            <button type="submit" class="button">Delete</button>
-          </form>
-        </td>
-      </tr>
-      {{ end }}
+        {{ range .Nodes }}
+        <tr>
+            <td>{{ .Name }}</td>
+            <td>{{ .IP }}</td>
+            <td>{{ .Port }}</td>
+            <td>{{ .APIKey }}</td>
+            <td>
+                <form method="POST" action="/api/v1/node/delete" style="display:inline-block; margin:0;">
+                    <input type="hidden" name="node" value="{{ .Name }}">
+                    <button type="submit" class="button">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {{ end }}
     </tbody>
-  </table>
-</div>
-
-<hr>
+</table>
+{{ else }}
+    <p>No nodes configured.</p>
+{{ end }}
 
 <h2>Add Node</h2>
 
 <form method="POST" action="/api/v1/node/add" class="node-form">
-  <label>Name</label>
-  <input type="text" name="node" required>
+    <label>Name</label>
+    <input type="text" name="node" required>
 
-  <label>IP Address</label>
-  <input type="text" name="ip" required>
+    <label>IP Address</label>
+    <input type="text" name="ip" required>
 
-  <label>Port</label>
-  <input type="text" name="port" value="8181" required>
+    <label>Port</label>
+    <input type="text" name="port" value="8181" required>
 
-  <label>API Key</label>
-  <input type="text" name="apiKey" required>
+    <label>API Key</label>
+    <input type="text" name="apiKey" required>
 
-  <button type="submit" class="button">Add Node</button>
+    <button type="submit" class="button">Add Node</button>
 </form>
+
 {{ end }}
