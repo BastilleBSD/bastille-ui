@@ -1,12 +1,21 @@
 package main
 
 import (
-	"bastille-ui/api"
-	"bastille-ui/web"
+    "bastille-ui/api"
+    "bastille-ui/web"
+    "flag"
 )
 
 func main() {
-	go api.Start()
-	go web.Start()
-	select {}
+
+    apiOnly := flag.Bool("api-only", false, "Only run the API server")
+    flag.Parse()
+
+    go api.Start()
+
+    if !*apiOnly {
+        go web.Start()
+    }
+
+    select {}
 }
