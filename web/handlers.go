@@ -1,8 +1,6 @@
 package web
 
 import (
-	"bastille-ui/api"
-	"bastille-ui/config"
 	"net/http"
 	"bufio"
 	"strings"
@@ -35,9 +33,9 @@ func homePageHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := PageData {
 		Title: "Bastille WebUI",
-		Config: config.Config,
-		Nodes: config.Config.Nodes,
-		ActiveNode: config.GetActiveNode(),
+		Config: cfg,
+		Nodes: cfg.Nodes,
+		ActiveNode: getActiveNode(),
 	}
 
 	options := ""
@@ -102,27 +100,22 @@ func settingsPageHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := PageData {
 		Title: "Settings",
-		Config: config.Config,
-		Nodes: config.Config.Nodes,
-		ActiveNode: config.GetActiveNode(),
+		Config: cfg,
+		Nodes: cfg.Nodes,
+		ActiveNode: getActiveNode(),
 	}
 
 	if r.Method == http.MethodPost {
 		r.ParseForm()
-		config.Config.Username = r.FormValue("username")
-		config.Config.Password = r.FormValue("password")
-		config.Config.Address  = r.FormValue("address")
-		config.Config.WebPort  = r.FormValue("webPort")
-		config.Config.APIPort  = r.FormValue("apiPort")
-		config.Config.APIKey   = r.FormValue("apiKey")
-
-		if err := config.SaveConfig(config.Config); err != nil {
+		cfg.User = r.FormValue("user")
+		cfg.Password = r.FormValue("password")
+		cfg.Host  = r.FormValue("host")
+		cfg.Port  = r.FormValue("port")
+		if err := saveConfig(cfg); err != nil {
 			data.Error = err.Error()
 		} else {
-			SetCredentials(config.Config.Username, config.Config.Password)
-			SetAPIKey(config.Config.APIKey)
-			api.SetAPIKey(config.Config.APIKey)
-			data.Config = config.Config
+			setConfig(cfg)
+			data.Config = cfg
 		}
 	}
 
@@ -139,8 +132,8 @@ func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
 	// Set default page header
 	data := PageData{
 		Title: "Bastille " + subcommand,
-		Nodes: config.Config.Nodes,
-		ActiveNode: config.GetActiveNode(),
+		Nodes: cfg.Nodes,
+		ActiveNode: getActiveNode(),
 	}
 
 	// Parse submitted form

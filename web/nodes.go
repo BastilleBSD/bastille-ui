@@ -1,7 +1,6 @@
 package web
 
 import (
-	"bastille-ui/config"
 	"fmt"
 	"net/http"
 )
@@ -14,36 +13,36 @@ func nodeAddHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := PageData{
-		Config:     config.Config,
-		Nodes:      config.Config.Nodes,
-		ActiveNode: config.GetActiveNode(),
+		Config:     cfg,
+		Nodes:      cfg.Nodes,
+		ActiveNode: getActiveNode(),
 	}
 
 	if r.Method == http.MethodPost {
 		r.ParseForm()
 		name := r.FormValue("node")
-		ip := r.FormValue("ip")
+		host := r.FormValue("host")
 		port := r.FormValue("port")
-		apiKey := r.FormValue("apiKey")
+		key := r.FormValue("key")
 
-		if name == "" || ip == "" || port == "" || apiKey == "" {
+		if name == "" || host == "" || port == "" || key == "" {
 			data.Error = "Please fill out all fields."
 			render(w, "nodes", data)
 			return
 		}
 
 		// Add node to config
-		newNode := config.Node{
+		newNode := Node{
 			Name:   name,
-			IP:     ip,
+			Host:     host,
 			Port:   port,
-			APIKey: apiKey,
+			Key: key,
 		}
 
-		config.Config.Nodes = append(config.Config.Nodes, newNode)
+		cfg.Nodes = append(cfg.Nodes, newNode)
 
 		// Save updated config
-		if err := config.SaveConfig(config.Config); err != nil {
+		if err := saveConfig(cfg); err != nil {
 			data.Error = fmt.Sprintf("Failed to save config: %v", err)
 			render(w, "nodes", data)
 			return
@@ -63,15 +62,15 @@ func nodeDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	name := r.FormValue("node")
 
-	var filtered []config.Node
-	for _, n := range config.Config.Nodes {
+	filtered := []Node{}
+	for _, n := range cfg.Nodes {
 		if n.Name != name {
 			filtered = append(filtered, n)
 		}
 	}
 
-	config.Config.Nodes = filtered
-	_ = config.SaveConfig(config.Config)
+	cfg.Nodes = filtered
+	_ = saveConfig(cfg)
 
 	http.Redirect(w, r, "/nodes", http.StatusSeeOther)
 }
@@ -94,7 +93,7 @@ func nodeSelectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := config.SetActiveNodeByName(nodeName); err != nil {
+	if err := setActiveNode(nodeName); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -106,13 +105,39 @@ func nodeSelectHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, referer, http.StatusSeeOther)
 }
 
-func nodesPageHandler(w http.ResponseWriter, r *http.Request) {
+func nodePageHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := PageData{
-		Config:     config.Config,
-		Nodes:      config.Config.Nodes,
-		ActiveNode: config.GetActiveNode(),
+		Config:     cfg,
+		Nodes:      cfg.Nodes,
+		ActiveNode: getActiveNode(),
 	}
 
 	render(w, "nodes", data)
 }
+
+func setActiveNode(name string) error {
+
+	activeNodeMu.Lock()
+	defer activeNodeMu.Unlock()
+
+	if cfg == nil {
+		return fmt.Errorf("config not loaded")
+	}
+
+	for i := range cfg.Nodes {
+		if cfg.Nodes[i].Name == name {
+			activeNode = &cfg.Nodes[i]
+			return nil
+		}
+	}
+
+	return fmt.Errorf("node with name %s not found", name)
+}
+
+func getActiveNode() *Node {
+	activeNodeMu.RLock()
+	defer activeNodeMu.RUnlock()
+	return activeNode
+}
+

@@ -6,14 +6,6 @@ import (
 	"time"
 )
 
-var username, password string
-
-// Set credentials from config file
-func SetCredentials(user, pass string) {
-	username = user
-	password = pass
-}
-
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := PageData{}
@@ -23,7 +15,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		u := r.FormValue("username")
 		p := r.FormValue("password")
 
-		if u == username && p == password {
+		if u == cfg.User && p == cfg.Password {
 			// Set session cookie for 24 hours
 			http.SetCookie(w, &http.Cookie{
 				Name:     "bastille-web-auth",

@@ -6,23 +6,17 @@
 {{ end }}
 
 <form method="POST" action="/settings">
-    <label>Username:</label>
-    <input type="text" name="username" value="{{.Config.Username}}" required>
+    <label>User:</label>
+    <input type="text" name="user" value="{{.Config.User}}" required>
 
     <label>Password:</label>
     <input type="password" name="password" value="{{.Config.Password}}" required>
 
-    <label>Address:</label>
-    <input type="text" name="address" value="{{.Config.Address}}" required>
+    <label>Host:</label>
+    <input type="text" name="host" value="{{.Config.Host}}" required>
 
-    <label>Web Port:</label>
-    <input type="text" name="webPort" value="{{.Config.WebPort}}" required>
-
-    <label>API Port:</label>
-    <input type="text" name="apiPort" value="{{.Config.APIPort}}" required>
-
-    <label>API Key:</label>
-    <input type="text" name="apiKey" value="{{.Config.APIKey}}" required>
+    <label>Port:</label>
+    <input type="text" name="port" value="{{.Config.Port}}" required>
 
     <button type="submit">Save Settings</button>
 </form>

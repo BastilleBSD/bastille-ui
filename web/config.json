@@ -1,0 +1,14 @@
+{
+  "user": "admin",
+  "password": "admin",
+  "host": "localhost",
+  "port": "8080",
+  "nodes": [
+    {
+      "name": "node1",
+      "host": "127.0.0.1",
+      "port": "8181",
+      "key": "testapikey"
+    }
+  ]
+}

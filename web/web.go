@@ -1,7 +1,6 @@
 package web
 
 import (
-	"bastille-ui/config"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -12,12 +11,12 @@ import (
 
 func callBastilleAPI(path string, params map[string]string) (string, error) {
 
-	node := config.GetActiveNode()
+	node := getActiveNode()
 	if node == nil {
-		return "", fmt.Errorf("no active node selected")
+		return "", fmt.Errorf("no node selected")
 	}
 
-	rawurl := fmt.Sprintf("http://%s:%s%s", node.IP, node.Port, path)
+	rawurl := fmt.Sprintf("http://%s:%s%s", node.Host, node.Port, path)
 	u, err := url.Parse(rawurl)
 	if err != nil {
 		return "", err
@@ -29,13 +28,10 @@ func callBastilleAPI(path string, params map[string]string) (string, error) {
 	}
 	u.RawQuery = q.Encode()
 
-	apiKey := node.APIKey
-	if apiKey == "" {
-		apiKey = config.Config.APIKey
-	}
+	Key := node.Key
 
 	req, _ := http.NewRequest("GET", u.String(), nil)
-	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Authorization", "Bearer "+Key)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -75,13 +71,27 @@ func render(w http.ResponseWriter, page string, data PageData) {
 	}
 }
 
-func Start(addr string) {
+func Start() {
+
+       var bindAddr string
+	config := loadConfig()
+	setConfig(config)
+
+	if Host == "0.0.0.0" || Host == "localhost" || Host == "" {
+		bindAddr = "0.0.0.0"
+		Host = "localhost"
+	} else {
+	       bindAddr = Host
+	}
+	
+	addr := fmt.Sprintf("%s:%s", bindAddr, Port)
+
 	loadRoutes()
+
 	log.Println("Starting BastilleBSD WebUI server on", addr)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
 
-// Handle routes
 func loadRoutes() {
 
 	// Handle built in pages
@@ -93,7 +103,7 @@ func loadRoutes() {
 	http.Handle("/", loggingMiddleware(requireLogin(homePageHandler)))
 	http.Handle("/bastille/quickaction", loggingMiddleware(requireLogin(homePageActionHandler)))
 	http.Handle("/bastille/", loggingMiddleware(requireLogin(bastilleWebHandler)))
-	http.Handle("/nodes", loggingMiddleware(requireLogin(nodesPageHandler)))
+	http.Handle("/nodes", loggingMiddleware(requireLogin(nodePageHandler)))
 	http.Handle("/api/v1/node/add", loggingMiddleware(requireLogin(nodeAddHandler)))
 	http.Handle("/api/v1/node/delete", loggingMiddleware(requireLogin(nodeDeleteHandler)))
 	http.Handle("/api/v1/node/select", loggingMiddleware(requireLogin(nodeSelectHandler)))
