@@ -1,6 +1,7 @@
 package web
 
 import (
+	"bastille-ui/config"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -10,7 +11,17 @@ import (
 )
 
 func callBastilleAPI(path string, params map[string]string) (string, error) {
-	u, _ := url.Parse(apiUrl + path)
+
+    node := config.GetActiveNode()
+    if node == nil {
+        return "", fmt.Errorf("no active node selected")
+    }
+
+    rawurl := fmt.Sprintf("http://%s:%s%s", node.IP, node.Port, path)
+    u, err := url.Parse(rawurl)
+    if err != nil {
+        return "", err
+    }
 
 	q := u.Query()
 	for k, v := range params {
@@ -46,6 +57,7 @@ func render(w http.ResponseWriter, page string, data PageData) {
 		"web/static/home.html",
 		"web/static/login.html",
 		"web/static/settings.html",
+		"web/static/nodes.html",
 		"web/static/"+page+".html",
 	)
 	if err != nil {
@@ -76,6 +88,10 @@ func loadRoutes() {
 	http.Handle("/", loggingMiddleware(requireLogin(homePageHandler)))
 	http.Handle("/bastille/quickaction", loggingMiddleware(requireLogin(homePageActionHandler)))
 	http.Handle("/bastille/", loggingMiddleware(requireLogin(bastilleWebHandler)))
+	http.Handle("/nodes", loggingMiddleware(requireLogin(nodesPageHandler)))
+	http.Handle("/api/v1/node/add", loggingMiddleware(requireLogin(nodeAddHandler)))
+	http.Handle("/api/v1/node/delete", loggingMiddleware(requireLogin(nodeDeleteHandler)))
+	http.Handle("/api/v1/node/select", loggingMiddleware(requireLogin(nodeSelectHandler)))
 
 	// Serve static files
 	http.Handle("/static/", http.StripPrefix("/static/",

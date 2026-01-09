@@ -4,5 +4,12 @@
   "address": "localhost",
   "webPort": "8080",
   "apiPort": "8181",
-  "apiKey": "test-api-key"
+  "apiKey": "testapikey",
+  "nodes": [
+    {
+      "name": "node1",
+      "ip": "127.0.0.1",
+      "port": "8181"
+    }
+  ]
 }

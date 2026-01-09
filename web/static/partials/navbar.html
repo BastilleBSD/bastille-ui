@@ -5,12 +5,28 @@
       <img src="/static/bastille-logo.png" alt="Bastille Logo" class="navbar-logo">
       <span class="navbar-title">BastilleBSD</span>
     </a>
+
+    <!-- Node selector + Add Node button -->
+    <div class="node-selector" style="display:inline-flex; align-items:center; gap:6px; margin-left:16px;">
+      <form method="POST" action="/api/v1/node/select" style="margin:0;">
+        <select name="node" onchange="this.form.submit()" style="padding:4px;">
+          <option disabled {{ if not .ActiveNode }}selected{{ end }}>Select node</option>
+          {{ range .Nodes }}
+          <option value="{{ .Name }}" {{ if and $.ActiveNode (eq .Name $.ActiveNode.Name) }}selected{{ end }}>
+            {{ .Name }}
+          </option>
+          {{ end }}
+        </select>
+      </form>
+    </div>
+	<a href="/nodes" class="button">Nodes</a>
   </div>
+
   <div class="navbar-right">
     <a href="/" class="button">Home</a>
     <a href="https://bastille.readthedocs.io" class="button" target="_blank">Docs</a>
     <a href="/settings" class="button">Settings</a>
-    <a href="/logout" class="button">Logout</a> <!-- Added logout button -->
+    <a href="/logout" class="button">Logout</a>
   </div>
 </nav>
 {{ end }}

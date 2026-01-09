@@ -1,0 +1,43 @@
+{{ define "content" }}
+<h1>Managed Nodes</h1>
+
+<table border="1" cellpadding="6" cellspacing="0">
+  <tr>
+    <th>Name</th>
+    <th>IP</th>
+    <th>Port</th>
+    <th>Action</th>
+  </tr>
+
+  {{ range .Nodes }}
+  <tr>
+    <td>{{ .Name }}</td>
+    <td>{{ .IP }}</td>
+    <td>{{ .Port }}</td>
+    <td>
+      <form method="POST" action="/api/v1/node/delete" style="margin:0;">
+        <input type="hidden" name="node" value="{{ .Name }}">
+        <button type="submit">Delete</button>
+      </form>
+    </td>
+  </tr>
+  {{ end }}
+</table>
+
+<hr>
+
+<h2>Add Node</h2>
+
+<form method="POST" action="/api/v1/node/add">
+  <label>Name:</label><br>
+  <input type="text" name="node" required><br><br>
+
+  <label>IP Address:</label><br>
+  <input type="text" name="ip" required><br><br>
+
+  <label>Port:</label><br>
+  <input type="text" name="port" value="8181"><br><br>
+
+  <button type="submit">Add Node</button>
+</form>
+{{ end }}

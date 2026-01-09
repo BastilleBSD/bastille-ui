@@ -5,11 +5,13 @@ import (
 )
 
 type PageData struct {
-	Title  string
-	Output string
-	Error  string
-	Jails []Jails
-	Config *config.Config
+	Title      string
+	Output     string
+	Error      string
+	Jails      []Jails
+	Config     *config.ConfigStruct
+	Nodes      []config.Node
+	ActiveNode *config.Node
 }
 
 type JailSettings struct {
