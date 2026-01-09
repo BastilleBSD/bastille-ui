@@ -1,33 +1,41 @@
 {{ define "content" }}
 <h1>Managed Nodes</h1>
 
-<table border="1" cellpadding="6" cellspacing="0">
-  <tr>
-    <th>Name</th>
-    <th>IP</th>
-    <th>Port</th>
-    <th>API Key</th>
-  </tr>
+<div class="nodes-table-wrapper">
+  <table class="nodes-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>IP</th>
+        <th>Port</th>
+        <th>API Key</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
 
-  {{ range .Nodes }}
-  <tr>
-    <td>{{ .Name }}</td>
-    <td>{{ .IP }}</td>
-    <td>{{ .Port }}</td>
-    <td>{{ if .APIKey }}••••••{{ else }}(global){{ end }}</td>
-    <td>
-      <form method="POST" action="/api/v1/node/delete" style="margin:0;">
-        <input type="hidden" name="node" value="{{ .Name }}">
-        <button type="submit">Delete</button>
-      </form>
-    </td>
-  </tr>
-  {{ end }}
-</table>
+    <tbody>
+      {{ range .Nodes }}
+      <tr>
+        <td>{{ .Name }}</td>
+        <td>{{ .IP }}</td>
+        <td>{{ .Port }}</td>
+        <td class="apikey-cell" data-apikey="{{ .APIKey }}">
+          <span class="apikey-mask">••••••••</span>
+        </td>
+        <td>
+          <form method="POST" action="/api/v1/node/delete">
+            <input type="hidden" name="node" value="{{ .Name }}">
+            <button type="submit" class="button">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+</div>
 
 <hr>
 
-<h2>Add Node</h2>
 <h2>Add Node</h2>
 
 <form method="POST" action="/api/v1/node/add" class="node-form">
@@ -45,5 +53,4 @@
 
   <button type="submit" class="button">Add Node</button>
 </form>
-
 {{ end }}
