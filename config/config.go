@@ -26,9 +26,10 @@ type ConfigStruct struct {
 }
 
 type Node struct {
-	Name string `json:"name"`
-	IP   string `json:"ip"`
-	Port string `json:"port"`
+	Name   string `json:"name"`
+	IP     string `json:"ip"`
+	Port   string `json:"port"`
+	APIKey string `json:"apiKey"`
 }
 
 // ----------------------

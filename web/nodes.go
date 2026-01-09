@@ -1,8 +1,8 @@
 package web
 
 import (
-	"fmt"
 	"bastille-ui/config"
+	"fmt"
 	"net/http"
 )
 
@@ -14,7 +14,7 @@ func nodeAddHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := PageData{
-		Config: config.Config,
+		Config:     config.Config,
 		Nodes:      config.Config.Nodes,
 		ActiveNode: config.GetActiveNode(),
 	}
@@ -24,8 +24,9 @@ func nodeAddHandler(w http.ResponseWriter, r *http.Request) {
 		name := r.FormValue("node")
 		ip := r.FormValue("ip")
 		port := r.FormValue("port")
+		apiKey := r.FormValue("apiKey")
 
-		if name == "" || ip == "" || port == "" {
+		if name == "" || ip == "" || port == "" || apiKey == "" {
 			data.Error = "Please fill out all fields."
 			render(w, "nodes", data)
 			return
@@ -33,9 +34,10 @@ func nodeAddHandler(w http.ResponseWriter, r *http.Request) {
 
 		// Add node to config
 		newNode := config.Node{
-			Name: name,
-			IP:   ip,
-			Port: port,
+			Name:   name,
+			IP:     ip,
+			Port:   port,
+			APIKey: apiKey,
 		}
 
 		config.Config.Nodes = append(config.Config.Nodes, newNode)
@@ -106,9 +108,9 @@ func nodeSelectHandler(w http.ResponseWriter, r *http.Request) {
 
 func nodesPageHandler(w http.ResponseWriter, r *http.Request) {
 
-	data := PageData {
-		Config: config.Config,
-		Nodes: config.Config.Nodes,
+	data := PageData{
+		Config:     config.Config,
+		Nodes:      config.Config.Nodes,
 		ActiveNode: config.GetActiveNode(),
 	}
 

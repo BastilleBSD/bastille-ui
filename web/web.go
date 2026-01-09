@@ -5,29 +5,34 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
-	"log"
 )
 
 func callBastilleAPI(path string, params map[string]string) (string, error) {
 
-    node := config.GetActiveNode()
-    if node == nil {
-        return "", fmt.Errorf("no active node selected")
-    }
+	node := config.GetActiveNode()
+	if node == nil {
+		return "", fmt.Errorf("no active node selected")
+	}
 
-    rawurl := fmt.Sprintf("http://%s:%s%s", node.IP, node.Port, path)
-    u, err := url.Parse(rawurl)
-    if err != nil {
-        return "", err
-    }
+	rawurl := fmt.Sprintf("http://%s:%s%s", node.IP, node.Port, path)
+	u, err := url.Parse(rawurl)
+	if err != nil {
+		return "", err
+	}
 
 	q := u.Query()
 	for k, v := range params {
 		q.Set(k, v)
 	}
 	u.RawQuery = q.Encode()
+
+	apiKey := node.APIKey
+	if apiKey == "" {
+		apiKey = config.Config.APIKey
+	}
 
 	req, _ := http.NewRequest("GET", u.String(), nil)
 	req.Header.Set("Authorization", "Bearer "+apiKey)

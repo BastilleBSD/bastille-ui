@@ -14,6 +14,7 @@
     <td>{{ .Name }}</td>
     <td>{{ .IP }}</td>
     <td>{{ .Port }}</td>
+    <td>{{ .APIKey }}</td>
     <td>
       <form method="POST" action="/api/v1/node/delete" style="margin:0;">
         <input type="hidden" name="node" value="{{ .Name }}">
@@ -27,17 +28,22 @@
 <hr>
 
 <h2>Add Node</h2>
+<h2>Add Node</h2>
 
-<form method="POST" action="/api/v1/node/add">
-  <label>Name:</label><br>
-  <input type="text" name="node" required><br><br>
+<form method="POST" action="/api/v1/node/add" class="node-form">
+  <label>Name</label>
+  <input type="text" name="node" required>
 
-  <label>IP Address:</label><br>
-  <input type="text" name="ip" required><br><br>
+  <label>IP Address</label>
+  <input type="text" name="ip" required>
 
-  <label>Port:</label><br>
-  <input type="text" name="port" value="8181"><br><br>
+  <label>Port</label>
+  <input type="text" name="port" value="8181" required>
 
-  <button type="submit">Add Node</button>
+  <label>API Key</label>
+  <input type="text" name="apiKey" required>
+
+  <button type="submit" class="button">Add Node</button>
 </form>
+
 {{ end }}

@@ -9,7 +9,8 @@
     {
       "name": "node1",
       "ip": "127.0.0.1",
-      "port": "8181"
+      "port": "8181",
+      "apiKey": "testapikey"
     }
   ]
 }
