@@ -22,6 +22,7 @@ go run .
 ```
 
 API config file: `api/config.json`
+
 WebUI config file: `web/config.json`
 
 Request made via the API must contain an `Authorization: Bearer API_KEY` header. The
