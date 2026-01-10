@@ -284,7 +284,7 @@ pre {
 
 #console-iframe-container {
     position: fixed;
-    top: 50%;
+    top: 10%;
     left: 10%;
     width: 80%;
     height: 150%;
