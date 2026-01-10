@@ -21,12 +21,17 @@ or
 go run .
 ```
 
-Request made via the API must contain an `Authorization: Bearer API_KEY` header. The
-`API_KEY` can be set inside the `config.json` file. The `API_KEY` is set every time
-the program starts, and can also be changed via the webui.
+API config file: `api/config.json`
+WebUI config file: `web/config.json`
 
-The `config.json` file also contains a default username and password to log in via the
+Request made via the API must contain an `Authorization: Bearer API_KEY` header. The
+`API_KEY` can be set inside the `api/config.json` file. The `API_KEY` is set every time
+the program starts.
+
+For the WebUI, the `web/config.json` file contains a default username and password to log in via the
 webui. Simply visit http://host:port to get started.
+
+To use the console on the homepage, you need to `pkg install ttyd`.
 
 ## API Examples
 
