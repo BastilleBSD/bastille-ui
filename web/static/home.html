@@ -1,29 +1,28 @@
 {{ define "content" }}
+  {{ if .Error }}
+    <div class="error">{{ .Error }}</div>
+  {{ end }}
 
-{{ if .Error }}
-	<div class="error">{{ .Error }}</div>
-{{ end }}
-
-{{ if .Jails }}
-<table class="jails-table">
-    <thead>
+  {{ if .Jails }}
+    <table class="jails-table">
+      <thead>
         <tr>
-            <th>JID</th>
-            <th>Name</th>
-            <th>Boot</th>
-            <th>Prio</th>
-            <th>State</th>
-            <th>Type</th>
-            <th>IP</th>
-            <th>Published Ports</th>
-            <th>Release</th>
-            <th>Tags</th>
-            <th>Jail Actions</th>
+          <th>JID</th>
+          <th>Name</th>
+          <th>Boot</th>
+          <th>Prio</th>
+          <th>State</th>
+          <th>Type</th>
+          <th>IP</th>
+          <th>Published Ports</th>
+          <th>Release</th>
+          <th>Tags</th>
+          <th>Jail Actions</th>
         </tr>
-    </thead>
-    <tbody>
+      </thead>
+      <tbody>
         {{ range .Jails }}
-        <tr>
+          <tr>
             <td>{{ .Jail.JID }}</td>
             <td>{{ .Jail.Name }}</td>
             <td>{{ .Jail.Boot }}</td>
@@ -34,30 +33,65 @@
             <td>{{ .Jail.Ports }}</td>
             <td>{{ .Jail.Release }}</td>
             <td>{{ .Jail.Tags }}</td>
-			<td>
-				<form action="/bastille/quickaction" method="POST" style="display:inline-block;">
-					<input type="hidden" name="target" value="{{.Jail.Name}}">
-					<input type="hidden" name="action" value="stop">
-					<button type="submit" class="homepage-stop-button">■</button>
-				</form>
+            <td>
+              <button class="homepage-console-button" style="display:inline-block" onclick="openConsole('{{ .Jail.Name }}')">>_</button>
 
-				<form action="/bastille/quickaction" method="POST" style="display:inline-block;">
-					<input type="hidden" name="target" value="{{.Jail.Name}}">
-					<input type="hidden" name="action" value="start">
-					<button type="submit" class="homepage-start-button">▶</button>
-				</form>
+              <form action="/bastille/quickaction" method="POST" style="display:inline-block;">
+                <input type="hidden" name="target" value="{{ .Jail.Name }}">
+                <input type="hidden" name="action" value="stop">
+                <button type="submit" class="homepage-stop-button">■</button>
+              </form>
 
-				<form action="/bastille/quickaction" method="POST" style="display:inline-block;">
-					<input type="hidden" name="target" value="{{.Jail.Name}}">
-					<input type="hidden" name="action" value="restart">
-					<button type="submit" class="homepage-restart-button">⟳</button>
-				</form>
-			</td>
-        </tr>
+              <form action="/bastille/quickaction" method="POST" style="display:inline-block;">
+                <input type="hidden" name="target" value="{{ .Jail.Name }}">
+                <input type="hidden" name="action" value="start">
+                <button type="submit" class="homepage-start-button">▶</button>
+              </form>
+
+              <form action="/bastille/quickaction" method="POST" style="display:inline-block;">
+                <input type="hidden" name="target" value="{{ .Jail.Name }}">
+                <input type="hidden" name="action" value="restart">
+                <button type="submit" class="homepage-restart-button">⟳</button>
+              </form>
+            </td>
+          </tr>
         {{ end }}
-    </tbody>
-</table>
-{{ else }}
-	<pre>{{ .Output }}</pre>
-{{ end }}
+      </tbody>
+    </table>
+
+    <div id="console-overlay" class="console-overlay" onclick="closeConsole()"></div>
+    <div id="console-iframe-container">
+      <iframe id="consoleIframe" class="console-iframe" frameborder="0"></iframe>
+      <button class="console-close-button" onclick="closeConsole()">Close</button>
+    </div>
+
+    <script>
+        function openConsole(jail) {
+            const url = `/api/v1/web-console?target=` + encodeURIComponent(jail);
+
+            fetch(url)
+                .then(response => response.text())
+                .then(data => {
+                    const iframe = document.getElementById("consoleIframe");
+                    iframe.src = data;  // Set the iframe source to the console URL
+                    window.onbeforeunload = function() {
+					};
+
+                    // Show the iframe and overlay
+                    document.getElementById("console-overlay").style.display = "block";  // Show the overlay
+                    document.getElementById("console-iframe-container").style.display = "block";  // Show the iframe container
+                })
+                .catch(error => {
+                    console.error("Error loading the console:", error);
+                });
+        }
+
+        function closeConsole() {
+            const iframe = document.getElementById("consoleIframe");
+            iframe.src = "about:blank";
+            document.getElementById("console-overlay").style.display = "none";
+            document.getElementById("console-iframe-container").style.display = "none";
+        }
+    </script>
+  {{ end }}
 {{ end }}

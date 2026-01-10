@@ -107,6 +107,7 @@ func loadRoutes() {
 	http.Handle("/api/v1/node/add", loggingMiddleware(requireLogin(nodeAddHandler)))
 	http.Handle("/api/v1/node/delete", loggingMiddleware(requireLogin(nodeDeleteHandler)))
 	http.Handle("/api/v1/node/select", loggingMiddleware(requireLogin(nodeSelectHandler)))
+	http.Handle("/api/v1/web-console", loggingMiddleware(requireLogin(consoleHandler)))
 
 	// Serve static files
 	http.Handle("/static/", http.StripPrefix("/static/",

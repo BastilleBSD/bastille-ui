@@ -225,6 +225,15 @@ pre {
   font-weight: bold;
 }
 
+.nodes-table button {
+    display: inline-block;
+    padding: 8px 8px;
+    margin: 0 0px;
+    font-size: 1em;
+    cursor: pointer;
+    color: white;
+}
+
 /* Table styling */
 /* Table container */
 .jails-table {
@@ -246,35 +255,70 @@ pre {
 
 /* Table cells */
 .jails-table td {
-  padding: 8px;
+  padding: 5px;
   border-bottom: 1px solid #ddd;
 }
 
 /* General button style */
 .jails-table button {
-    display: flex;
-    padding: 4px 10px;
-    margin: 0 2px;
-    border: none;
-    border-radius: 4px;
-    font-size: 0.85em;
+    display: inline-block;
+    height: 25px;
+    width: 25px;
+    padding: 0px 0px;
+    margin: 0 0px;
+    font-size: 1em;
     cursor: pointer;
     color: white;
-    transition: background-color 0.2s ease-in-out;
 }
 
-.homepage-stop-button,
-.homepage-start-button,
-.homepage-restart-button {
-    width: 34px;
-    height: 34px;
-    font-size: 18px;
-    padding: 0;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+.console-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: none;
+}
+
+#console-iframe-container {
+    position: fixed;
+    top: 50%;
+    left: 10%;
+    width: 80%;
+    height: 150%;
+    z-index: 10000;
+    display: none;
+    background-color: rgba(0, 0, 0, 0.9);
+    border: 1px;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+}
+
+.console-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 10px;
+}
+
+.console-close-button {
+    position: absolute;
+    bottom: -50px;
+    right: 10px;
+    color: #fff;
+    border: none;
+    font-size: 20px;
     cursor: pointer;
+    z-index: 10001;
+    padding: 5px;
+    line-height: 1;
+}
+
+.console-close-button:hover {
+    background: #ff3333;
 }
 
 .error {
