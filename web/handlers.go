@@ -1,8 +1,8 @@
 package web
 
 import (
-	"net/http"
 	"bufio"
+	"net/http"
 	"strings"
 )
 
@@ -31,10 +31,10 @@ func homePageHandler(w http.ResponseWriter, r *http.Request) {
 
 	var jails []Jails
 
-	data := PageData {
-		Title: "Bastille WebUI",
-		Config: cfg,
-		Nodes: cfg.Nodes,
+	data := PageData{
+		Title:      "Bastille WebUI",
+		Config:     cfg,
+		Nodes:      cfg.Nodes,
 		ActiveNode: getActiveNode(),
 	}
 
@@ -42,7 +42,7 @@ func homePageHandler(w http.ResponseWriter, r *http.Request) {
 	item := ""
 	params := map[string]string{
 		"options": options,
-		"item": item,
+		"item":    item,
 	}
 	// Call API
 	out, err := callBastilleAPI("/api/v1/bastille/list", params)
@@ -73,20 +73,20 @@ func homePageHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-	jails = append(jails, Jails {
-		Jail: JailSettings {
-			JID:     fields[0],
-			Name:    fields[1],
-			Boot:    fields[2],
-			Prio:    fields[3],
-			State:   fields[4],
-			Type:    fields[5],
-			IP:      fields[6],
-			Ports:   fields[7],
-			Release: fields[8],
-			Tags:    fields[9],
-		},
-	})
+		jails = append(jails, Jails{
+			Jail: JailSettings{
+				JID:     fields[0],
+				Name:    fields[1],
+				Boot:    fields[2],
+				Prio:    fields[3],
+				State:   fields[4],
+				Type:    fields[5],
+				IP:      fields[6],
+				Ports:   fields[7],
+				Release: fields[8],
+				Tags:    fields[9],
+			},
+		})
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -98,10 +98,10 @@ func homePageHandler(w http.ResponseWriter, r *http.Request) {
 
 func settingsPageHandler(w http.ResponseWriter, r *http.Request) {
 
-	data := PageData {
-		Title: "Settings",
-		Config: cfg,
-		Nodes: cfg.Nodes,
+	data := PageData{
+		Title:      "Settings",
+		Config:     cfg,
+		Nodes:      cfg.Nodes,
 		ActiveNode: getActiveNode(),
 	}
 
@@ -109,8 +109,8 @@ func settingsPageHandler(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 		cfg.User = r.FormValue("user")
 		cfg.Password = r.FormValue("password")
-		cfg.Host  = r.FormValue("host")
-		cfg.Port  = r.FormValue("port")
+		cfg.Host = r.FormValue("host")
+		cfg.Port = r.FormValue("port")
 		if err := saveConfig(cfg); err != nil {
 			data.Error = err.Error()
 		} else {
@@ -127,12 +127,13 @@ func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract subcommand from the URL
 	// Example: /bastille/list -> subcommand = "list"
 	subcommand := r.URL.Path[len("/bastille/"):]
+	subcommandpath := "template/" + subcommand
 	apiPath := "/api/v1/bastille/" + subcommand
 
 	// Set default page header
 	data := PageData{
-		Title: "Bastille " + subcommand,
-		Nodes: cfg.Nodes,
+		Title:      "Bastille " + subcommand,
+		Nodes:      cfg.Nodes,
 		ActiveNode: getActiveNode(),
 	}
 
@@ -160,6 +161,6 @@ func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-    // Render the corresponding template
-    render(w, subcommand, data)
+	// Render the corresponding template
+	render(w, subcommandpath, data)
 }
