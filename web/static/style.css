@@ -236,7 +236,7 @@ pre {
 }
 
 .jails-table {
-  width: auto;
+  width: 100%;
   border-collapse: collapse;
   margin-top: 1em;
   font-family: Arial, sans-serif;
@@ -244,7 +244,7 @@ pre {
 
 .jails-table th:first-child,
 .jails-table td:first-child {
-    max-width: 80px;
+    max-width: 30px;
     text-align: left;   /* center the checkbox */
     padding: 4px;
 }
