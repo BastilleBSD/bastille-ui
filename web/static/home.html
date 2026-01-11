@@ -7,7 +7,9 @@
     <table class="jails-table">
       <thead>
         <tr>
-          <th></th>
+          <th>
+			      <input type="checkbox" id="selectAll" />
+		      </th>
           <th>JID</th>
           <th>Name</th>
           <th>Boot</th>
@@ -26,9 +28,7 @@
         {{ range .Jails }}
         <tr>
           <td>
-            <input type="checkbox"
-                   class="jail-checkbox"
-                   value="{{ .Jail.Name }}">
+            <input type="checkbox" class="jail-checkbox" value="{{ .Jail.Name }}">
           </td>
           <td>{{ .Jail.JID }}</td>
           <td>{{ .Jail.Name }}</td>
@@ -133,6 +133,23 @@
           document.getElementById(inputId).value = selected.join(" ");
         });
       }
+      // Setup Select All checkbox
+      const selectAllCheckbox = document.getElementById("selectAll");
+      const jailCheckboxes = document.querySelectorAll(".jail-checkbox");
+
+      selectAllCheckbox.addEventListener("change", function() {
+        const checked = this.checked;
+        jailCheckboxes.forEach(cb => cb.checked = checked);
+      });
+
+      // Keep Select All in sync with individual checkboxes
+      jailCheckboxes.forEach(cb => cb.addEventListener("change", function() {
+        if (!this.checked) {
+          selectAllCheckbox.checked = false;
+        } else if (Array.from(jailCheckboxes).every(cb => cb.checked)) {
+          selectAllCheckbox.checked = true;
+        }
+      }));
 
       setupBulkForm("multi-jail-form", "multi-jail-target-input-stop");
       setupBulkForm("multi-jail-form-start", "multi-jail-target-input-start");
@@ -140,3 +157,4 @@
     </script>
   {{ end }}
 {{ end }}
+
