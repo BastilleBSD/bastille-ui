@@ -1,0 +1,51 @@
+{{define "h2"}}Bootstrap a Release or Template(s){{end}}
+{{define "content"}}
+<form method="post" onsubmit="updateOptions()">
+
+    <input name="target" placeholder="Release or Template URL" required>
+    <input name="arch" placeholder="Arch (Optional)">
+    <input type="hidden" name="options" id="options">
+
+    <fieldset>
+        <legend>Options:</legend>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-p">
+            <label>Bootstrap using pkgbase (FreeBSD 15.0-RELEASE and above).</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-u">
+            <label>Update the release after bootstrap.</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-x">
+            <label>Enable debug mode.</label>
+        </div>
+
+    </fieldset>
+
+    <button class="action-button" type="submit">GO!</button>
+</form>
+
+<script>
+function updateOptions() {
+    const checkboxes = document.querySelectorAll('.option-checkbox');
+    const optionsInput = document.getElementById('options');
+    let opts = [];
+
+    // Simple flags
+    checkboxes.forEach(cb => {
+        if (cb.checked && cb.value) {
+            opts.push(cb.value);
+        }
+    });
+
+    optionsInput.value = opts.join(' ');
+}
+</script>
+
+{{if .Output}}<pre>{{.Output}}</pre>{{end}}
+{{if .Error}}<div class="error">{{.Error}}</div>{{end}}
+{{end}}

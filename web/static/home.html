@@ -7,6 +7,7 @@
     <table class="jails-table">
       <thead>
         <tr>
+          <th>Select</th>
           <th>JID</th>
           <th>Name</th>
           <th>Boot</th>
@@ -20,45 +21,78 @@
           <th>Jail Actions</th>
         </tr>
       </thead>
+
       <tbody>
         {{ range .Jails }}
-          <tr>
-            <td>{{ .Jail.JID }}</td>
-            <td>{{ .Jail.Name }}</td>
-            <td>{{ .Jail.Boot }}</td>
-            <td>{{ .Jail.Prio }}</td>
-            <td>{{ .Jail.State }}</td>
-            <td>{{ .Jail.Type }}</td>
-            <td>{{ .Jail.IP }}</td>
-            <td>{{ .Jail.Ports }}</td>
-            <td>{{ .Jail.Release }}</td>
-            <td>{{ .Jail.Tags }}</td>
-            <td>
-              <button class="homepage-console-button" style="display:inline-block" onclick="openConsole('{{ .Jail.Name }}')">>_</button>
+        <tr>
+          <td>
+            <input type="checkbox"
+                   class="jail-checkbox"
+                   value="{{ .Jail.Name }}">
+          </td>
+          <td>{{ .Jail.JID }}</td>
+          <td>{{ .Jail.Name }}</td>
+          <td>{{ .Jail.Boot }}</td>
+          <td>{{ .Jail.Prio }}</td>
+          <td>{{ .Jail.State }}</td>
+          <td>{{ .Jail.Type }}</td>
+          <td>{{ .Jail.IP }}</td>
+          <td>{{ .Jail.Ports }}</td>
+          <td>{{ .Jail.Release }}</td>
+          <td>{{ .Jail.Tags }}</td>
+          <td>
+            <button class="homepage-console-button"
+                    onclick="openConsole('{{ .Jail.Name }}')">>_</button>
 
-              <form action="/bastille/quickaction" method="POST" style="display:inline-block;">
-                <input type="hidden" name="target" value="{{ .Jail.Name }}">
-                <input type="hidden" name="action" value="stop">
-                <button type="submit" class="homepage-stop-button">■</button>
-              </form>
+            <form action="/bastille/quickaction" method="POST">
+              <input type="hidden" name="target" value="{{ .Jail.Name }}">
+              <input type="hidden" name="action" value="stop">
+              <button type="submit" class="homepage-stop-button">■</button>
+            </form>
 
-              <form action="/bastille/quickaction" method="POST" style="display:inline-block;">
-                <input type="hidden" name="target" value="{{ .Jail.Name }}">
-                <input type="hidden" name="action" value="start">
-                <button type="submit" class="homepage-start-button">▶</button>
-              </form>
+            <form action="/bastille/quickaction" method="POST">
+              <input type="hidden" name="target" value="{{ .Jail.Name }}">
+              <input type="hidden" name="action" value="start">
+              <button type="submit" class="homepage-start-button">▶</button>
+            </form>
 
-              <form action="/bastille/quickaction" method="POST" style="display:inline-block;">
-                <input type="hidden" name="target" value="{{ .Jail.Name }}">
-                <input type="hidden" name="action" value="restart">
-                <button type="submit" class="homepage-restart-button">⟳</button>
-              </form>
-            </td>
-          </tr>
+            <form action="/bastille/quickaction" method="POST;">
+              <input type="hidden" name="target" value="{{ .Jail.Name }}">
+              <input type="hidden" name="action" value="restart">
+              <button type="submit" class="homepage-restart-button">⟳</button>
+            </form>
+          </td>
+        </tr>
         {{ end }}
       </tbody>
+
+      <!-- BULK ACTIONS -->
+      <tfoot>
+        <tr>
+          <td>
+            <form id="multi-jail-form" action="/bastille/quickaction" method="POST">
+              <input type="hidden" name="target" id="multi-jail-target-input-stop">
+              <input type="hidden" name="action" value="stop">
+              <button type="submit">Stop</button>
+            </form>
+
+            <form id="multi-jail-form-start" action="/bastille/quickaction" method="POST">
+              <input type="hidden" name="target" id="multi-jail-target-input-start">
+              <input type="hidden" name="action" value="start">
+              <button type="submit">Start</button>
+            </form>
+
+            <form id="multi-jail-form-restart" action="/bastille/quickaction" method="POST">
+              <input type="hidden" name="target" id="multi-jail-target-input-restart">
+              <input type="hidden" name="action" value="restart">
+              <button type="submit">Restart</button>
+            </form>
+          </td>
+        </tr>
+      </tfoot>
     </table>
 
+    <!-- Console -->
     <div id="console-overlay" class="console-overlay" onclick="closeConsole()"></div>
     <div id="console-iframe-container">
       <iframe id="consoleIframe" class="console-iframe" frameborder="0"></iframe>
@@ -66,32 +100,43 @@
     </div>
 
     <script>
-        function openConsole(jail) {
-            const url = `/api/v1/web-console?target=` + encodeURIComponent(jail);
+      function openConsole(jail) {
+        const url = `/api/v1/web-console?target=` + encodeURIComponent(jail);
+        fetch(url)
+          .then(response => response.text())
+          .then(data => {
+            document.getElementById("consoleIframe").src = data;
+            document.getElementById("console-overlay").style.display = "block";
+            document.getElementById("console-iframe-container").style.display = "block";
+          })
+          .catch(error => console.error("Error loading the console:", error));
+      }
 
-            fetch(url)
-                .then(response => response.text())
-                .then(data => {
-                    const iframe = document.getElementById("consoleIframe");
-                    iframe.src = data;  // Set the iframe source to the console URL
-                    window.onbeforeunload = function() {
-					};
+      function closeConsole() {
+        document.getElementById("consoleIframe").src = "about:blank";
+        document.getElementById("console-overlay").style.display = "none";
+        document.getElementById("console-iframe-container").style.display = "none";
+      }
 
-                    // Show the iframe and overlay
-                    document.getElementById("console-overlay").style.display = "block";  // Show the overlay
-                    document.getElementById("console-iframe-container").style.display = "block";  // Show the iframe container
-                })
-                .catch(error => {
-                    console.error("Error loading the console:", error);
-                });
-        }
+      function setupBulkForm(formId, inputId) {
+        document.getElementById(formId).addEventListener("submit", function (e) {
+          const selected = Array.from(
+            document.querySelectorAll(".jail-checkbox:checked")
+          ).map(cb => cb.value);
 
-        function closeConsole() {
-            const iframe = document.getElementById("consoleIframe");
-            iframe.src = "about:blank";
-            document.getElementById("console-overlay").style.display = "none";
-            document.getElementById("console-iframe-container").style.display = "none";
-        }
+          if (selected.length === 0) {
+            e.preventDefault();
+            alert("Please select at least one jail.");
+            return;
+          }
+
+          document.getElementById(inputId).value = selected.join(" ");
+        });
+      }
+
+      setupBulkForm("multi-jail-form", "multi-jail-target-input-stop");
+      setupBulkForm("multi-jail-form-start", "multi-jail-target-input-start");
+      setupBulkForm("multi-jail-form-restart", "multi-jail-target-input-restart");
     </script>
   {{ end }}
 {{ end }}

@@ -1,5 +1,7 @@
 {{define "sidebar"}}
 <div class="sidebar">
+    <input type="text" id="sidebar-search-bar" placeholder="Search commands..." class="sidebar-search-bar">
+    
     <h3>Bastille Commands</h3>
     <a class="button" href="/bastille/bootstrap">Bootstrap</a>
     <a class="button" href="/bastille/clone">Clone</a>
@@ -41,4 +43,20 @@
     <a class="button" href="/bastille/verify">Verify</a>
     <a class="button" href="/bastille/zfs">Zfs</a>
 </div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("sidebar-search-bar");
+    if (!searchInput) return;
+
+    searchInput.addEventListener("input", function () {
+        const filter = this.value.toLowerCase();
+        const buttons = document.querySelectorAll(".sidebar a.button");
+
+        buttons.forEach(button => {
+            const text = button.textContent.toLowerCase();
+            button.style.display = text.includes(filter) ? "block" : "none";
+        });
+    });
+});
+</script>
 {{end}}

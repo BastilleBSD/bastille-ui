@@ -2,6 +2,7 @@
 
 html, body {
     height: 100%;
+    width: 100%;
     margin: 0;
     font-family: system-ui, sans-serif;
     background: #0b0b0b;
@@ -133,9 +134,9 @@ body {
 .panel {
     background: rgba(0, 0, 0, 0.75);
     backdrop-filter: blur(6px);
-    padding: 30px 40px;
+    padding: 30px 30px;
     border-radius: 10px;
-    max-width: 1000px;
+    max-width: 1200px;
     margin: 0 auto;
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
     text-align: left;
@@ -234,13 +235,18 @@ pre {
     color: white;
 }
 
-/* Table styling */
-/* Table container */
 .jails-table {
-  width: 100%;
+  width: auto;
   border-collapse: collapse;
   margin-top: 1em;
   font-family: Arial, sans-serif;
+}
+
+.jails-table th:first-child,
+.jails-table td:first-child {
+    max-width: 80px;
+    text-align: left;   /* center the checkbox */
+    padding: 4px;
 }
 
 /* Table headers */
@@ -259,16 +265,31 @@ pre {
   border-bottom: 1px solid #ddd;
 }
 
-/* General button style */
-.jails-table button {
+.jails-table tbody button {
     display: inline-block;
-    height: 25px;
-    width: 25px;
+    height: 24px;
+    width: 24px;
     padding: 0px 0px;
     margin: 0 0px;
     font-size: 1em;
     cursor: pointer;
     color: white;
+}
+.jails-table tfoot tr td {
+    display: flex;
+    gap: 4px;
+    border-bottom: none !important;
+    padding-top: 10px;
+}
+.jails-table form {
+    display: inline-block;
+}
+.jails-table tfoot button {
+    width: auto;
+    height: auto;
+    padding: 5px;
+    font-size: 1em;
+    cursor: pointer;
 }
 
 .console-overlay {
@@ -287,7 +308,7 @@ pre {
     top: 10%;
     left: 10%;
     width: 80%;
-    height: 150%;
+    height: 100%;
     z-index: 10000;
     display: none;
     background-color: rgba(0, 0, 0, 0.9);

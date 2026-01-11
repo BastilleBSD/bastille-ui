@@ -1,0 +1,143 @@
+{{define "h2"}}Create a New Jail{{end}}
+{{define "content"}}
+<form method="post" onsubmit="updateOptions()">
+
+    <input name="name" placeholder="Jail Name" required>
+    <input name="release" placeholder="Release (14.0-RELEASE)" required>
+    <input name="ip" placeholder="IP address" required>
+    <input name="iface" placeholder="Interface (optional)">
+
+    <input type="hidden" name="options" id="options">
+
+    <fieldset>
+        <legend>Options:</legend>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-B">
+            <label>Enable VNET. INTERFACE must be a bridge</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-C">
+            <label>Create a clone jail (ZFS only)</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-D">
+            <label>Use dual IPv4+6 networking</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-E">
+            <label>Create an empty jail</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox"
+                   class="option-checkbox"
+                   value="-g"
+                   data-has-value="true"
+                   data-target="gatewayInput">
+            <label>Specify a default router/gateway.</label>
+        </div>
+        <div class="option-sub" id="gatewayInput" style="display:none;">
+            <input type="text" placeholder="Gateway/Router">
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-L">
+            <label>Create a Linux jail</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-M">
+            <label>Use static/persistent MAC address</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox"
+                   class="option-checkbox"
+                   value="-n"
+                   data-has-value="true"
+                   data-target="nameserverInput">
+            <label>Specify nameserver(s) for the jail. Comma-separated.</label>
+        </div>
+        <div class="option-sub" id="nameserverInput" style="display:none;">
+            <input type="text" placeholder="Nameserver">
+        </div>
+
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="--no-validate">
+            <label>Do not validate release name</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="--no-boot">
+            <label>Set boot=off</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-P">
+            <label>Enable VNET with interface as-is</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox"
+                   class="option-checkbox"
+                   value="-p"
+                   data-has-value="true"
+                   data-target="priorityInput">
+            <label>Set priority value.</label>
+        </div>
+        <div class="option-sub" id="priorityInput" style="display:none;">
+            <input type="text" placeholder="Priority">
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-T">
+            <label>Create a thick jail</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-V">
+            <label>Enable VNET. Interface must be a physical interface</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox"
+                   class="option-checkbox"
+                   value="-v"
+                   data-has-value="true"
+                   data-target="vlanInput">
+            <label>Set VLAN ID (VNET only).</label>
+        </div>
+        <div class="option-sub" id="vlanInput" style="display:none;">
+            <input type="text" placeholder="VLAN ID">
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox" class="option-checkbox" value="-x">
+            <label>Enable debug mode</label>
+        </div>
+
+        <div class="option-row">
+            <input type="checkbox"
+                   class="option-checkbox"
+                   value="-Z"
+                   data-has-value="true"
+                   data-target="zfsInput">
+            <label>Custom ZFS options. Comma-separated.</label>
+        </div>
+        <div class="option-sub" id="zfsInput" style="display:none;">
+            <input type="text" placeholder="zfs,options">
+        </div>
+
+    </fieldset>
+
+    <button type="submit">GO!</button>
+</form>
+
+{{if .Output}}<pre>{{.Output}}</pre>{{end}}
+{{if .Error}}<div class="error">{{.Error}}</div>{{end}}
+{{end}}
