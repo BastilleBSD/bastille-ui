@@ -308,8 +308,8 @@ pre {
     position: fixed;
     top: 10%;
     left: 10%;
-    width: 80%;
-    height: 100%;
+    width: 50vw;
+    height: 70vh;
     z-index: 10000;
     display: none;
     background-color: rgba(0, 0, 0, 0.9);
