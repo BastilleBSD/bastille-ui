@@ -244,9 +244,8 @@ pre {
 
 .jails-table th:first-child,
 .jails-table td:first-child {
-    max-width: 30px;
+    max-width: 10px;
     text-align: left;   /* center the checkbox */
-    padding: 4px;
 }
 
 /* Table headers */
@@ -261,7 +260,9 @@ pre {
 
 /* Table cells */
 .jails-table td {
-  padding: 5px;
+  padding-inline: 10px;
+  padding-top: 3px;
+  padding-bottom: 3px;
   border-bottom: 1px solid #ddd;
 }
 
