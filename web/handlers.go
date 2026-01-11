@@ -127,7 +127,7 @@ func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract subcommand from the URL
 	// Example: /bastille/list -> subcommand = "list"
 	subcommand := r.URL.Path[len("/bastille/"):]
-	subcommandpath := "template/" + subcommand
+	subcommandpath := "templates/" + subcommand
 	apiPath := "/api/v1/bastille/" + subcommand
 
 	// Set default page header
