@@ -29,12 +29,7 @@
         {{ range .Jails }}
         <tr>
           <td>
-            <input type="checkbox"
-                   class="jail-checkbox"
-                   value="{{ .Jail.Name }}">
-            <input type="checkbox"
-                   class="jail-checkbox"
-                   value="{{ .Jail.Name }}">
+            <input type="checkbox" class="jail-checkbox" value="{{ .Jail.Name }}">
           </td>
           <td>{{ .Jail.JID }}</td>
           <td>{{ .Jail.Name }}</td>
