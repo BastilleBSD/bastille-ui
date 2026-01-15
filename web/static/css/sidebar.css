@@ -1,0 +1,25 @@
+.sidebar {
+    position: fixed;
+    top: 60px; /* below navbar */
+    left: 0;
+    width: 200px;
+    bottom: 0;
+    background-color: #222;
+    color: #fff;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.sidebar a.button {
+    display: block;
+    padding: 8px 10px;
+    margin-bottom: 5px;
+    background-color: #333;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 3px;
+}
+
+.sidebar a.button:hover {
+    background-color: #dd544b;
+}

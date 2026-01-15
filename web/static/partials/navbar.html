@@ -2,15 +2,14 @@
 <nav class="navbar">
   <div class="navbar-left">
     <a href="https://bastillebsd.org">
-      <img src="/static/bastille-logo.png" alt="Bastille Logo" class="navbar-logo">
-      <span class="navbar-title">BastilleBSD</span>
+      <img src="/static/bastille-logo.png" alt="Bastille Logo" class="logo">
+      <span class="title">BastilleBSD</span>
     </a>
 
-    <!-- Node selector + Add Node button -->
-    <div class="node-selector" style="display:inline-flex; align-items:center; gap:6px; margin-left:16px;">
-      <form method="POST" action="/api/v1/node/select" style="margin:0;">
-        <select name="node" onchange="this.form.submit()" style="padding:4px;">
-          <option disabled {{ if not .ActiveNode }}selected{{ end }}>Select node</option>
+    <div class="node-selector">
+      <form method="POST" action="/api/v1/node/select">
+        <select name="node" onchange="this.form.submit()">
+          <option disabled {{ if not .ActiveNode }}selected{{ end }}>Select Node</option>
           {{ range .Nodes }}
           <option value="{{ .Name }}" {{ if and $.ActiveNode (eq .Name $.ActiveNode.Name) }}selected{{ end }}>
             {{ .Name }}

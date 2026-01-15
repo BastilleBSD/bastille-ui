@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"bufio"
 	"net/http"
 	"strings"
@@ -122,45 +123,53 @@ func settingsPageHandler(w http.ResponseWriter, r *http.Request) {
 	render(w, "settings", data)
 }
 
-// --- Handle Submitted Forms ---
 func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract subcommand from the URL
-	// Example: /bastille/list -> subcommand = "list"
 	subcommand := r.URL.Path[len("/bastille/"):]
 	subcommandpath := "templates/" + subcommand
 	apiPath := "/api/v1/bastille/" + subcommand
 
-	// Set default page header
+	// Default page data
 	data := PageData{
 		Title:      "Bastille " + subcommand,
 		Nodes:      cfg.Nodes,
 		ActiveNode: getActiveNode(),
 	}
 
-	// Parse submitted form
-	if r.Method == http.MethodPost {
-		r.ParseForm()
-		// Collect all form parameters dynamically
-		params := map[string]string{}
+	r.ParseForm()
+	params := map[string]string{}
 
-		for key, values := range r.PostForm {
-			if len(values) > 0 {
-				// If the field is "options", join multiple values into a single string
-				if key == "options" {
-					params[key] = strings.Join(values, " ")
-				} else {
-					params[key] = values[0]
-				}
+	for key, values := range r.Form {
+		if len(values) > 0 {
+			if key == "options" {
+				params[key] = strings.Join(values, " ")
+			} else {
+				params[key] = values[0]
 			}
-		}
-		// Call the API
-		out, err := callBastilleAPI(apiPath, params)
-		data.Output = out
-		if err != nil {
-			data.Error = err.Error()
 		}
 	}
 
-	// Render the corresponding template
+	if subcommand == "console" || subcommand == "top" {
+		// This call returns a URL instead of normal output
+		urlPath, err := callBastilleAPILive(apiPath, params)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Return the URL directly as plain text for JS iframe
+		url := fmt.Sprintf("http://%s", urlPath)
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write([]byte(url))
+		return
+	}
+
+	// Normal Bastille API call
+	out, err := callBastilleAPI(apiPath, params)
+	data.Output = out
+	if err != nil {
+		data.Error = err.Error()
+	}
+
 	render(w, subcommandpath, data)
 }

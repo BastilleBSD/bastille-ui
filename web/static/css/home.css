@@ -1,0 +1,55 @@
+.jails-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1em;
+  font-family: Arial, sans-serif;
+}
+
+.jails-table th:first-child,
+.jails-table td:first-child {
+    max-width: 10px;
+    text-align: left;   /* center the checkbox */
+}
+
+.jails-table th {
+  background-color: #ff3333;
+  color: black;
+  padding: 10px;
+  text-align: left;
+  font-weight: bold;
+  border-bottom: 2px solid #34495e;
+}
+
+.jails-table td {
+  padding-inline: 10px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid #ddd;
+}
+
+.jails-table tbody button {
+    display: inline-block;
+    height: 24px;
+    width: 24px;
+    padding: 0px 0px;
+    margin: 0 0px;
+    font-size: 1em;
+    cursor: pointer;
+    color: white;
+}
+.jails-table tfoot tr td {
+    display: flex;
+    gap: 4px;
+    border-bottom: none !important;
+    padding-top: 10px;
+}
+.jails-table form {
+    display: inline-block;
+}
+.jails-table tfoot button {
+    width: auto;
+    height: auto;
+    padding: 5px;
+    font-size: 1em;
+    cursor: pointer;
+}

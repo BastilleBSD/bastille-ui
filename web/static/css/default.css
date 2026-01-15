@@ -1,0 +1,82 @@
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: #0b0b0b;
+    color: #eee;
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main-content {
+    margin-left: 240px;
+    margin-top: 60px;
+    padding: 20px;
+    flex: 1;
+}
+
+.panel {
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(6px);
+    padding: 30px 30px;
+    border-radius: 10px;
+    max-width: 1200px;
+    margin: 0 auto;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+    text-align: left;
+}
+
+a.button, button {
+    display: block;
+    padding: 10px;
+    margin: 10px 0;
+    background: #cc0000;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+a.button:hover, button:hover {
+    background: #ff3333;
+}
+
+input {
+    width: auto;
+    max-width: 100%;
+    display: block;
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 4px;
+    border: none;
+}
+
+input[type="hidden"] {
+    display: none;
+}
+
+input[type="checkbox"] {
+    width: auto;       /* default small size */
+    height: auto;
+    margin: 0;         /* adjust if needed */
+}
+
+pre {
+    background: #111;
+    font-size: 1.2em;
+    color: #14c514;
+    padding: 10px;
+    margin-top: 15px;
+    max-height: 300px;
+    overflow: auto;
+    border-radius: 4px;
+}
+
+.error {
+    color: #ff6666;
+}

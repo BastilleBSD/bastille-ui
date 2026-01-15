@@ -1,25 +1,33 @@
 {{define "default"}}
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="UTF-8">
-    <title>{{block "title" .}}{{.Title}}{{end}}</title>
+	<head>
+		<meta charset="UTF-8">
+		<title>{{block "title" .}}{{.Title}}{{end}}</title>
 
-    <!-- Link external CSS -->
-    <link rel="stylesheet" href="/static/style.css">
-</head>
+		<!-- Load CSS files-->
+		<link rel="stylesheet" href="/static/css/default.css">
+		<link rel="stylesheet" href="/static/css/navbar.css">
+		<link rel="stylesheet" href="/static/css/sidebar.css">
+		<link rel="stylesheet" href="/static/css/console.css">
+		<link rel="stylesheet" href="/static/css/home.css">
+		<link rel="stylesheet" href="/static/css/nodes.css">
+		<link rel="stylesheet" href="/static/css/templates.css">
 
-<body>
-    {{template "navbar" .}}
-    {{template "sidebar" .}}
-    {{template "options" .}}
+	</head>
 
-    <div class="main-content">
-        <div class="panel">
-            <h2>{{block "h2" .}}{{.Title}}{{end}}</h2>
-            {{template "content" .}}
-        </div>
-    </div>
-</body>
+	<body>
+
+		{{template "navbar" .}}
+		{{template "sidebar" .}}
+		{{template "options" .}}
+
+		<div class="main-content">
+			<div class="panel">
+				<h2>{{block "h2" .}}{{.Title}}{{end}}</h2>
+				{{template "content" .}}
+			</div>
+		</div>
+	</body>
 </html>
 {{end}}

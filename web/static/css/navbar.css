@@ -1,0 +1,56 @@
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 8vh;
+    background-color: black;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+}
+
+.navbar-left {
+    display: flex;
+    margin: 10px;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar-left .logo {
+    height: 50px;
+}
+
+.navbar-left .title {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin: 20px;
+}
+
+.navbar-left a {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-left .button {
+    padding: 8px;
+    margin: 8px;
+    color: white;
+    border-radius: 8px;
+}
+
+.navbar-right {
+    display: flex;
+    padding: 5px;
+}
+
+.navbar-right .button {
+    padding: 8px;
+    margin: 8px;
+    color: white;
+    border-radius: 8px;
+}

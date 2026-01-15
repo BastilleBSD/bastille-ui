@@ -159,16 +159,18 @@ func BastilleConsoleHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
 		return
 	}
+	cmdArgs = append(cmdArgs, target)
 	if user != "" {
 		cmdArgs = append(cmdArgs, user)
 	}
 	
-	output, err := BastilleCommand(cmdArgs...)
+	port, err := BastilleCommandLive(cmdArgs...)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	fmt.Fprintf(w, "%s", output)
+
+	w.Header().Set("X-TTYD-Port", port)
 }
 
 func BastilleConvertHandler(w http.ResponseWriter, r *http.Request) {

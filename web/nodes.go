@@ -108,6 +108,7 @@ func nodeSelectHandler(w http.ResponseWriter, r *http.Request) {
 func nodePageHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := PageData{
+		Title: "Manage Nodes",
 		Config:     cfg,
 		Nodes:      cfg.Nodes,
 		ActiveNode: getActiveNode(),

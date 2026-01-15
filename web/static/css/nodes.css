@@ -1,0 +1,27 @@
+.nodes-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1em;
+  font-family: Arial, sans-serif;
+}
+
+.nodes-table td {
+  padding: 8px;
+}
+
+.nodes-table th {
+  background-color: #ff3333;
+  color: black;
+  padding: 10px;
+  text-align: left;
+  font-weight: bold;
+}
+
+.nodes-table button {
+    display: inline-block;
+    padding: 8px 8px;
+    margin: 0 0px;
+    font-size: 1em;
+    cursor: pointer;
+    color: white;
+}

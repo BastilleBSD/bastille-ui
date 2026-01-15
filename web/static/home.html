@@ -1,4 +1,5 @@
 {{ define "content" }}
+
   {{ if .Error }}
     <div class="error">{{ .Error }}</div>
   {{ end }}
@@ -31,6 +32,9 @@
             <input type="checkbox"
                    class="jail-checkbox"
                    value="{{ .Jail.Name }}">
+            <input type="checkbox"
+                   class="jail-checkbox"
+                   value="{{ .Jail.Name }}">
           </td>
           <td>{{ .Jail.JID }}</td>
           <td>{{ .Jail.Name }}</td>
@@ -58,7 +62,7 @@
               <button type="submit" class="homepage-start-button">▶</button>
             </form>
 
-            <form action="/bastille/quickaction" method="POST;">
+            <form action="/bastille/quickaction" method="POST">
               <input type="hidden" name="target" value="{{ .Jail.Name }}">
               <input type="hidden" name="action" value="restart">
               <button type="submit" class="homepage-restart-button">⟳</button>
@@ -96,6 +100,13 @@
               <button type="submit">Destroy</button>
 
             </form>
+
+            <form id="multi-jail-form-destroy" action="/bastille/quickaction" method="POST">
+              <input type="hidden" name="target" id="multi-jail-target-input-destroy">
+              <input type="hidden" name="action" value="destroy">
+              <button type="submit">Destroy</button>
+
+            </form>
           </td>
         </tr>
       </tfoot>
@@ -109,74 +120,81 @@
     </div>
 
 <script>
-  function openConsole(jail) {
-    const url = `/api/v1/web-console?target=` + encodeURIComponent(jail);
-    fetch(url)
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById("consoleIframe").src = data;
-        document.getElementById("console-overlay").style.display = "block";
-        document.getElementById("console-iframe-container").style.display = "block";
-      })
-      .catch(error => console.error("Error loading the console:", error));
-  }
 
-  function closeConsole() {
-    document.getElementById("consoleIframe").src = "about:blank";
+function openConsole(jail) {
+    const url = `/bastille/console?target=` + encodeURIComponent(jail);
+
+    fetch(url, { method: "GET" }) // POST if your API expects it
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return response.text(); // The API returns the full URL
+        })
+        .then(url => {
+            document.getElementById("consoleIframe").src = url;
+            document.getElementById("console-overlay").style.display = "block";
+            document.getElementById("console-iframe-container").style.display = "block";
+        })
+        .catch(err => console.error("Error opening console:", err));
+}
+
+function closeConsole() {
+    const iframe = document.getElementById("consoleIframe");
+    iframe.src = "about:blank"; // stops ttyd stream
     document.getElementById("console-overlay").style.display = "none";
     document.getElementById("console-iframe-container").style.display = "none";
-  }
+}
 
-  function setupBulkForm(formId, inputId, needsConfirm = false) {
+function setupBulkForm(formId, inputId, needsConfirm = false) {
     document.getElementById(formId).addEventListener("submit", function (e) {
-      const selected = Array.from(
-        document.querySelectorAll(".jail-checkbox:checked")
-      ).map(cb => cb.value);
+        const selected = Array.from(
+            document.querySelectorAll(".jail-checkbox:checked")
+        ).map(cb => cb.value);
 
-      if (selected.length === 0) {
-        e.preventDefault();
-        alert("Please select at least one jail.");
-        return;
-      }
-
-      if (needsConfirm) {
-        const confirmed = confirm(
-          "Are you sure you want to DESTROY the selected jail(s)?\nThis action cannot be undone."
-        );
-        if (!confirmed) {
-          e.preventDefault();
-          return;
+        if (selected.length === 0) {
+            e.preventDefault();
+            alert("Please select at least one jail.");
+            return;
         }
-      }
 
-      document.getElementById(inputId).value = selected.join(" ");
+        if (needsConfirm) {
+            const confirmed = confirm(
+                "Are you sure you want to DESTROY the selected jail(s)?\nThis action cannot be undone."
+            );
+            if (!confirmed) {
+                e.preventDefault();
+                return;
+            }
+        }
+
+        document.getElementById(inputId).value = selected.join(" ");
     });
-  }
+}
 
-  // Select All checkbox logic
-  const selectAllCheckbox = document.getElementById("selectAll");
-  const jailCheckboxes = document.querySelectorAll(".jail-checkbox");
+// Select All checkbox logic
+const selectAllCheckbox = document.getElementById("selectAll");
+const jailCheckboxes = document.querySelectorAll(".jail-checkbox");
 
-  selectAllCheckbox.addEventListener("change", function () {
+selectAllCheckbox.addEventListener("change", function () {
     const checked = this.checked;
     jailCheckboxes.forEach(cb => cb.checked = checked);
-  });
+});
 
-  jailCheckboxes.forEach(cb =>
+jailCheckboxes.forEach(cb =>
     cb.addEventListener("change", function () {
-      if (!this.checked) {
-        selectAllCheckbox.checked = false;
-      } else if (Array.from(jailCheckboxes).every(cb => cb.checked)) {
-        selectAllCheckbox.checked = true;
-      }
+        if (!this.checked) {
+            selectAllCheckbox.checked = false;
+        } else if (Array.from(jailCheckboxes).every(cb => cb.checked)) {
+            selectAllCheckbox.checked = true;
+        }
     })
-  );
+);
 
-  // Bulk action setups
-  setupBulkForm("multi-jail-form", "multi-jail-target-input-stop");
-  setupBulkForm("multi-jail-form-start", "multi-jail-target-input-start");
-  setupBulkForm("multi-jail-form-restart", "multi-jail-target-input-restart");
-  setupBulkForm("multi-jail-form-destroy", "multi-jail-target-input-destroy", true);
+// Bulk action setups
+setupBulkForm("multi-jail-form", "multi-jail-target-input-stop");
+setupBulkForm("multi-jail-form-start", "multi-jail-target-input-start");
+setupBulkForm("multi-jail-form-restart", "multi-jail-target-input-restart");
+setupBulkForm("multi-jail-form-destroy", "multi-jail-target-input-destroy", true);
+
 </script>
 
   {{ end }}
