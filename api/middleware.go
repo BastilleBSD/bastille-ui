@@ -16,6 +16,25 @@ func apiKeyMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Set headers for all requests
+		w.Header().Set("Access-Control-Allow-Origin", "*") 
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-TTYD-Port")
+
+w.Header().Set("Access-Control-Expose-Headers", "X-TTYD-Port")
+
+		// Handle Preflight: Return OK immediately for OPTIONS
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 // Log all API requests
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

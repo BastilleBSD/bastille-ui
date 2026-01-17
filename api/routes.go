@@ -53,9 +53,11 @@ func loadRoutes() {
 
 	for path, handler := range routes {
 		mux.Handle(
-			"POST "+path,
+			path,
 			loggingMiddleware(
-				apiKeyMiddleware(handler),
+				corsMiddleware(
+					apiKeyMiddleware(handler),
+				),
 			),
 		)
 	}
