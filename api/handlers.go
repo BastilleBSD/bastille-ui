@@ -11,20 +11,28 @@ func getParam(r *http.Request, key string) string {
 }
 
 func ParseAndRunCommand(w http.ResponseWriter, r *http.Request, cmdArgs []string) {
+
+	extra := make(map[string]any)
+	logAll("debug", r, cmdArgs, extra, nil)
+	
     if strings.Contains(r.URL.Path, "/api/v1/bastille/live/") {
         port, err := BastilleCommandLive(cmdArgs...)
         if err != nil {
+			logAll("error", r, cmdArgs, extra, err)
             http.Error(w, err.Error(), http.StatusInternalServerError)
             return
         }
         w.Header().Set("X-TTYD-Port", port)
+		logAll("info", r, cmdArgs, extra, nil)
     } else {
         output, err := BastilleCommand(cmdArgs...)
         if err != nil {
+			logAll("error", r, cmdArgs, extra, err)
             http.Error(w, err.Error(), http.StatusInternalServerError)
             return
         }
         fmt.Fprintf(w, "%s", output)
+		logAll("info", r, cmdArgs, nil, nil)
     }
 }
 
@@ -365,7 +373,6 @@ func BastilleExportHandler(w http.ResponseWriter, r *http.Request) {
 	if path != "" {
 		cmdArgs = append(cmdArgs, path)
 	}
-	cmdArgs = append(cmdArgs, path)
 
 	ParseAndRunCommand(w, r, cmdArgs)
 }
@@ -494,8 +501,9 @@ func BastilleLimitsHandler(w http.ResponseWriter, r *http.Request) {
 	} else if action == "list" || action == "show" {
 			if args == "active" {
 				cmdArgs = append(cmdArgs, action, args)
+			} else {
+				cmdArgs = append(cmdArgs, action)
 			}
-			cmdArgs = append(cmdArgs, action)
 	}
 
 	ParseAndRunCommand(w, r, cmdArgs)
@@ -961,13 +969,14 @@ func BastilleTagsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		cmdArgs = append(cmdArgs, action, tags)
-	} else {
-		if action == "list" {
-			cmdArgs = append(cmdArgs, action)
-			if tags != "" {
-				cmdArgs = append(cmdArgs, action, tags)
-			}
+	} else if action == "list" {
+		cmdArgs = append(cmdArgs, action)
+		if tags != "" {
+			cmdArgs = append(cmdArgs, tags)
 		}
+	} else {
+		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		return
 	}
 
 	ParseAndRunCommand(w, r, cmdArgs)
