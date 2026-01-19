@@ -8,7 +8,7 @@ import (
 )
 
 var (
-       configFile = "web/config.json"
+	configFile = "web/config.json"
 	cfg                    *ConfigStruct
 	activeNode      *Node
 	activeNodeMu sync.RWMutex
@@ -37,7 +37,7 @@ func loadConfig() *ConfigStruct {
 
 func saveConfig(config *ConfigStruct) error {
 
-	file, err := os.Create("config.json")
+	file, err := os.Create(configFile)
 	if err != nil {
 		return err
 	}

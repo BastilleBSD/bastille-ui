@@ -134,10 +134,11 @@ func settingsPageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
-	// Extract subcommand from the URL
+
 	subcommand := r.URL.Path[len("/bastille/"):]
 	subcommandpath := "templates/" + subcommand
 	apiPath := "/api/v1/bastille/" + subcommand
+	apiPathLive := "/api/v1/bastille/live/" + subcommand
 
 	// Default page data
 	data := PageData{
@@ -166,7 +167,7 @@ func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	if subcommand == "console" || subcommand == "top" {
 		// This call returns a URL instead of normal output
-		urlPath, err := callBastilleAPILive(apiPath, params)
+		urlPath, err := callBastilleAPILive(apiPathLive, params)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

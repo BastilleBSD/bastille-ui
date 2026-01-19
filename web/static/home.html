@@ -69,9 +69,9 @@
 </div>
 
 <div id="console-overlay" class="console-overlay" onclick="closeConsole()"></div>
-<div id="console-iframe-container">
+<div id="console-iframe-container" class="console-ifram-container">
   <iframe id="consoleIframe" class="console-iframe"></iframe>
-  <button class="ghost-btn full-width" onclick="closeConsole()">TERMINATE CONNECTION</button>
+  <button class="console-close-button" onclick="closeConsole()">CLOSE</button>
 </div>
 
 <script>
@@ -113,7 +113,7 @@ async function jailAction(action, target) {
     panel.classList.remove("loading");
   }
 }
-
+// ================= BULK ACTION =================
 async function bulkAction(action) {
   const targets = Array.from(
     document.querySelectorAll(".jail-panel-checkbox:checked")
@@ -140,6 +140,7 @@ async function bulkAction(action) {
       throw new Error(text || "Bulk action failed");
     }
 
+    // Fetch updated jail list
     const listRes = await fetch("/bastille/quickaction/list-jails-json");
     const jails = await listRes.json();
 
@@ -181,12 +182,26 @@ function updateJailPanel(panel, jail) {
 }
 
 function openConsole(jail) {
-  fetch(`/bastille/console?target=${encodeURIComponent(jail)}`)
-    .then(r => r.text())
+  // Show a loading state or just trigger the fetch
+  fetch(`/bastille/console`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ target: jail })
+  })
+    .then(res => {
+      if (!res.ok) throw new Error("Could not start console session");
+      return res.text();
+    })
     .then(url => {
-      document.getElementById("consoleIframe").src = url;
+      // url should be the full http://IP:PORT from your Go backend
+      const iframe = document.getElementById("consoleIframe");
+      iframe.src = url;
+      
       document.getElementById("console-iframe-container").style.display = "block";
       document.getElementById("console-overlay").style.display = "block";
+    })
+    .catch(err => {
+      alert("Console Error: " + err.message);
     });
 }
 
@@ -196,6 +211,7 @@ function closeConsole() {
   document.getElementById("console-overlay").style.display = "none";
 }
 
+// ================= SELECT ALL =================
 document.getElementById("selectAll").onclick = function () {
   document.querySelectorAll(".jail-panel-checkbox")
     .forEach(c => c.checked = this.checked);

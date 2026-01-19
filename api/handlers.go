@@ -10,6 +10,24 @@ func getParam(r *http.Request, key string) string {
     return r.URL.Query().Get(key)
 }
 
+func ParseAndRunCommand(w http.ResponseWriter, r *http.Request, cmdArgs []string) {
+    if strings.Contains(r.URL.Path, "/api/v1/bastille/live/") {
+        port, err := BastilleCommandLive(cmdArgs...)
+        if err != nil {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+            return
+        }
+        w.Header().Set("X-TTYD-Port", port)
+    } else {
+        output, err := BastilleCommand(cmdArgs...)
+        if err != nil {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+            return
+        }
+        fmt.Fprintf(w, "%s", output)
+    }
+}
+
 func BastilleBootstrapHandler(w http.ResponseWriter, r *http.Request) {
 
 	cmdArgs := []string{"bootstrap"}
@@ -30,12 +48,7 @@ func BastilleBootstrapHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, arch)
 	}
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleCloneHandler(w http.ResponseWriter, r *http.Request) {
@@ -66,12 +79,7 @@ func BastilleCloneHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, ip)
 	
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleCmdHandler(w http.ResponseWriter, r *http.Request) {
@@ -96,12 +104,7 @@ func BastilleCmdHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, strings.Fields(command)...)
 	
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleConfigHandler(w http.ResponseWriter, r *http.Request) {
@@ -136,12 +139,7 @@ func BastilleConfigHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, value)
 	}
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleConsoleHandler(w http.ResponseWriter, r *http.Request) {
@@ -164,13 +162,7 @@ func BastilleConsoleHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, user)
 	}
 	
-	port, err := BastilleCommandLive(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	w.Header().Set("X-TTYD-Port", port)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleConvertHandler(w http.ResponseWriter, r *http.Request) {
@@ -197,12 +189,7 @@ func BastilleConvertHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, release)
 	}
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleCpHandler(w http.ResponseWriter, r *http.Request) {
@@ -233,12 +220,7 @@ func BastilleCpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, jail_path)
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleCreateHandler(w http.ResponseWriter, r *http.Request) {
@@ -273,12 +255,7 @@ func BastilleCreateHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, iface)
 	}
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleDestroyHandler(w http.ResponseWriter, r *http.Request) {
@@ -301,12 +278,7 @@ func BastilleDestroyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, target)
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleEditHandler(w http.ResponseWriter, r *http.Request) {
@@ -329,12 +301,7 @@ func BastilleEditHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, file)
 	}
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleEtcupdateHandler(w http.ResponseWriter, r *http.Request) {
@@ -376,12 +343,7 @@ func BastilleEtcupdateHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleExportHandler(w http.ResponseWriter, r *http.Request) {
@@ -405,12 +367,7 @@ func BastilleExportHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, path)
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleHtopHandler(w http.ResponseWriter, r *http.Request) {
@@ -429,12 +386,7 @@ func BastilleHtopHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, target)
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleImportHandler(w http.ResponseWriter, r *http.Request) {
@@ -457,12 +409,7 @@ func BastilleImportHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, release)
 	}
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleJcpHandler(w http.ResponseWriter, r *http.Request) {
@@ -499,12 +446,7 @@ func BastilleJcpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, destination_path)
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleLimitsHandler(w http.ResponseWriter, r *http.Request) {
@@ -556,12 +498,7 @@ func BastilleLimitsHandler(w http.ResponseWriter, r *http.Request) {
 			cmdArgs = append(cmdArgs, action)
 	}
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleListHandler(w http.ResponseWriter, r *http.Request) {
@@ -578,12 +515,7 @@ func BastilleListHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, item)
 	}
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleMigrateHandler(w http.ResponseWriter, r *http.Request) {
@@ -608,12 +540,7 @@ func BastilleMigrateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, destination)
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleMonitorHandler(w http.ResponseWriter, r *http.Request) {
@@ -648,12 +575,7 @@ func BastilleMonitorHandler(w http.ResponseWriter, r *http.Request) {
 			}
 	}
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleMountHandler(w http.ResponseWriter, r *http.Request) {
@@ -707,12 +629,7 @@ func BastilleMountHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, fs_type, fs_options, dump, pass_number)
 	}
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleNetworkHandler(w http.ResponseWriter, r *http.Request) {
@@ -752,12 +669,7 @@ func BastilleNetworkHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastillePkgHandler(w http.ResponseWriter, r *http.Request) {
@@ -782,12 +694,7 @@ func BastillePkgHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, strings.Fields(args)...)
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleRcpHandler(w http.ResponseWriter, r *http.Request) {
@@ -818,12 +725,7 @@ func BastilleRcpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, host_path)
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleRdrHandler(w http.ResponseWriter, r *http.Request) {
@@ -871,12 +773,7 @@ func BastilleRdrHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, action, log_options)
 	}
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleRenameHandler(w http.ResponseWriter, r *http.Request) {
@@ -904,12 +801,7 @@ func BastilleRenameHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, target, new_name)
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleRestartHandler(w http.ResponseWriter, r *http.Request) {
@@ -928,12 +820,7 @@ func BastilleRestartHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, target)
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleServiceHandler(w http.ResponseWriter, r *http.Request) {
@@ -964,12 +851,7 @@ func BastilleServiceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, strings.Fields(args)...)
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleSetupHandler(w http.ResponseWriter, r *http.Request) {
@@ -990,12 +872,7 @@ func BastilleSetupHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, args)
 	}
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleStartHandler(w http.ResponseWriter, r *http.Request) {
@@ -1014,12 +891,7 @@ func BastilleStartHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, target)
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleStopHandler(w http.ResponseWriter, r *http.Request) {
@@ -1038,12 +910,7 @@ func BastilleStopHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, target)
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleSysrcHandler(w http.ResponseWriter, r *http.Request) {
@@ -1068,12 +935,7 @@ func BastilleSysrcHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, strings.Fields(args)...)
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleTagsHandler(w http.ResponseWriter, r *http.Request) {
@@ -1108,12 +970,7 @@ func BastilleTagsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleTemplateHandler(w http.ResponseWriter, r *http.Request) {
@@ -1148,12 +1005,7 @@ func BastilleTemplateHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, template)
 	}
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleTopHandler(w http.ResponseWriter, r *http.Request) {
@@ -1172,12 +1024,7 @@ func BastilleTopHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, target)
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleUmountHandler(w http.ResponseWriter, r *http.Request) {
@@ -1202,12 +1049,7 @@ func BastilleUmountHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, jail_path)
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleUpdateHandler(w http.ResponseWriter, r *http.Request) {
@@ -1226,12 +1068,7 @@ func BastilleUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, target)
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleUpgradeHandler(w http.ResponseWriter, r *http.Request) {
@@ -1261,12 +1098,7 @@ func BastilleUpgradeHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, new_release)
 	}
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleVerifyHandler(w http.ResponseWriter, r *http.Request) {
@@ -1285,12 +1117,7 @@ func BastilleVerifyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmdArgs = append(cmdArgs, target)
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
 
 func BastilleZfsHandler(w http.ResponseWriter, r *http.Request) {
@@ -1348,10 +1175,5 @@ func BastilleZfsHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, jail_path)
 	}
 
-	output, err := BastilleCommand(cmdArgs...)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	fmt.Fprintf(w, "%s", output)
+	ParseAndRunCommand(w, r, cmdArgs)
 }
