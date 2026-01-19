@@ -20,13 +20,13 @@ body {
     padding: 20px;
 }
 
-.button {
+.button, .action-button, form button {
     background: var(--color-btn);
     color: var(--color-btn-text);
     text-decoration: none;
 }
 
-.button:hover {
+.button:hover, .action-button:hover, form button:hover {
     background: var(--color-btn-hover);
 }
 
@@ -37,7 +37,8 @@ input {
     padding: 8px;
     margin: 5px 0;
     border-radius: 4px;
-    border: none;
+    border: 1px solid var(--color-input-border);
+    background: var(--color-input-bg);
 }
 
 input[type="hidden"] {

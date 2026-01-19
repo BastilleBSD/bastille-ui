@@ -2,8 +2,8 @@
     --bastille-dark-red: #a61e1e;   /* Left side of logo */
     --bastille-light-red: #d91e1e;  /* Right side of logo */
 
-	--color-text-primary: black;
-	--color-text-secondary: #ffffff;
+    --color-text-primary: black;
+    --color-text-secondary: #ffffff;
 
     --color-main: #black; /* black */
     --color-main-bg: #ffffff; /* white */
@@ -11,7 +11,7 @@
     --color-border: black;
 
     --color-input-bg: #ffffff;
-    --color-input-border: #e2e8f0;
+    --color-input-border: #f2f2f2;
 
     --color-jail-panel: var(--color-secondary-bg);
     --color-jail-panel-border: #e2e8f0;
@@ -21,7 +21,7 @@
 
     --color-btn: var(--bastille-dark-red);
     --color-btn-hover: var(--bastille-light-red);
-	--color-btn-text: #ffffff;
+    --color-btn-text: #ffffff;
 
     --btn-padding: 5px 10px;
     --btn-margin: 2px 2px;
@@ -35,18 +35,18 @@
         --color-main: white; /* white */
         --color-main-bg: black; /* zinc950 */
         --color-secondary-bg: #27272a; /* dark grey */
-		--color-border: white;
+        --color-border: f2f2f2;
 
-		--color-text-primary: white;
-		--color-text-secondary: #ffffff;
+        --color-text-primary: white;
+        --color-text-secondary: #ffffff;
 		
-		--color-input-bg: #1a1a1a;
-		--color-input-border: #333333;
+        --color-input-bg: #1a1a1a;
+        --color-input-border: #333333;
 		
-		--color-jail-panel: var(--color-secondary-bg);
-		--color-jail-panel-shadow: 0 0 10px #fff;
-		--color-jail-panel-border: none;
-		--color-jail-panel-hover: orange;
-		--color-jail-panel-shadow-hover: 0 0 30px #fff;
+        --color-jail-panel: var(--color-secondary-bg);
+        --color-jail-panel-shadow: 0 0 10px #fff;
+        --color-jail-panel-border: none;
+        --color-jail-panel-hover: orange;
+        --color-jail-panel-shadow-hover: 0 0 30px #fff;
     }
 }

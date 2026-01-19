@@ -25,3 +25,14 @@
 .option-row input[type="checkbox"] {
     margin-top: 0;
 }
+
+.action-button, form button {
+    border: none;
+    padding: var(--btn-padding);
+    font-weight: var(--btn-font-weight);
+    font-size: 1.2em;
+    margin: var(--btn-margin);
+    color: var(--color-btn-text);
+    border-radius: var(--btn-radius);
+    cursor: pointer;
+}

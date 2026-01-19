@@ -28,24 +28,6 @@
 
     <button class="action-button" type="submit">GO!</button>
 </form>
-
-<script>
-function updateOptions() {
-    const checkboxes = document.querySelectorAll('.option-checkbox');
-    const optionsInput = document.getElementById('options');
-    let opts = [];
-
-    // Simple flags
-    checkboxes.forEach(cb => {
-        if (cb.checked && cb.value) {
-            opts.push(cb.value);
-        }
-    });
-
-    optionsInput.value = opts.join(' ');
-}
-</script>
-
 {{if .Output}}<pre>{{.Output}}</pre>{{end}}
 {{if .Error}}<div class="error">{{.Error}}</div>{{end}}
 {{end}}

@@ -16,6 +16,8 @@ func loadRoutes() {
 
 	http.Handle("/bastille/quickaction", loggingMiddleware(requireLogin(homePageActionHandler)))
 
+	http.Handle("/bastille/quickaction/list-jails-json", loggingMiddleware(requireLogin(getJailsJSONHandler)))
+
 	http.Handle("/bastille/", loggingMiddleware(requireLogin(bastilleWebHandler)))
 
 	http.Handle("/nodes", loggingMiddleware(requireLogin(nodePageHandler)))

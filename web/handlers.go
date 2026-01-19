@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"net/http"
 	"strings"
+	"encoding/json"
 )
 
 func homePageActionHandler(w http.ResponseWriter, r *http.Request) {
@@ -21,10 +22,19 @@ func homePageActionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Call the API
-	callBastilleAPI("/api/v1/bastille/"+action, params)
+	_, err := callBastilleAPI("/api/v1/bastille/"+action, params)
 
-	// Redirect back to main page so the table reloads
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string {
+			"error": err.Error(),
+		})
+        	return
+	}
+
+	json.NewEncoder(w).Encode(map[string]string{
+		"status": "ok",
+	})
 }
 
 // --- Home Page ---
@@ -177,4 +187,70 @@ func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render(w, subcommandpath, data)
+}
+
+func getJailsJSONHandler(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/json")
+
+    var jails []Jails
+
+    options := ""
+    item := ""
+    params := map[string]string{
+        "options": options,
+        "item":    item,
+    }
+
+    // Call Bastille API
+    out, err := callBastilleAPI("/api/v1/bastille/list", params)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    scanner := bufio.NewScanner(strings.NewReader(out))
+    firstLine := true
+    for scanner.Scan() {
+        line := strings.TrimSpace(scanner.Text())
+        if line == "" {
+            continue
+        }
+
+        // Skip header
+        if firstLine {
+            firstLine = false
+            continue
+        }
+
+        fields := strings.Fields(line)
+        if len(fields) < 10 {
+            continue
+        }
+
+        jails = append(jails, Jails{
+            Jail: JailSettings{
+                JID:     fields[0],
+                Name:    fields[1],
+                Boot:    fields[2],
+                Prio:    fields[3],
+                State:   fields[4],
+                Type:    fields[5],
+                IP:      fields[6],
+                Ports:   fields[7],
+                Release: fields[8],
+                Tags:    fields[9],
+            },
+        })
+    }
+
+    if err := scanner.Err(); err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    // Return the jails slice as JSON
+    if err := json.NewEncoder(w).Encode(jails); err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
 }

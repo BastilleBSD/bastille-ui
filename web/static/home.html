@@ -1,149 +1,207 @@
 {{ define "content" }}
 
-  {{ if .Error }}
-    <div class="error-banner">{{ .Error }}</div>
-  {{ end }}
+{{ if .Error }}
+  <div class="error-banner">{{ .Error }}</div>
+{{ end }}
 
-  {{ if .Jails }}
-    <div class="home-header">
-      <div class="home-header-main">
-        <label class="home-select-all">
-          <input type="checkbox" id="selectAll" />
-          <span class=>Select All</span>
-        </label>
-        
-        <div class="bulk-btn-group">
-          <form id="multi-jail-form" action="/bastille/quickaction" method="POST">
-            <input type="hidden" name="target" id="multi-jail-target-input-stop">
-            <input type="hidden" name="action" value="stop">
-            <button type="submit" class="ghost-btn">STOP</button>
-          </form>
+{{ if .Jails }}
 
-          <form id="multi-jail-form-start" action="/bastille/quickaction" method="POST">
-            <input type="hidden" name="target" id="multi-jail-target-input-start">
-            <input type="hidden" name="action" value="start">
-            <button type="submit" class="ghost-btn">START</button>
-          </form>
+<div class="home-header">
+  <div class="home-header-main">
+    <label class="home-select-all">
+      <input type="checkbox" id="selectAll" />
+      <span>Select All</span>
+    </label>
 
-          <form id="multi-jail-form-destroy" action="/bastille/quickaction" method="POST">
-            <input type="hidden" name="target" id="multi-jail-target-input-destroy">
-            <input type="hidden" name="action" value="destroy">
-            <button type="submit" class="ghost-btn danger">DESTROY</button>
-          </form>
-        </div>
+    <div class="bulk-btn-group">
+      <button class="ghost-btn" onclick="bulkAction('stop')">STOP</button>
+      <button class="ghost-btn" onclick="bulkAction('start')">START</button>
+      <button class="ghost-btn danger" onclick="bulkAction('destroy')">DESTROY</button>
+    </div>
+  </div>
+</div>
+
+<div class="jails-grid">
+  {{ range .Jails }}
+  <div class="jail-panel" data-jail="{{ .Jail.Name }}">
+    <div class="jail-loading">
+      <span class="spinner"></span>
+    </div>
+
+    <div class="jail-panel-top">
+      <div class="jail-panel-identity">
+        <input type="checkbox" class="jail-panel-checkbox" value="{{ .Jail.Name }}">
+        <span class="jail-name">{{ .Jail.Name }}</span>
+      </div>
+
+      <div class="jail-panel-status-indicator">
+        {{ if eq .Jail.State "Up" }}
+          <span class="throbber up" title="Active"></span>
+        {{ else }}
+          <span class="throbber down" title="Inactive"></span>
+        {{ end }}
       </div>
     </div>
 
-    <div class="jails-grid">
-      {{ range .Jails }}
-      <div class="jail-panel">
-        <div class="jail-panel-top">
-          <div class="jail-panel-identity">
-            <input type="checkbox" class="jail-panel-checkbox" value="{{ .Jail.Name }}">
-            <span class="jail-name">{{ .Jail.Name }}</span>
-          </div>
-          
-          <div class="jail-panel-status-indicator">
-            {{ if or (eq .Jail.State "Up") }}
-              <span class="throbber up" title="Active"></span>
-            {{ else }}
-              <span class="throbber down" title="Inactive"></span>
-            {{ end }}
-          </div>
-        </div>
+    <div class="jail-panel-details">
+      <div class="detail-row"><span class="d-label">IP</span><span class="d-value">{{ .Jail.IP }}</span></div>
+      <div class="detail-row"><span class="d-label">Release</span><span class="d-value">{{ .Jail.Release }}</span></div>
+      <div class="detail-row"><span class="d-label">Type</span><span class="d-value">{{ .Jail.Type }}</span></div>
+      <div class="detail-row"><span class="d-label">Priority</span><span class="d-value">{{ .Jail.Prio }}</span></div>
+      <div class="detail-row"><span class="d-label">Boot</span><span class="d-value">{{ .Jail.Boot }}</span></div>
+    </div>
 
-        <div class="jail-panel-details">
-          <div class="detail-row">
-            <span class="d-label">IP Address</span>
-            <span class="d-value">{{ .Jail.IP }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="d-label">Release</span>
-            <span class="d-value">{{ .Jail.Release }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="d-label">Type</span>
-            <span class="d-value status-text">{{ .Jail.Type }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="d-label">Priority</span>
-            <span class="d-value status-text">{{ .Jail.Prio }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="d-label">Boot</span>
-            <span class="d-value status-text">{{ .Jail.Boot }}</span>
-          </div>
-        </div>
+    <div class="jail-panel-actions">
+      <button
+        type="button"
+        class="jail-panel-console-button"
+        onclick="openConsole('{{ .Jail.Name }}')"
+        title="Console">>_</button>
 
-        <div class="jail-panel-actions">
-          <button class="jail-panel-console-button" onclick="openConsole('{{ .Jail.Name }}')" title="Console">>_</button>
-          
-          <div class="jail-panel-btn-cluster">
-            <form action="/bastille/quickaction" method="POST">
-              <input type="hidden" name="target" value="{{ .Jail.Name }}">
-              <input type="hidden" name="action" value="start">
-              <button type="submit" class="jail-panel-start-button" title="Start">▶</button>
-            </form>
-
-            <form action="/bastille/quickaction" method="POST">
-              <input type="hidden" name="target" value="{{ .Jail.Name }}">
-              <input type="hidden" name="action" value="stop">
-              <button type="submit" class="jail-panel-stop-button" title="Stop">■</button>
-            </form>
-            
-            <form action="/bastille/quickaction" method="POST">
-              <input type="hidden" name="target" value="{{ .Jail.Name }}">
-              <input type="hidden" name="action" value="restart">
-              <button type="submit" class="jail-panel-restart-button" title="Restart">⟳</button>
-            </form>
-          </div>
-        </div>
+      <div class="jail-panel-btn-cluster">
+        <button class="jail-panel-start-button" type="button" onclick="jailAction('start', '{{ .Jail.Name }}')">▶</button>
+        <button class="jail-panel-stop-button" type="button" onclick="jailAction('stop', '{{ .Jail.Name }}')">■</button>
+        <button class="jail-panel-restart-button" type="button" onclick="jailAction('restart', '{{ .Jail.Name }}')">⟳</button>
       </div>
-      {{ end }}
     </div>
-
-    <div id="console-overlay" class="console-overlay" onclick="closeConsole()"></div>
-    <div id="console-iframe-container">
-      <iframe id="consoleIframe" class="console-iframe" frameborder="0"></iframe>
-      <button class="ghost-btn full-width" onclick="closeConsole()">TERMINATE CONNECTION</button>
-    </div>
-
-    <script>
-      function openConsole(jail) {
-        const url = `/bastille/console?target=` + encodeURIComponent(jail);
-        fetch(url, { method: "GET" })
-          .then(res => res.ok ? res.text() : Promise.reject())
-          .then(url => {
-            document.getElementById("consoleIframe").src = url;
-            document.getElementById("console-overlay").style.display = "block";
-            document.getElementById("console-iframe-container").style.display = "block";
-          }).catch(() => console.error("Console failed. Check if ttyd is running."));
-      }
-
-      function closeConsole() {
-        document.getElementById("consoleIframe").src = "about:blank";
-        document.getElementById("console-overlay").style.display = "none";
-        document.getElementById("console-iframe-container").style.display = "none";
-      }
-
-      function setupBulk(formId, inputId, needsConfirm = false) {
-        const form = document.getElementById(formId);
-        if(!form) return;
-        form.addEventListener("submit", (e) => {
-          const selected = Array.from(document.querySelectorAll(".jail-panel-checkbox:checked")).map(c => c.value);
-          if(!selected.length) { alert("SELECT JAILS FIRST."); return e.preventDefault(); }
-          if(needsConfirm && !confirm("CONFIRM DESTRUCTION OF SELECTED TARGETS?")) return e.preventDefault();
-          document.getElementById(inputId).value = selected.join(" ");
-        });
-      }
-
-      document.getElementById("selectAll").onclick = function() {
-        document.querySelectorAll(".jail-panel-checkbox").forEach(c => c.checked = this.checked);
-      };
-
-      setupBulk("multi-jail-form", "multi-jail-target-input-stop");
-      setupBulk("multi-jail-form-start", "multi-jail-target-input-start");
-      setupBulk("multi-jail-form-destroy", "multi-jail-target-input-destroy", true);
-    </script>
+  </div>
   {{ end }}
+</div>
+
+<div id="console-overlay" class="console-overlay" onclick="closeConsole()"></div>
+<div id="console-iframe-container">
+  <iframe id="consoleIframe" class="console-iframe"></iframe>
+  <button class="ghost-btn full-width" onclick="closeConsole()">TERMINATE CONNECTION</button>
+</div>
+
+<script>
+async function jailAction(action, target) {
+  const panel = document.querySelector(`.jail-panel[data-jail="${target}"]`);
+  if (!panel) return;
+
+  panel.classList.add("loading");
+
+  try {
+    const res = await fetch("/bastille/quickaction", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ action, target })
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || "Action failed");
+    }
+
+    const listRes = await fetch("/bastille/quickaction/list-jails-json");
+    if (!listRes.ok) throw new Error("Failed to fetch jail list");
+
+    const jails = await listRes.json();
+    if (!Array.isArray(jails)) throw new Error("Invalid jail list");
+
+    const updated = jails.find(j => j.Jail?.Name === target);
+    if (!updated) {
+      console.warn("Updated jail not found:", target);
+      return;
+    }
+
+    updateJailPanel(panel, updated.Jail);
+
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    panel.classList.remove("loading");
+  }
+}
+
+async function bulkAction(action) {
+  const targets = Array.from(
+    document.querySelectorAll(".jail-panel-checkbox:checked")
+  ).map(c => c.value);
+
+  if (!targets.length) {
+    alert("SELECT JAILS FIRST.");
+    return;
+  }
+
+  targets.forEach(t => 
+    document.querySelector(`.jail-panel[data-jail="${t}"]`)?.classList.add("loading")
+  );
+
+  try {
+    const res = await fetch("/bastille/quickaction", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ action, target: targets.join(" ") })
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || "Bulk action failed");
+    }
+
+    const listRes = await fetch("/bastille/quickaction/list-jails-json");
+    const jails = await listRes.json();
+
+    targets.forEach(t => {
+      const panel = document.querySelector(`.jail-panel[data-jail="${t}"]`);
+      const updated = jails.find(j => j.Jail.Name === t);
+      if (panel && updated) updateJailPanel(panel, updated.Jail);
+    });
+
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    targets.forEach(t => 
+      document.querySelector(`.jail-panel[data-jail="${t}"]`)?.classList.remove("loading")
+    );
+  }
+}
+
+function updateJailPanel(panel, jail) {
+  const throbber = panel.querySelector(".jail-panel-status-indicator span");
+  if (throbber) {
+    if (jail.State === "Up") {
+      throbber.className = "throbber up";
+      throbber.title = "Active";
+    } else {
+      throbber.className = "throbber down";
+      throbber.title = "Inactive";
+    }
+  }
+
+  const details = panel.querySelectorAll(".jail-panel-details .d-value");
+  if (details.length >= 5) {
+    details[0].textContent = jail.IP || "";
+    details[1].textContent = jail.Release || "";
+    details[2].textContent = jail.Type || "";
+    details[3].textContent = jail.Prio || "";
+    details[4].textContent = jail.Boot || "";
+  }
+}
+
+function openConsole(jail) {
+  fetch(`/bastille/console?target=${encodeURIComponent(jail)}`)
+    .then(r => r.text())
+    .then(url => {
+      document.getElementById("consoleIframe").src = url;
+      document.getElementById("console-iframe-container").style.display = "block";
+      document.getElementById("console-overlay").style.display = "block";
+    });
+}
+
+function closeConsole() {
+  document.getElementById("consoleIframe").src = "about:blank";
+  document.getElementById("console-iframe-container").style.display = "none";
+  document.getElementById("console-overlay").style.display = "none";
+}
+
+document.getElementById("selectAll").onclick = function () {
+  document.querySelectorAll(".jail-panel-checkbox")
+    .forEach(c => c.checked = this.checked);
+};
+
+</script>
+
+{{ end }}
 {{ end }}
