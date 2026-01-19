@@ -7,12 +7,14 @@ import (
 	"os"
 )
 
+var DebugMode bool
 var logger *slog.Logger
 
 func InitLogger(debug bool) {
 
 	level := slog.LevelInfo
-	if debug {
+	DebugMode = debug
+	if DebugMode {
 		level = slog.LevelDebug
 	}
 
@@ -32,17 +34,19 @@ func logAll(level string, r *http.Request, cmdArgs []string, extra map[string]an
 
 	switch level {
 	case "debug":
-		logger.Debug("Request debug",
-			"method", r.Method,
-			"path", r.URL.Path,
-			"query", r.URL.RawQuery,
-			"remote", r.RemoteAddr,
-			"user_agent", r.UserAgent(),
-			"args", cmdArgs,
-			"extra", extra,
-			"headers", headers,
-			"error", err,
-		)
+		if DebugMode {
+			logger.Debug("Request debug",
+				"method", r.Method,
+				"path", r.URL.Path,
+				"query", r.URL.RawQuery,
+				"remote", r.RemoteAddr,
+				"user_agent", r.UserAgent(),
+				"args", cmdArgs,
+				"extra", extra,
+				"headers", headers,
+				"error", err,
+		 )
+		}
 	case "info":
 		// Info only prints basic request info
 		logger.Info("Request info",
