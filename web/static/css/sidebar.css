@@ -1,25 +1,70 @@
 .sidebar {
+    display: flex;
+    flex-shrink: 0;
+    flex-direction: column;
+    height: calc(100% - 50px);
     position: fixed;
-    top: 60px; /* below navbar */
-    left: 0;
-    width: 200px;
-    bottom: 0;
-    background-color: #222;
-    color: #fff;
-    overflow-y: auto;
-    padding: 20px;
+    z-index: 2000;
+    float: left;
+    top: 50px;
+    width: 150px;
+    background-color: var(--color-secondary-bg);
+    color: var(--color-text-primary);
+    padding: 0 10px;
+    border: 1px solid var(--color-input-border);
+    overflow-x: hidden;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-header {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 15px;
+}
+
+.sidebar-search-bar {
+    display: block;
+    box-sizing: border-box;
+    padding: 5px;
+    background: var(--color-main-bg);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-input-border);
+    border-radius: var(--btn-radius);
+}
+
+.sidebar.open {
+    transform: translateX(0);
 }
 
 .sidebar a.button {
     display: block;
-    padding: 8px 10px;
-    margin-bottom: 5px;
-    background-color: #333;
-    color: #fff;
-    text-decoration: none;
-    border-radius: 3px;
+    font-weight: var(--btn-font-weight);
+    padding: var(--btn-padding);
+    text-align: center;
+    margin: var(--btn-margin);
+    background-color: var(--color-btn);
+    border-radius: var(--btn-radius);
 }
 
 .sidebar a.button:hover {
-    background-color: #dd544b;
+    background-color: var(--color-btn-hover);
+}
+
+@media (max-width: 720px) {
+
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .main-content {
+        margin-left: 0px;
+    }
+
+    .navbar-left-hamburger-menu.active {
+        transform: rotate(180deg);
+    }
 }

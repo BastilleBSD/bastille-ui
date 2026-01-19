@@ -33,7 +33,7 @@ func homePageHandler(w http.ResponseWriter, r *http.Request) {
 	var jails []Jails
 
 	data := PageData{
-		Title:      "Bastille WebUI",
+		Title:      "Bastion",
 		Config:     cfg,
 		Nodes:      cfg.Nodes,
 		ActiveNode: getActiveNode(),
@@ -135,6 +135,11 @@ func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
 		Nodes:      cfg.Nodes,
 		ActiveNode: getActiveNode(),
 	}
+
+	if r.Method == http.MethodGet {
+        render(w, subcommandpath, data)
+        return
+    }
 
 	r.ParseForm()
 	params := map[string]string{}

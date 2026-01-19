@@ -1,189 +1,149 @@
 {{ define "content" }}
 
   {{ if .Error }}
-    <div class="error">{{ .Error }}</div>
+    <div class="error-banner">{{ .Error }}</div>
   {{ end }}
 
   {{ if .Jails }}
-    <table class="jails-table">
-      <thead>
-        <tr>
-          <th>
-			<input type="checkbox" id="selectAll" />
-		  </th>
-          <th>JID</th>
-          <th>Name</th>
-          <th>Boot</th>
-          <th>Prio</th>
-          <th>State</th>
-          <th>Type</th>
-          <th>IP</th>
-          <th>Published Ports</th>
-          <th>Release</th>
-          <th>Tags</th>
-          <th>Jail Actions</th>
-        </tr>
-      </thead>
+    <div class="home-header">
+      <div class="home-header-main">
+        <label class="home-select-all">
+          <input type="checkbox" id="selectAll" />
+          <span class=>Select All</span>
+        </label>
+        
+        <div class="bulk-btn-group">
+          <form id="multi-jail-form" action="/bastille/quickaction" method="POST">
+            <input type="hidden" name="target" id="multi-jail-target-input-stop">
+            <input type="hidden" name="action" value="stop">
+            <button type="submit" class="ghost-btn">STOP</button>
+          </form>
 
-      <tbody>
-        {{ range .Jails }}
-        <tr>
-          <td>
-            <input type="checkbox" class="jail-checkbox" value="{{ .Jail.Name }}">
-          </td>
-          <td>{{ .Jail.JID }}</td>
-          <td>{{ .Jail.Name }}</td>
-          <td>{{ .Jail.Boot }}</td>
-          <td>{{ .Jail.Prio }}</td>
-          <td>{{ .Jail.State }}</td>
-          <td>{{ .Jail.Type }}</td>
-          <td>{{ .Jail.IP }}</td>
-          <td>{{ .Jail.Ports }}</td>
-          <td>{{ .Jail.Release }}</td>
-          <td>{{ .Jail.Tags }}</td>
-          <td>
-            <button class="homepage-console-button"
-                    onclick="openConsole('{{ .Jail.Name }}')">>_</button>
+          <form id="multi-jail-form-start" action="/bastille/quickaction" method="POST">
+            <input type="hidden" name="target" id="multi-jail-target-input-start">
+            <input type="hidden" name="action" value="start">
+            <button type="submit" class="ghost-btn">START</button>
+          </form>
+
+          <form id="multi-jail-form-destroy" action="/bastille/quickaction" method="POST">
+            <input type="hidden" name="target" id="multi-jail-target-input-destroy">
+            <input type="hidden" name="action" value="destroy">
+            <button type="submit" class="ghost-btn danger">DESTROY</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="jails-grid">
+      {{ range .Jails }}
+      <div class="jail-panel">
+        <div class="jail-panel-top">
+          <div class="jail-panel-identity">
+            <input type="checkbox" class="jail-panel-checkbox" value="{{ .Jail.Name }}">
+            <span class="jail-name">{{ .Jail.Name }}</span>
+          </div>
+          
+          <div class="jail-panel-status-indicator">
+            {{ if or (eq .Jail.State "Up") }}
+              <span class="throbber up" title="Active"></span>
+            {{ else }}
+              <span class="throbber down" title="Inactive"></span>
+            {{ end }}
+          </div>
+        </div>
+
+        <div class="jail-panel-details">
+          <div class="detail-row">
+            <span class="d-label">IP Address</span>
+            <span class="d-value">{{ .Jail.IP }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">Release</span>
+            <span class="d-value">{{ .Jail.Release }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">Type</span>
+            <span class="d-value status-text">{{ .Jail.Type }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">Priority</span>
+            <span class="d-value status-text">{{ .Jail.Prio }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="d-label">Boot</span>
+            <span class="d-value status-text">{{ .Jail.Boot }}</span>
+          </div>
+        </div>
+
+        <div class="jail-panel-actions">
+          <button class="jail-panel-console-button" onclick="openConsole('{{ .Jail.Name }}')" title="Console">>_</button>
+          
+          <div class="jail-panel-btn-cluster">
+            <form action="/bastille/quickaction" method="POST">
+              <input type="hidden" name="target" value="{{ .Jail.Name }}">
+              <input type="hidden" name="action" value="start">
+              <button type="submit" class="jail-panel-start-button" title="Start">▶</button>
+            </form>
 
             <form action="/bastille/quickaction" method="POST">
               <input type="hidden" name="target" value="{{ .Jail.Name }}">
               <input type="hidden" name="action" value="stop">
-              <button type="submit" class="homepage-stop-button">■</button>
+              <button type="submit" class="jail-panel-stop-button" title="Stop">■</button>
             </form>
-
-            <form action="/bastille/quickaction" method="POST">
-              <input type="hidden" name="target" value="{{ .Jail.Name }}">
-              <input type="hidden" name="action" value="start">
-              <button type="submit" class="homepage-start-button">▶</button>
-            </form>
-
+            
             <form action="/bastille/quickaction" method="POST">
               <input type="hidden" name="target" value="{{ .Jail.Name }}">
               <input type="hidden" name="action" value="restart">
-              <button type="submit" class="homepage-restart-button">⟳</button>
+              <button type="submit" class="jail-panel-restart-button" title="Restart">⟳</button>
             </form>
-          </td>
-        </tr>
-        {{ end }}
-      </tbody>
+          </div>
+        </div>
+      </div>
+      {{ end }}
+    </div>
 
-      <!-- BULK ACTIONS -->
-      <tfoot>
-        <tr>
-          <td>
-            <form id="multi-jail-form" action="/bastille/quickaction" method="POST">
-              <input type="hidden" name="target" id="multi-jail-target-input-stop">
-              <input type="hidden" name="action" value="stop">
-              <button type="submit">Stop</button>
-            </form>
-
-            <form id="multi-jail-form-start" action="/bastille/quickaction" method="POST">
-              <input type="hidden" name="target" id="multi-jail-target-input-start">
-              <input type="hidden" name="action" value="start">
-              <button type="submit">Start</button>
-            </form>
-
-            <form id="multi-jail-form-restart" action="/bastille/quickaction" method="POST">
-              <input type="hidden" name="target" id="multi-jail-target-input-restart">
-              <input type="hidden" name="action" value="restart">
-              <button type="submit">Restart</button>
-            </form>
-
-            <form id="multi-jail-form-destroy" action="/bastille/quickaction" method="POST">
-              <input type="hidden" name="target" id="multi-jail-target-input-destroy">
-              <input type="hidden" name="action" value="destroy">
-              <button type="submit">Destroy</button>
-            </form>
-
-          </td>
-        </tr>
-      </tfoot>
-    </table>
-
-    <!-- Console -->
     <div id="console-overlay" class="console-overlay" onclick="closeConsole()"></div>
     <div id="console-iframe-container">
       <iframe id="consoleIframe" class="console-iframe" frameborder="0"></iframe>
-      <button class="console-close-button" onclick="closeConsole()">Close</button>
+      <button class="ghost-btn full-width" onclick="closeConsole()">TERMINATE CONNECTION</button>
     </div>
 
-<script>
-
-function openConsole(jail) {
-    const url = `/bastille/console?target=` + encodeURIComponent(jail);
-
-    fetch(url, { method: "GET" }) // POST if your API expects it
-        .then(response => {
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return response.text(); // The API returns the full URL
-        })
-        .then(url => {
+    <script>
+      function openConsole(jail) {
+        const url = `/bastille/console?target=` + encodeURIComponent(jail);
+        fetch(url, { method: "GET" })
+          .then(res => res.ok ? res.text() : Promise.reject())
+          .then(url => {
             document.getElementById("consoleIframe").src = url;
             document.getElementById("console-overlay").style.display = "block";
             document.getElementById("console-iframe-container").style.display = "block";
-        })
-        .catch(err => console.error("Error opening console:", err));
-}
+          }).catch(() => console.error("Console failed. Check if ttyd is running."));
+      }
 
-function closeConsole() {
-    const iframe = document.getElementById("consoleIframe");
-    iframe.src = "about:blank"; // stops ttyd stream
-    document.getElementById("console-overlay").style.display = "none";
-    document.getElementById("console-iframe-container").style.display = "none";
-}
+      function closeConsole() {
+        document.getElementById("consoleIframe").src = "about:blank";
+        document.getElementById("console-overlay").style.display = "none";
+        document.getElementById("console-iframe-container").style.display = "none";
+      }
 
-function setupBulkForm(formId, inputId, needsConfirm = false) {
-    document.getElementById(formId).addEventListener("submit", function (e) {
-        const selected = Array.from(
-            document.querySelectorAll(".jail-checkbox:checked")
-        ).map(cb => cb.value);
+      function setupBulk(formId, inputId, needsConfirm = false) {
+        const form = document.getElementById(formId);
+        if(!form) return;
+        form.addEventListener("submit", (e) => {
+          const selected = Array.from(document.querySelectorAll(".jail-panel-checkbox:checked")).map(c => c.value);
+          if(!selected.length) { alert("SELECT JAILS FIRST."); return e.preventDefault(); }
+          if(needsConfirm && !confirm("CONFIRM DESTRUCTION OF SELECTED TARGETS?")) return e.preventDefault();
+          document.getElementById(inputId).value = selected.join(" ");
+        });
+      }
 
-        if (selected.length === 0) {
-            e.preventDefault();
-            alert("Please select at least one jail.");
-            return;
-        }
+      document.getElementById("selectAll").onclick = function() {
+        document.querySelectorAll(".jail-panel-checkbox").forEach(c => c.checked = this.checked);
+      };
 
-        if (needsConfirm) {
-            const confirmed = confirm(
-                "Are you sure you want to DESTROY the selected jail(s)?\nThis action cannot be undone."
-            );
-            if (!confirmed) {
-                e.preventDefault();
-                return;
-            }
-        }
-
-        document.getElementById(inputId).value = selected.join(" ");
-    });
-}
-
-// Select All checkbox logic
-const selectAllCheckbox = document.getElementById("selectAll");
-const jailCheckboxes = document.querySelectorAll(".jail-checkbox");
-
-selectAllCheckbox.addEventListener("change", function () {
-    const checked = this.checked;
-    jailCheckboxes.forEach(cb => cb.checked = checked);
-});
-
-jailCheckboxes.forEach(cb =>
-    cb.addEventListener("change", function () {
-        if (!this.checked) {
-            selectAllCheckbox.checked = false;
-        } else if (Array.from(jailCheckboxes).every(cb => cb.checked)) {
-            selectAllCheckbox.checked = true;
-        }
-    })
-);
-
-// Bulk action setups
-setupBulkForm("multi-jail-form", "multi-jail-target-input-stop");
-setupBulkForm("multi-jail-form-start", "multi-jail-target-input-start");
-setupBulkForm("multi-jail-form-restart", "multi-jail-target-input-restart");
-setupBulkForm("multi-jail-form-destroy", "multi-jail-target-input-destroy", true);
-
-</script>
-
+      setupBulk("multi-jail-form", "multi-jail-target-input-stop");
+      setupBulk("multi-jail-form-start", "multi-jail-target-input-start");
+      setupBulk("multi-jail-form-destroy", "multi-jail-target-input-destroy", true);
+    </script>
   {{ end }}
 {{ end }}

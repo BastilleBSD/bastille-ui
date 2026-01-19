@@ -1,55 +1,247 @@
-.jails-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1em;
-  font-family: Arial, sans-serif;
+.home-header {
+    padding: 10px;
+    background: transparent;
 }
 
-.jails-table th:first-child,
-.jails-table td:first-child {
-    max-width: 10px;
-    text-align: left;   /* center the checkbox */
-}
-
-.jails-table th {
-  background-color: #ff3333;
-  color: black;
-  padding: 10px;
-  text-align: left;
-  font-weight: bold;
-  border-bottom: 2px solid #34495e;
-}
-
-.jails-table td {
-  padding-inline: 10px;
-  padding-top: 3px;
-  padding-bottom: 3px;
-  border-bottom: 1px solid #ddd;
-}
-
-.jails-table tbody button {
-    display: inline-block;
-    height: 24px;
-    width: 24px;
-    padding: 0px 0px;
-    margin: 0 0px;
-    font-size: 1em;
-    cursor: pointer;
-    color: white;
-}
-.jails-table tfoot tr td {
+.home-header-main {
     display: flex;
-    gap: 4px;
-    border-bottom: none !important;
-    padding-top: 10px;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--color-input-border);
+    padding-bottom: 15px;
 }
-.jails-table form {
+
+.home-select-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.jails-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 25px;
+    padding: 20px;
+}
+
+.jail-panel {
+    background: var(--color-jail-panel);
+    border: 1px solid var(--color-jail-panel-border);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: var(--color-jail-panel-shadow);
+}
+
+.jail-panel:hover {
+    box-shadow: var(--color-jail-panel-shadow-hover);
+}
+
+.jail-panel-top, 
+.jail-panel-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.jail-panel-identity {
+    display: flex;
+    align-items: center;
+}
+
+.jail-panel-details {
+    margin: 15px 0;
+    border-top: 1px solid var(--color-input-border);
+    padding-top: 15px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+/* --- Status Throbbers & Animations --- */
+.throbber {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
     display: inline-block;
 }
-.jails-table tfoot button {
-    width: auto;
-    height: auto;
-    padding: 5px;
-    font-size: 1em;
+
+.throbber.up {
+    background: #10b981;
+    box-shadow: 0 0 10px #10b981;
+    animation: pulse-green 2s infinite;
+}
+
+.throbber.down {
+    background: #ef4444;
+    box-shadow: 0 0 10px #ef4444;
+    animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-green {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+@keyframes pulse-red {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* --- Typography --- */
+.jail-name {
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+    margin-left: 10px;
+}
+
+.d-label {
+    font-size: 0.9em;
+    color: var(--color-text-primary);
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.d-value {
+    font-size: 0.9rem;
+    color: var(--color-text-primary);
+}
+
+.bulk-btn-group {
+    display: flex;
+    gap: 10px;
+}
+
+.jail-panel-btn-cluster {
+    display: flex;
+}
+
+.ghost-btn {
+    background: transparent;
+    border: 1px solid var(--color-btn);
+    color: var(--btn-primary);
+    padding: var(--btn-padding);
+    font-size: 0.75rem;
+    font-weight: 800;
     cursor: pointer;
+    border-radius: var(--btn-radius);
+}
+
+.ghost-btn:hover {
+    background: var(--color-btn);
+}
+
+.ghost-btn.danger {
+    border-color: var(--bastille-dark-red);
+    color: var(--bastille-dark-red);
+}
+
+.ghost-btn.danger:hover {
+    background: var(--bastille-dark-red);
+    color: var(--color-text-primary);
+}
+
+.jail-panel-start-button {
+    background: transparent;
+    border: none;
+    color: green;
+    width: 38px;
+    height: 38px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.jail-panel-stop-button {
+    background: transparent;
+    border: none;
+    color: crimson;
+    width: 38px;
+    height: 38px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.jail-panel-restart-button {
+    background: transparent;
+    border: none;
+    color: orange;
+    width: 38px;
+    height: 38px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.jail-panel-console-button {
+    background: transparent;
+    color: var(--color-text-primary);
+    border: none;
+    width: 38px;
+    height: 38px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.jail-panel-start-button:hover,
+.jail-panel-stop-button:hover,
+.jail-panel-restart-button:hover,
+.jail-panel-console-button:hover {
+    background: var(--color-main-bg);
+}
+
+/* --- Console Overlay & Iframe --- */
+.console-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    z-index: 10000;
+}
+
+#console-iframe-container {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    height: 85%;
+    background: #000;
+    z-index: 10001;
+    border: 1px solid var(--input-border);
+}
+
+.console-iframe {
+    width: 100%;
+    height: calc(100% - 40px);
+    border: none;
+}
+
+.full-width {
+    width: 100%;
+    border: none;
+    border-top: 1px solid var(--color-input-border);
+    border-radius: 0;
+    height: 40px;
 }

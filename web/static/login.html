@@ -15,20 +15,20 @@
       --btn-bg-hover: var(--bastille-light-red);
       
       /* Theme Colors */
-      --bg-color: #0b0b0b;
-      --panel-bg: rgba(20, 20, 20, 0.9);
-      --text-primary: #eeeeee;
-      --input-bg: #1a1a1a;
-      --input-border: #333333;
+	--bg-color: #f4f4f5;
+	--panel-bg: #ffffff;
+	--text-primary: #1a1a1a;
+	--input-bg: #ffffff;
+	--input-border: #e2e8f0;
     }
 
-    @media (prefers-color-scheme: light) {
+    @media (prefers-color-scheme: dark) {
       :root {
-        --bg-color: #f4f4f5;
-        --panel-bg: #ffffff;
-        --text-primary: #1a1a1a;
-        --input-bg: #ffffff;
-        --input-border: #e2e8f0;
+		--bg-color: #0b0b0b;
+		--panel-bg: rgba(20, 20, 20, 0.9);
+		--text-primary: #eeeeee;
+		--input-bg: #1a1a1a;
+		--input-border: #333333;
       }
     }
 
@@ -97,7 +97,7 @@
 
     .error { color: var(--bastille-light-red); margin-bottom: 15px; font-size: 0.9em; }
 
-    @media (max-width: 480px) {
+    @media (max-width: 720px) {
       .login-panel { padding: 30px 20px; border: none; background: transparent; box-shadow: none; }
     }
   </style>
