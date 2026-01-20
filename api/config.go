@@ -2,12 +2,12 @@ package api
 
 import (
 	"encoding/json"
-	"log"
-	"os"
-	"net/http"
 	"fmt"
-	"strings"
+	"log"
+	"net/http"
+	"os"
 	"strconv"
+	"strings"
 )
 
 var bastilleSpec *BastilleSpecStruct
@@ -24,7 +24,7 @@ func setAPIKey(key string) {
 }
 
 func getParam(r *http.Request, key string) string {
-    return r.URL.Query().Get(key)
+	return r.URL.Query().Get(key)
 }
 
 func ValidateBastilleCommandParameters(r *http.Request, cmdArgs []string) error {
@@ -220,7 +220,7 @@ func setConfig(config *ConfigStruct) {
 
 	Host = config.Host
 	Port = config.Port
-	Key  = config.Key
+	Key = config.Key
 
 	setAPIKey(Key)
 }

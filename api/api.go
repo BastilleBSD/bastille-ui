@@ -1,9 +1,9 @@
 package api
 
 import (
+	"fmt"
 	"log"
 	"net/http"
-	"fmt"
 )
 
 func Start() {
@@ -16,9 +16,9 @@ func Start() {
 		bindAddr = "0.0.0.0"
 		Host = "localhost"
 	} else {
-	       bindAddr = Host
+		bindAddr = Host
 	}
-	
+
 	addr := fmt.Sprintf("%s:%s", bindAddr, Port)
 
 	loadRoutes()

@@ -67,23 +67,21 @@ func loadRoutes() {
 		"zpool":     RocinanteZpoolHandler,
 	}
 
-
 	for path, handler := range bastilleRoutes {
 		staticPathBastille := "/api/v1/bastille/" + path
 		livePathBastille := "/api/v1/bastille/live/" + path
 
-		mux.Handle(staticPathBastille , loggingMiddleware(apiKeyMiddleware(validateMethodMiddleware(handler, path, "bastille"))))
-		mux.Handle(livePathBastille , loggingMiddleware(apiKeyMiddleware(validateMethodMiddleware(handler, path, "bastille"))))
+		mux.Handle(staticPathBastille, loggingMiddleware(apiKeyMiddleware(validateMethodMiddleware(handler, path, "bastille"))))
+		mux.Handle(livePathBastille, loggingMiddleware(apiKeyMiddleware(validateMethodMiddleware(handler, path, "bastille"))))
 
 	}
 	for path, handler := range rocinanteRoutes {
 		staticPathRocinante := "/api/v1/rocinante/" + path
 		livePathRocinante := "/api/v1/rocinante/live/" + path
 
-		mux.Handle(staticPathRocinante , loggingMiddleware(apiKeyMiddleware(validateMethodMiddleware(handler, path, "rocinante"))))
-		mux.Handle(livePathRocinante , loggingMiddleware(apiKeyMiddleware(validateMethodMiddleware(handler, path, "rocinante"))))
+		mux.Handle(staticPathRocinante, loggingMiddleware(apiKeyMiddleware(validateMethodMiddleware(handler, path, "rocinante"))))
+		mux.Handle(livePathRocinante, loggingMiddleware(apiKeyMiddleware(validateMethodMiddleware(handler, path, "rocinante"))))
 
 	}
 
 }
-

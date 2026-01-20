@@ -3,8 +3,8 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"strings"
 	"os/exec"
+	"strings"
 )
 
 func BastilleCommand(args ...string) (string, error) {
@@ -135,7 +135,7 @@ func BastilleCloneHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cmdArgs = append(cmdArgs, ip)
-	
+
 	ParseAndRunCommand(w, r, cmdArgs)
 }
 
@@ -160,7 +160,7 @@ func BastilleCmdHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cmdArgs = append(cmdArgs, strings.Fields(command)...)
-	
+
 	ParseAndRunCommand(w, r, cmdArgs)
 }
 
@@ -218,7 +218,7 @@ func BastilleConsoleHandler(w http.ResponseWriter, r *http.Request) {
 	if user != "" {
 		cmdArgs = append(cmdArgs, user)
 	}
-	
+
 	ParseAndRunCommand(w, r, cmdArgs)
 }
 
@@ -288,7 +288,7 @@ func BastilleCreateHandler(w http.ResponseWriter, r *http.Request) {
 	name := getParam(r, "name")
 	release := getParam(r, "release")
 	ip := getParam(r, "ip")
-	iface :=  getParam(r, "iface")
+	iface := getParam(r, "iface")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
@@ -546,13 +546,13 @@ func BastilleLimitsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		cmdArgs = append(cmdArgs, option)
 	} else if action == "clear" || action == "reset" || action == "stats" {
-			cmdArgs = append(cmdArgs, action)
+		cmdArgs = append(cmdArgs, action)
 	} else if action == "list" || action == "show" {
-			if args == "active" {
-				cmdArgs = append(cmdArgs, action, args)
-			} else {
-				cmdArgs = append(cmdArgs, action)
-			}
+		if args == "active" {
+			cmdArgs = append(cmdArgs, action, args)
+		} else {
+			cmdArgs = append(cmdArgs, action)
+		}
 	}
 
 	ParseAndRunCommand(w, r, cmdArgs)
@@ -626,10 +626,10 @@ func BastilleMonitorHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		cmdArgs = append(cmdArgs, action, service)
 	} else if action == "list" {
-			cmdArgs = append(cmdArgs, action)
-			if service != "" {
-				cmdArgs = append(cmdArgs, service)
-			}
+		cmdArgs = append(cmdArgs, action)
+		if service != "" {
+			cmdArgs = append(cmdArgs, service)
+		}
 	}
 
 	ParseAndRunCommand(w, r, cmdArgs)

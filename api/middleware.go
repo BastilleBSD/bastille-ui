@@ -1,11 +1,11 @@
 package api
 
 import (
-	"net/http"
+	"encoding/json"
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
-	"encoding/json"
 )
 
 var DebugMode bool
@@ -78,7 +78,7 @@ func apiKeyMiddleware(next http.Handler) http.Handler {
 func validateMethodMiddleware(handler http.HandlerFunc, cmdName string, software string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		w.Header().Set("Access-Control-Allow-Origin", "*") 
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-TTYD-Port")
 		w.Header().Set("Access-Control-Expose-Headers", "X-TTYD-Port")

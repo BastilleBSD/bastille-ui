@@ -3,8 +3,8 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"strings"
 	"os/exec"
+	"strings"
 )
 
 func RocinanteCommand(args ...string) (string, error) {
@@ -47,7 +47,6 @@ func RocinanteCommandLive(args ...string) (string, error) {
 	port := fmt.Sprintf("%d", 7681)
 	return port, nil
 }
-
 
 func ParseAndRunRocinanteCommand(w http.ResponseWriter, r *http.Request, cmdArgs []string) {
 
