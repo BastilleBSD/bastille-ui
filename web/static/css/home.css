@@ -248,37 +248,6 @@
     background: var(--color-main-bg);
 }
 
-/* --- Console Overlay & Iframe --- */
-.console-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.9);
-    z-index: 10000;
-}
-
-#console-iframe-container {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90%;
-    height: 85%;
-    background: #000;
-    z-index: 10001;
-    border: 1px solid var(--input-border);
-}
-
-.console-iframe {
-    width: 100%;
-    height: calc(100% - 40px);
-    border: none;
-}
-
 .full-width {
     width: 100%;
     border: none;
