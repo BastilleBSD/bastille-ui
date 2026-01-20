@@ -4,8 +4,14 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"net/http"
+	"fmt"
+	"strings"
+	"strconv"
 )
 
+var bastilleSpec *BastilleSpecStruct
+var rocinanteSpec *RocinanteSpecStruct
 var configFile = "api/config.json"
 var cfg *ConfigStruct
 var APIURL string
@@ -15,6 +21,182 @@ var Key string
 
 func setAPIKey(key string) {
 	Key = key
+}
+
+func getParam(r *http.Request, key string) string {
+    return r.URL.Query().Get(key)
+}
+
+func ValidateBastilleCommandParameters(r *http.Request, cmdArgs []string) error {
+
+	query := r.URL.Query()
+
+	cmdName := cmdArgs[0]
+	var subcmd *BastilleCommandStruct
+	for _, c := range bastilleSpec.Commands {
+		if c.Command == cmdName {
+			subcmd = &c
+			break
+		}
+	}
+
+	paramsMap := make(map[string]struct{})
+	for _, params := range subcmd.Parameters {
+		paramsMap[strings.ToLower(params)] = struct{}{}
+	}
+
+	for param := range query {
+		if _, ok := paramsMap[strings.ToLower(param)]; !ok {
+			err := fmt.Sprintf("invalid parameter %q for command %q", param, cmdName)
+			logAll("error", r, cmdArgs, err)
+			return fmt.Errorf(err)
+		}
+	}
+
+	optionsValueMap := make(map[string]interface{})
+	for _, opt := range subcmd.Options {
+		if opt.SFlag != "" {
+			optionsValueMap[opt.SFlag] = opt.Value
+		}
+		if opt.LFlag != "" {
+			optionsValueMap[opt.LFlag] = opt.Value
+		}
+	}
+
+	optionsParam := query.Get("options")
+	if optionsParam != "" {
+
+		optionsParam = strings.ReplaceAll(optionsParam, "+", " ")
+		opts := strings.Fields(optionsParam)
+
+		for i := 0; i < len(opts); i++ {
+
+			arg := opts[i]
+			valueType, ok := optionsValueMap[arg]
+
+			if !ok {
+				err := fmt.Sprintf("invalid option %q for command %q", arg, cmdName)
+				logAll("error", r, cmdArgs, err)
+				return fmt.Errorf(err)
+			}
+
+			i++
+			if i >= len(opts) || strings.HasPrefix(opts[i], "-") {
+				err := fmt.Sprintf("option %q requires a value", arg)
+				logAll("error", r, cmdArgs, err)
+				return fmt.Errorf(err)
+			}
+
+			if valueType == "int" {
+				if _, err := strconv.Atoi(opts[i]); err != nil {
+					err := fmt.Sprintf("option %q requires an numeric value", arg)
+					logAll("error", r, cmdArgs, err)
+					return fmt.Errorf(err)
+				}
+			}
+		}
+	}
+
+	logAll("debug", r, cmdArgs, "command validated")
+
+	return nil
+}
+
+func ValidateRocinanteCommandParameters(r *http.Request, cmdArgs []string) error {
+
+	query := r.URL.Query()
+
+	cmdName := cmdArgs[0]
+	var subcmd *RocinanteCommandStruct
+	for _, c := range rocinanteSpec.Commands {
+		if c.Command == cmdName {
+			subcmd = &c
+			break
+		}
+	}
+
+	paramsMap := make(map[string]struct{})
+	for _, params := range subcmd.Parameters {
+		paramsMap[strings.ToLower(params)] = struct{}{}
+	}
+
+	for param := range query {
+		if _, ok := paramsMap[strings.ToLower(param)]; !ok {
+			err := fmt.Sprintf("invalid parameter %q for command %q", param, cmdName)
+			logAll("error", r, cmdArgs, err)
+			return fmt.Errorf(err)
+		}
+	}
+
+	optionsValueMap := make(map[string]interface{})
+	for _, opt := range subcmd.Options {
+		if opt.SFlag != "" {
+			optionsValueMap[opt.SFlag] = opt.Value
+		}
+		if opt.LFlag != "" {
+			optionsValueMap[opt.LFlag] = opt.Value
+		}
+	}
+
+	optionsParam := query.Get("options")
+	if optionsParam != "" {
+
+		optionsParam = strings.ReplaceAll(optionsParam, "+", " ")
+		opts := strings.Fields(optionsParam)
+
+		for i := 0; i < len(opts); i++ {
+
+			arg := opts[i]
+			_, ok := optionsValueMap[arg]
+
+			if !ok {
+				err := fmt.Sprintf("invalid option %q for command %q", arg, cmdName)
+				logAll("error", r, cmdArgs, err)
+				return fmt.Errorf(err)
+			}
+			i++
+		}
+	}
+
+	logAll("debug", r, cmdArgs, "command validated")
+
+	return nil
+}
+
+func loadBastilleSpec() *BastilleSpecStruct {
+
+	specFile := "api/bastille.json"
+	var spec BastilleSpecStruct
+
+	data, err := os.ReadFile(specFile)
+	if err != nil {
+		log.Fatalf("Failed to read Bastille spec file: %v", err)
+	}
+
+	if err := json.Unmarshal(data, &spec); err != nil {
+		log.Fatalf("Failed to parse Bastille spec: %v", err)
+	}
+
+	bastilleSpec = &spec
+	return bastilleSpec
+}
+
+func loadRocinanteSpec() *RocinanteSpecStruct {
+
+	specFile := "api/rocinante.json"
+	var spec RocinanteSpecStruct
+
+	data, err := os.ReadFile(specFile)
+	if err != nil {
+		log.Fatalf("Failed to read Rocinante spec file: %v", err)
+	}
+
+	if err := json.Unmarshal(data, &spec); err != nil {
+		log.Fatalf("Failed to parse Rocinante spec: %v", err)
+	}
+
+	rocinanteSpec = &spec
+	return rocinanteSpec
 }
 
 func loadConfig() *ConfigStruct {

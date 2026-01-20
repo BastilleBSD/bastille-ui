@@ -5,6 +5,7 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"encoding/json"
 )
 
 var DebugMode bool
@@ -27,7 +28,7 @@ func InitLogger(debug bool) {
 	slog.SetDefault(logger)
 }
 
-func logAll(level string, r *http.Request, cmdArgs []string, extra map[string]any, err error) {
+func logAll(level string, r *http.Request, cmdArgs []string, msg string) {
 
 	headers := r.Header.Clone()
 	headers.Del("Authorization")
@@ -35,34 +36,30 @@ func logAll(level string, r *http.Request, cmdArgs []string, extra map[string]an
 	switch level {
 	case "debug":
 		if DebugMode {
-			logger.Debug("Request debug",
+			logger.Debug(msg,
 				"method", r.Method,
 				"path", r.URL.Path,
 				"query", r.URL.RawQuery,
+				"rawArgs", cmdArgs,
 				"remote", r.RemoteAddr,
 				"user_agent", r.UserAgent(),
-				"args", cmdArgs,
-				"extra", extra,
 				"headers", headers,
-				"error", err,
-		 )
+			)
 		}
 	case "info":
-		// Info only prints basic request info
-		logger.Info("Request info",
+		logger.Info(msg,
 			"method", r.Method,
 			"path", r.URL.Path,
-			"remote", r.RemoteAddr,
-			"args", cmdArgs,
+			"query", r.URL.RawQuery,
+			"rawArgs", cmdArgs,
 		)
 	case "error":
-		logger.Error("Request error",
+		logger.Error(msg,
 			"method", r.Method,
 			"path", r.URL.Path,
+			"query", r.URL.RawQuery,
+			"rawArgs", cmdArgs,
 			"remote", r.RemoteAddr,
-			"args", cmdArgs,
-			"extra", extra,
-			"error", err,
 		)
 	}
 }
@@ -78,23 +75,45 @@ func apiKeyMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Set headers for all requests
+func validateMethodMiddleware(handler http.HandlerFunc, cmdName string, software string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
 		w.Header().Set("Access-Control-Allow-Origin", "*") 
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-TTYD-Port")
-
 		w.Header().Set("Access-Control-Expose-Headers", "X-TTYD-Port")
 
-		// Handle Preflight: Return OK immediately for OPTIONS
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return
-		}
+		} else if r.Method == http.MethodGet {
+			var cmd interface{}
 
-		next.ServeHTTP(w, r)
-	})
+			switch software {
+			case "bastille":
+				for _, c := range bastilleSpec.Commands {
+					if c.Command == cmdName {
+						cmd = c
+						break
+					}
+				}
+			case "rocinante":
+				for _, c := range rocinanteSpec.Commands {
+					if c.Command == cmdName {
+						cmd = c
+						break
+					}
+				}
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(cmd)
+
+			logAll("debug", r, []string{cmdName}, "success")
+			return
+		}
+		handler(w, r)
+	}
 }
 
 // Log all API requests
