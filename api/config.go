@@ -70,7 +70,6 @@ func ValidateBastilleCommandParameters(r *http.Request, cmdArgs []string) error 
 		opts := strings.Fields(optionsParam)
 
 		for i := 0; i < len(opts); i++ {
-
 			arg := opts[i]
 			valueType, ok := optionsValueMap[arg]
 
@@ -80,19 +79,31 @@ func ValidateBastilleCommandParameters(r *http.Request, cmdArgs []string) error 
 				return fmt.Errorf(err)
 			}
 
-			i++
-			if i >= len(opts) || strings.HasPrefix(opts[i], "-") {
+			if valueType == "" || valueType == nil {
+				continue
+			}
+
+			if i+1 >= len(opts) {
 				err := fmt.Sprintf("option %q requires a value", arg)
 				logAll("error", r, cmdArgs, err)
 				return fmt.Errorf(err)
 			}
 
+			i++
+			val := opts[i]
+
 			if valueType == "int" {
-				if _, err := strconv.Atoi(opts[i]); err != nil {
-					err := fmt.Sprintf("option %q requires an numeric value", arg)
+				if _, err := strconv.Atoi(val); err != nil {
+					err := fmt.Sprintf("option %q requires a numeric value", arg)
 					logAll("error", r, cmdArgs, err)
 					return fmt.Errorf(err)
 				}
+			}
+
+			if strings.HasPrefix(val, "-") {
+				err := fmt.Sprintf("option %q requires a value", arg)
+				logAll("error", r, cmdArgs, err)
+				return fmt.Errorf(err)
 			}
 		}
 	}
