@@ -823,11 +823,13 @@ func BastilleRdrHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		cmdArgs = append(cmdArgs, jail_port)
-		if action == "log" && log_options == "" {
-			http.Error(w, "[ERROR]: Missing log_options parameter", http.StatusBadRequest)
-			return
+		if action == "log" {
+			if log_options == "" {
+				http.Error(w, "[ERROR]: Missing log_options parameter", http.StatusBadRequest)
+				return
+			}
+			cmdArgs = append(cmdArgs, action, log_options)
 		}
-		cmdArgs = append(cmdArgs, action, log_options)
 	}
 
 	ParseAndRunCommand(w, r, cmdArgs)
