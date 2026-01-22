@@ -10,7 +10,7 @@
     <div class="bulk-btn-group">
       <button class="ghost-btn" onclick="bulkAction('stop', event)">STOP</button>
       <button class="ghost-btn" onclick="bulkAction('start', event)">START</button>
-      <button class="ghost-btn danger" onclick="bulkAction('destroy', event)">DESTROY</button>
+      <button class="ghost-btn danger" onclick="if(confirm('Destroy selected jails?')) bulkAction('destroy', event)">DESTROY</button>
     </div>
   </div>
 </div>
@@ -54,7 +54,10 @@ async function loadJails() {
       panel.className = "jail-panel " + (jail.State === "Up" ? "up" : "down");
       panel.dataset.jail = jail.Name;
 
-      panel.onclick = () => openJailInfo(jail.Name);
+      panel.onclick = (e) => {
+        if (e.target.type === 'checkbox') return; // don't open if checkbox clicked
+        openJailInfo(jail.Name);
+      };
 
       panel.innerHTML = `
         <div class="jail-loading"><span class="spinner"></span></div>
