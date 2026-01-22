@@ -57,7 +57,7 @@ Bastille endpoint: `/api/v1/bastille/command`
 
 Rocinante endpoint: `/api/v1/rocinante/command`
 
-Any parameter/option string that has spaces shiukd be passed with either
+Any parameter/option string that has spaces should be passed with either
 a `+` or `%20` as the space character. See examples below...
 
 ## API Examples
