@@ -20,13 +20,16 @@ body {
     padding: 20px;
 }
 
-.button, .action-button, .template-button, .template-list-button {
+.button, .action-button, .template-button, .template-list-button,
+.nodes-button, .settings-button {
     background: var(--color-btn);
     color: var(--color-btn-text);
+    font-size: 1em;
     text-decoration: none;
 }
 
-.button:hover, .action-button:hover, .template-button:hover, .template-list-button:hover {
+.button:hover, .action-button:hover, .template-button:hover, .template-list-button:hover,
+.nodes-button:hover, .settings-button:hover {
     background: var(--color-btn-hover);
 }
 

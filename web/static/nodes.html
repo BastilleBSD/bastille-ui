@@ -19,7 +19,7 @@
             <td>{{ .Port }}</td>
             <td>{{ .Key }}</td>
             <td>
-                <form method="POST" action="/api/v1/node/delete" style="display:inline-block; margin:0;">
+                <form method="POST" action="/api/v1/node/delete">
                     <input type="hidden" name="node" value="{{ .Name }}">
                     <button type="submit" class="button">Delete</button>
                 </form>
@@ -42,12 +42,12 @@
     <input type="text" name="host" required>
 
     <label>Port</label>
-    <input type="text" name="port" value="8181" required>
+    <input type="text" name="port" value="8888" required>
 
     <label>API Key</label>
     <input type="text" name="key" required>
 
-    <button type="submit" class="button">Add Node</button>
+    <button class="nodes-button" type="submit" class="button">Add Node</button>
 </form>
 
 {{ end }}

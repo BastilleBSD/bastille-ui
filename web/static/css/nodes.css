@@ -1,6 +1,8 @@
 .nodes-table {
   width: 100%;
-  border-collapse: collapse;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  background-color: var(--color-secondary-bg);
   margin-top: 1em;
   font-family: Arial, sans-serif;
 }
@@ -10,18 +12,18 @@
 }
 
 .nodes-table th {
-  background-color: #ff3333;
-  color: black;
+  background-color: var(--bastille-dark-red);
+  color: var(--color-text-secondary);
+  border-radius: 5px;
   padding: 10px;
   text-align: left;
   font-weight: bold;
 }
 
-.nodes-table button {
-    display: inline-block;
-    padding: 8px 8px;
-    margin: 0 0px;
-    font-size: 1em;
-    cursor: pointer;
-    color: white;
+.nodes-button {
+    padding: var(--btn-padding);
+    font-weight: var(--btn-font-weight);
+    margin: var(--btn-margin);
+    color: var(--color-btn-text);
+    border-radius: var(--btn-radius);
 }

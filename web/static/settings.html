@@ -9,7 +9,7 @@
     <input type="text" name="user" value="{{.Config.User}}" required>
 
     <label>Password:</label>
-    <input type="password" name="password" value="{{.Config.Password}}" required>
+    <input type="password" name="password" required>
 
     <label>Host:</label>
     <input type="text" name="host" value="{{.Config.Host}}" required>
@@ -17,6 +17,6 @@
     <label>Port:</label>
     <input type="text" name="port" value="{{.Config.Port}}" required>
 
-    <button type="submit">Save Settings</button>
+    <button class="settings-button" type="submit">Save</button>
 </form>
 {{end}}
