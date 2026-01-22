@@ -47,9 +47,9 @@ func ValidateBastilleCommandParameters(r *http.Request, cmdArgs []string) error 
 
 	for param := range query {
 		if _, ok := paramsMap[strings.ToLower(param)]; !ok {
-			err := fmt.Sprintf("invalid parameter %q for command %q", param, cmdName)
-			logAll("error", r, cmdArgs, err)
-			return fmt.Errorf(err)
+			err := fmt.Errorf("invalid parameter %q for command %q", param, cmdName)
+			logAll("error", r, cmdArgs, err.Error())
+			return err
 		}
 	}
 
@@ -74,9 +74,9 @@ func ValidateBastilleCommandParameters(r *http.Request, cmdArgs []string) error 
 			valueType, ok := optionsValueMap[arg]
 
 			if !ok {
-				err := fmt.Sprintf("invalid option %q for command %q", arg, cmdName)
-				logAll("error", r, cmdArgs, err)
-				return fmt.Errorf(err)
+				err := fmt.Errorf("invalid option %q for command %q", arg, cmdName)
+				logAll("error", r, cmdArgs, err.Error())
+				return err
 			}
 
 			if valueType == "" || valueType == nil {
@@ -84,9 +84,9 @@ func ValidateBastilleCommandParameters(r *http.Request, cmdArgs []string) error 
 			}
 
 			if i+1 >= len(opts) {
-				err := fmt.Sprintf("option %q requires a value", arg)
-				logAll("error", r, cmdArgs, err)
-				return fmt.Errorf(err)
+				err := fmt.Errorf("option %q requires a value", arg)
+				logAll("error", r, cmdArgs, err.Error())
+				return err
 			}
 
 			i++
@@ -94,16 +94,16 @@ func ValidateBastilleCommandParameters(r *http.Request, cmdArgs []string) error 
 
 			if valueType == "int" {
 				if _, err := strconv.Atoi(val); err != nil {
-					err := fmt.Sprintf("option %q requires a numeric value", arg)
-					logAll("error", r, cmdArgs, err)
-					return fmt.Errorf(err)
+					err := fmt.Errorf("option %q requires a numeric value", arg)
+					logAll("error", r, cmdArgs, err.Error())
+					return err
 				}
 			}
 
 			if strings.HasPrefix(val, "-") {
-				err := fmt.Sprintf("option %q requires a value", arg)
-				logAll("error", r, cmdArgs, err)
-				return fmt.Errorf(err)
+				err := fmt.Errorf("option %q requires a value", arg)
+				logAll("error", r, cmdArgs, err.Error())
+				return err
 			}
 		}
 	}
@@ -133,9 +133,9 @@ func ValidateRocinanteCommandParameters(r *http.Request, cmdArgs []string) error
 
 	for param := range query {
 		if _, ok := paramsMap[strings.ToLower(param)]; !ok {
-			err := fmt.Sprintf("invalid parameter %q for command %q", param, cmdName)
-			logAll("error", r, cmdArgs, err)
-			return fmt.Errorf(err)
+			err := fmt.Errorf("invalid parameter %q for command %q", param, cmdName)
+			logAll("error", r, cmdArgs, err.Error())
+			return err
 		}
 	}
 
@@ -161,9 +161,9 @@ func ValidateRocinanteCommandParameters(r *http.Request, cmdArgs []string) error
 			_, ok := optionsValueMap[arg]
 
 			if !ok {
-				err := fmt.Sprintf("invalid option %q for command %q", arg, cmdName)
-				logAll("error", r, cmdArgs, err)
-				return fmt.Errorf(err)
+				err := fmt.Errorf("invalid option %q for command %q", arg, cmdName)
+				logAll("error", r, cmdArgs, err.Error())
+				return err
 			}
 			i++
 		}
