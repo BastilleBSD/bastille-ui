@@ -87,7 +87,7 @@ Run a command inside a jail
 curl -X POST "http://ip:port/api/v1/bastille/cmd?target=test&command=echo+hi+how%20are%20you" -H "Authorization: Bearer API_KEY"
 ```
 
-Apply a templateusing rocinante
+Apply a template using rocinante
 ```
 curl -X POST "http://ip:port/api/v1/rocinante/template?template=custom/template" -H "Authorization: Bearer API_KEY"
 ```
