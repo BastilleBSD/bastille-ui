@@ -161,12 +161,17 @@ function updateJailPanel(panel, jail) {
 // ================= BULK ACTION =================
 function bulkAction(action, event) {
   if (event) event.stopPropagation();
-
   const targets = Array.from(document.querySelectorAll(".jail-panel-checkbox:checked"))
-                       .map(c => c.value);
-  if (!targets.length) { alert("SELECT JAILS FIRST."); return; }
-
+    .map(c => c.value);
+  if (!targets.length) {
+    alert("SELECT JAILS FIRST.");
+    return;
+  }
   targets.forEach(t => queueJailAction(action, t));
+  if (action === 'destroy') {
+    // Reload jails after destroy actions complete
+    Promise.all(targets.map(t => jailQueues[t])).then(loadJails);
+  }
 }
 
 // ================= JAIL INFO MODAL =================
