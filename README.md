@@ -62,27 +62,32 @@ a `+` or `%20` as the space character. See examples below...
 
 ## API Examples
 
+Get supported options and parameters for create
+```
+curl "http://ip:port/api/v1/bastille/create" -H "Authorization: Bearer API_KEY"
+```
+
 Create a jail
 ```
-curl "http://ip:port/api/v1/bastille/create?name=test&release=15.0-release&ip=10.0.0.12&iface=vtnet0" -H "Authorization: Bearer API_KEY"
+curl -X POST "http://ip:port/api/v1/bastille/create?name=test&release=15.0-release&ip=10.0.0.12&iface=vtnet0" -H "Authorization: Bearer API_KEY"
 ```
 
 Create a vnet jail with custom gateway and nameserver
 ```
-curl "http://ip:port/api/v1/bastille/create?name=test&release=15.0-release&ip=10.0.0.12&iface=vtnet0&options=-V+-g+192.168.10.1+-n+192.168.10.1" -H "Authorization: Bearer API_KEY"
+curl -X POST "http://ip:port/api/v1/bastille/create?name=test&release=15.0-release&ip=10.0.0.12&iface=vtnet0&options=-V+-g+192.168.10.1+-n+192.168.10.1" -H "Authorization: Bearer API_KEY"
 ```
 
 Destroy a jail
 ```
-curl "http://ip:port/api/v1/bastille/destroy?target=test&options=-f+-a+-y" -H "Authorization: Bearer API_KEY"
+curl -X POST "http://ip:port/api/v1/bastille/destroy?target=test&options=-f+-a+-y" -H "Authorization: Bearer API_KEY"
 ```
 
 Run a command inside a jail
 ```
-curl "http://ip:port/api/v1/bastille/cmd?target=test&command=echo+hi+how%20are%20you" -H "Authorization: Bearer API_KEY"
+curl -X POST "http://ip:port/api/v1/bastille/cmd?target=test&command=echo+hi+how%20are%20you" -H "Authorization: Bearer API_KEY"
 ```
 
 Apply a templateusing rocinante
 ```
-curl "http://ip:port/api/v1/rocinante/template?template=custom/template" -H "Authorization: Bearer API_KEY"
+curl -X POST "http://ip:port/api/v1/rocinante/template?template=custom/template" -H "Authorization: Bearer API_KEY"
 ```
