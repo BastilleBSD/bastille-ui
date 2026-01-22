@@ -14,7 +14,12 @@ func callBastilleAPI(path string, params map[string]string) (string, error) {
 		return "", fmt.Errorf("no node selected")
 	}
 
-	rawurl := fmt.Sprintf("http://%s:%s%s", node.Host, node.Port, path)
+	scheme := "http"
+    if node.Port == "443" {
+        scheme = "https"
+    }
+	
+	rawurl := fmt.Sprintf("%s://%s:%s%s", scheme, node.Host, node.Port, path)
 	u, err := url.Parse(rawurl)
 	if err != nil {
 		return "", err
@@ -50,7 +55,12 @@ func callBastilleAPILive(path string, params map[string]string) (string, error) 
 		return "", fmt.Errorf("no node selected")
 	}
 
-	rawurl := fmt.Sprintf("http://%s:%s%s", node.Host, node.Port, path)
+	scheme := "http"
+    if node.Port == "443" {
+        scheme = "https"
+    }
+	
+	rawurl := fmt.Sprintf("%s://%s:%s%s", scheme, node.Host, node.Port, path)
 	u, err := url.Parse(rawurl)
 	if err != nil {
 		return "", err
