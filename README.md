@@ -23,6 +23,7 @@ or
 go run .
 ```
 To run only the API: `go run . --api-only`
+
 To run in debug mode: `go run . --debug`
 
 API config file: `api/config.json`
@@ -38,7 +39,7 @@ log in. Simply visit http://host:port to get started.
 
 To use the console on the homepage, you need to `pkg install ttyd`.
 
-## Dependancies
+## Dependencies
 
 ```
 bastille
@@ -53,6 +54,7 @@ All requests called via GET will return the supported parameters and options. To
 run the command, it must be a POST request.
 
 Bastille endpoint: `/api/v1/bastille/command`
+
 Rocinante endpoint: `/api/v1/rocinante/command`
 
 ## API Examples
