@@ -5,9 +5,15 @@ import (
 	"net/http"
 	"os/exec"
 	"strings"
+	"sync"	
 )
 
+var bastilleLock sync.Mutex
+
 func BastilleCommand(args ...string) (string, error) {
+
+	bastilleLock.Lock()
+	defer bastilleLock.Unlock() 
 
 	cmd := exec.Command("bastille", args...)
 	out, err := cmd.CombinedOutput()
@@ -18,10 +24,12 @@ func BastilleCommand(args ...string) (string, error) {
 	}
 
 	return output, nil
-
 }
 
 func BastilleCommandLive(args ...string) (string, error) {
+
+	bastilleLock.Lock()
+	defer bastilleLock.Unlock() 
 
 	ttydArgs := []string{
 		"-t", "disableLeaveAlert=true",

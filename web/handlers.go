@@ -2,7 +2,6 @@ package web
 
 import (
 	"fmt"
-	"bufio"
 	"net/http"
 	"strings"
 	"encoding/json"
@@ -37,75 +36,18 @@ func homePageActionHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// --- Home Page ---
 func homePageHandler(w http.ResponseWriter, r *http.Request) {
+    data := PageData{
+        Title:      "Bastion",
+        Config:     cfg,
+        Nodes:      cfg.Nodes,
+        ActiveNode: getActiveNode(),
+    }
 
-	var jails []Jails
-
-	data := PageData{
-		Title:      "Bastion",
-		Config:     cfg,
-		Nodes:      cfg.Nodes,
-		ActiveNode: getActiveNode(),
-	}
-
-	options := ""
-	item := ""
-	params := map[string]string{
-		"options": options,
-		"item":    item,
-	}
-	// Call API
-	out, err := callBastilleAPI("/api/v1/bastille/list", params)
-	if err != nil {
-		data.Error = err.Error()
-		render(w, "home", data)
-		return
-	}
-
-	data.Output = out // optional: keep raw output
-
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	firstLine := true
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-
-		// Skip header line
-		if firstLine {
-			firstLine = false
-			continue
-		}
-
-		fields := strings.Fields(line)
-		if len(fields) < 10 {
-			continue
-		}
-
-		jails = append(jails, Jails{
-			Jail: JailSettings{
-				JID:     fields[0],
-				Name:    fields[1],
-				Boot:    fields[2],
-				Prio:    fields[3],
-				State:   fields[4],
-				Type:    fields[5],
-				IP:      fields[6],
-				Ports:   fields[7],
-				Release: fields[8],
-				Tags:    fields[9],
-			},
-		})
-	}
-
-	if err := scanner.Err(); err != nil {
-		data.Error = err.Error()
-	}
-	data.Jails = jails
-	render(w, "home", data)
+    // Simply render the home template
+    render(w, "home", data)
 }
+
 
 func settingsPageHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -191,67 +133,18 @@ func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getJailsJSONHandler(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Content-Type", "application/json")
 
-    var jails []Jails
-
-    options := ""
-    item := ""
-    params := map[string]string{
-        "options": options,
-        "item":    item,
-    }
-
-    // Call Bastille API
-    out, err := callBastilleAPI("/api/v1/bastille/list", params)
+    // Call the API, expecting it to return JSON
+    out, err := callBastilleAPI("/api/v1/bastille/list?options=--json", nil)
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
     }
 
-    scanner := bufio.NewScanner(strings.NewReader(out))
-    firstLine := true
-    for scanner.Scan() {
-        line := strings.TrimSpace(scanner.Text())
-        if line == "" {
-            continue
-        }
+    // Set the content type for JSON
+    w.Header().Set("Content-Type", "application/json; charset=utf-8")
+    w.WriteHeader(http.StatusOK)
 
-        // Skip header
-        if firstLine {
-            firstLine = false
-            continue
-        }
-
-        fields := strings.Fields(line)
-        if len(fields) < 10 {
-            continue
-        }
-
-        jails = append(jails, Jails{
-            Jail: JailSettings{
-                JID:     fields[0],
-                Name:    fields[1],
-                Boot:    fields[2],
-                Prio:    fields[3],
-                State:   fields[4],
-                Type:    fields[5],
-                IP:      fields[6],
-                Ports:   fields[7],
-                Release: fields[8],
-                Tags:    fields[9],
-            },
-        })
-    }
-
-    if err := scanner.Err(); err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-
-    // Return the jails slice as JSON
-    if err := json.NewEncoder(w).Encode(jails); err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
+    // Write the API output directly to the response
+    w.Write([]byte(out))
 }

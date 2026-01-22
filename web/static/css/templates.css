@@ -1,12 +1,18 @@
 .list-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 0.8em;
 }
 
-.list-buttons button {
-    width: fit-content;
-    padding: 10px;
+.list-button {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.template-button {
+    display: flex;
+    margin-top: 10px;
 }
 
 .option-sub {

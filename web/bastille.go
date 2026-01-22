@@ -44,6 +44,7 @@ func callBastilleAPI(path string, params map[string]string) (string, error) {
 }
 
 func callBastilleAPILive(path string, params map[string]string) (string, error) {
+
 	node := getActiveNode()
 	if node == nil {
 		return "", fmt.Errorf("no node selected")

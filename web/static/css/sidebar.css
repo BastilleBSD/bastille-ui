@@ -6,12 +6,12 @@
     position: fixed;
     z-index: 2000;
     float: left;
-    top: 50px;
+    top: 51px;
     width: 150px;
     background-color: var(--color-secondary-bg);
     color: var(--color-text-primary);
     padding: 0 10px;
-    border-right: 1px solid var(--color-input-border);
+    border: 1px solid var(--color-border);
     overflow-x: hidden;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

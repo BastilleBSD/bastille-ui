@@ -74,8 +74,60 @@
   to { transform: rotate(360deg); }
 }
 
-.jail-panel:hover {
-    box-shadow: var(--color-jail-panel-shadow-hover);
+/* Hover preserves UP/DOWN glow */
+.jail-panel.up:hover {
+    box-shadow:
+        0 0 0 2px rgba(16, 185, 129, 0.8),
+        0 0 30px rgba(16, 185, 129, 0.8);
+}
+
+.jail-panel.up {
+    border-color: #10b981;
+    animation: panel-pulse-green 4s ease-in-out infinite;
+    will-change: box-shadow;
+    position: relative; /* for pseudo-element */
+}
+
+/* --- DOWN PANEL --- */
+.jail-panel.down {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3), 0 0 10px rgba(239, 68, 68, 0.3);
+    position: relative;
+}
+
+.jail-panel.down:hover {
+    box-shadow:
+        0 0 0 1px rgba(239, 68, 68, 0.8),
+        0 0 20px rgba(239, 68, 68, 0.8);
+}
+
+.jail-panel.up::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    pointer-events: none;
+    transition: box-shadow 0.3s ease;
+}
+
+.jail-panel::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    pointer-events: none;
+    transition: box-shadow 0.3s ease;
+}
+
+/* --- UP HOVER --- */
+.jail-panel.up:hover::after {
+    box-shadow: 0 0 20px 4px rgba(16, 185, 129, 0.7);
+}
+
+/* --- DOWN HOVER --- */
+.jail-panel.down:hover::after {
+    box-shadow: 0 0 20px 4px rgba(239, 68, 68, 0.5);
 }
 
 .jail-panel-top, 
@@ -132,6 +184,24 @@
     0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
     70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
     100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+@keyframes panel-pulse-green {
+    0% {
+        box-shadow:
+            0 0 0 1px rgba(16, 185, 129, 0.5),
+            0 0 12px rgba(16, 185, 129, 0.5);
+    }
+    40% {
+        box-shadow:
+            0 0 0 2px rgba(16, 185, 129, 0.9),
+            0 0 24px rgba(16, 185, 129, 0.9);
+    }
+    100% {
+        box-shadow:
+            0 0 0 1px rgba(16, 185, 129, 0.5),
+            0 0 12px rgba(16, 185, 129, 0.5);
+    }
 }
 
 /* --- Typography --- */
@@ -254,4 +324,64 @@
     border-top: 1px solid var(--color-input-border);
     border-radius: 0;
     height: 40px;
+}
+
+.jail-info-overlay {
+    display: none;
+    position: fixed;
+    backdrop-filter: blur(5px);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.jail-info-modal {
+    position: fixed;
+    top: 25%;
+    left: 200px;
+    width: calc(100% - 300px);
+    max-width: 100%;
+    max-height: 90%;
+    background: var(--color-main-bg);
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    display: none;
+    z-index: 2000;
+    transition: border 0.3s, box-shadow 0.3s;
+    overflow-y: auto;
+}
+
+@media (max-width: 720px) {
+    .jail-info-modal {
+        left: 5%;
+        right: 5%;
+        top: 25%;
+        height: 100%;
+        width: 75%;
+        max-width: 80%;
+        max-height: 50%;
+    }
+}
+
+.jail-info-modal.up {
+  border: 3px solid #10b981; /* green for active */
+  box-shadow: 0 0 20px #10b981;
+}
+
+.jail-info-modal.down {
+  border: 3px solid #ef4444; /* red for inactive */
+  box-shadow: 0 0 20px #ef4444;
+}
+
+.jail-info-close-button {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #333;
 }
