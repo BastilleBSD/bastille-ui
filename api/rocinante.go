@@ -25,6 +25,7 @@ func RocinanteCommandLive(args ...string) (string, error) {
 	ttydArgs := []string{
 		"-t", "disableLeaveAlert=true",
 		"-o",
+		"--ipv6",
 		"-m", "1",
 		"-p", "7681",
 		"-W",
