@@ -1,26 +1,32 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"os/exec"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 func RocinanteCommand(args ...string) (string, error) {
+
+	logRequest("debug", "RocinanteCommand", nil, args, nil)
 
 	cmd := exec.Command("rocinante", args...)
 	out, err := cmd.CombinedOutput()
 	output := string(out)
 
 	if err != nil {
-		return output, fmt.Errorf("Rocinante %v failed: %v\n%s", args, err, output)
+		logRequest("error", "command failed", nil, args, output)
+		return "", err
 	}
 
 	return output, nil
 }
 
 func RocinanteCommandLive(args ...string) (string, error) {
+
+	logRequest("debug", "RocinanteCommandLive", nil, args, nil)
 
 	ttydArgs := []string{
 		"-t", "disableLeaveAlert=true",
@@ -31,190 +37,193 @@ func RocinanteCommandLive(args ...string) (string, error) {
 		"-W",
 	}
 
-	var cmdArgs []string
-	cmdArgs = append(cmdArgs, ttydArgs...)
-	cmdArgs = append(cmdArgs, "rocinante")
+	cmdArgs := append(ttydArgs, "rocinante")
 	cmdArgs = append(cmdArgs, args...)
 
 	cmd := exec.Command("ttyd", cmdArgs...)
 	if err := cmd.Start(); err != nil {
-		return "", fmt.Errorf(
-			"Rocinante live %v failed to start ttyd: %w",
-			args,
-			err,
-		)
+		logRequest("error", "ttyd command failed", nil, args, err)
+		return "", err
 	}
 
-	port := fmt.Sprintf("%d", 7681)
-	return port, nil
+	return "7681", nil
 }
 
-func ParseAndRunRocinanteCommand(w http.ResponseWriter, r *http.Request, cmdArgs []string) {
+func ParseAndRunRocinanteCommand(c *gin.Context, cmdArgs []string) {
 
-	if err := ValidateRocinanteCommandParameters(r, cmdArgs); err != nil {
-		logAll("error", r, cmdArgs, err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	logRequest("debug", "ParseAndRunRocinanteCommand", c, cmdArgs, nil)
+
+	if err := ValidateRocinanteCommandParameters(c, cmdArgs); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		logRequest("error", "parameter validation failed", c, cmdArgs, err)
 		return
 	}
 
-	isLive := strings.Contains(r.URL.Path, "/api/v1/rocinante/live/")
-
-	var (
-		result RocinanteCommandOutputStruct
-		err    error
-	)
+	isLive := strings.Contains(c.FullPath(), "/api/v1/rocinante/live/")
+	var result string
+	var err error
 
 	if isLive {
-		result.port, err = RocinanteCommandLive(cmdArgs...)
+		result, err = RocinanteCommandLive(cmdArgs...)
 	} else {
-		result.output, err = RocinanteCommand(cmdArgs...)
+		result, err = RocinanteCommand(cmdArgs...)
 	}
 
 	if err != nil {
-		logAll("error", r, cmdArgs, fmt.Sprintf("failed: %v", err))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		logRequest("error", "command failed", c, cmdArgs, err)
 		return
 	}
 
 	if isLive {
-		w.Header().Set("X-TTYD-Port", result.port)
+		c.Header("X-TTYD-Port", result)
+		c.JSON(http.StatusOK, gin.H{"port": result})
+		logRequest("info", "success (live)", c, cmdArgs, result)
 	} else {
-		fmt.Fprint(w, result.output)
+		c.String(http.StatusOK, result)
+		logRequest("info", "success", c, cmdArgs, result)
 	}
-
-	logAll("info", r, cmdArgs, "success")
 }
 
-func RocinanteBootstrapHandler(w http.ResponseWriter, r *http.Request) {
+func RocinanteBootstrapHandler(c *gin.Context) {
+
+	logRequest("debug", "RocinanteBootstrapHandler", c, nil, nil)
 
 	cmdArgs := []string{"bootstrap"}
-
-	options := getParam(r, "options")
-	url := getParam(r, "url")
+	options := getParam(c, "options")
+	url := getParam(c, "url")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if url == "" {
-		http.Error(w, "[ERROR]: Missing url parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing url parameter"})
+		logRequest("error", "missing url parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, url)
 
-	ParseAndRunRocinanteCommand(w, r, cmdArgs)
+	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
-func RocinanteCmdHandler(w http.ResponseWriter, r *http.Request) {
+func RocinanteCmdHandler(c *gin.Context) {
+
+	logRequest("debug", "RocinanteCmdHandler", c, nil, nil)
 
 	cmdArgs := []string{"cmd"}
-
-	args := getParam(r, "args")
-
+	args := getParam(c, "args")
 	if args == "" {
-		http.Error(w, "[ERROR]: Missing args parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
+		logRequest("error", "missing args parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, strings.Fields(args)...)
 
-	ParseAndRunRocinanteCommand(w, r, cmdArgs)
+	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
-func RocinanteLimitsHandler(w http.ResponseWriter, r *http.Request) {
+func RocinanteLimitsHandler(c *gin.Context) {
+
+	logRequest("debug", "RocinanteLimitsHandler", c, nil, nil)
 
 	cmdArgs := []string{"limits"}
-
-	args := getParam(r, "args")
-
+	args := getParam(c, "args")
 	if args == "" {
-		http.Error(w, "[ERROR]: Missing args parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
+		logRequest("error", "missing args parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, strings.Fields(args)...)
 
-	ParseAndRunRocinanteCommand(w, r, cmdArgs)
+	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
-func RocinanteListHandler(w http.ResponseWriter, r *http.Request) {
+func RocinanteListHandler(c *gin.Context) {
+
+	logRequest("debug", "RocinanteListHandler", c, nil, nil)
 
 	cmdArgs := []string{"list"}
-
-	options := getParam(r, "options")
-
+	options := getParam(c, "options")
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 
-	ParseAndRunRocinanteCommand(w, r, cmdArgs)
+	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
-func RocinantePkgHandler(w http.ResponseWriter, r *http.Request) {
+func RocinantePkgHandler(c *gin.Context) {
+
+	logRequest("debug", "RocinantePkgHandler", c, nil, nil)
 
 	cmdArgs := []string{"pkg"}
-
-	args := getParam(r, "args")
-
+	args := getParam(c, "args")
 	if args == "" {
-		http.Error(w, "[ERROR]: Missing args parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
+		logRequest("error", "missing args parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, strings.Fields(args)...)
 
-	ParseAndRunRocinanteCommand(w, r, cmdArgs)
+	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
-func RocinanteServiceHandler(w http.ResponseWriter, r *http.Request) {
+func RocinanteServiceHandler(c *gin.Context) {
+
+	logRequest("debug", "RocinanteServiceHandler", c, nil, nil)
 
 	cmdArgs := []string{"service"}
-
-	args := getParam(r, "args")
-
+	args := getParam(c, "args")
 	if args == "" {
-		http.Error(w, "[ERROR]: Missing args parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
+		logRequest("error", "missing args parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, strings.Fields(args)...)
 
-	ParseAndRunRocinanteCommand(w, r, cmdArgs)
+	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
-func RocinanteSysctlHandler(w http.ResponseWriter, r *http.Request) {
+func RocinanteSysctlHandler(c *gin.Context) {
+
+	logRequest("debug", "RocinanteSysctlHandler", c, nil, nil)
 
 	cmdArgs := []string{"sysctl"}
-
-	args := getParam(r, "args")
-
+	args := getParam(c, "args")
 	if args == "" {
-		http.Error(w, "[ERROR]: Missing args parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
+		logRequest("error", "missing args parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, strings.Fields(args)...)
 
-	ParseAndRunRocinanteCommand(w, r, cmdArgs)
+	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
-func RocinanteSysrcHandler(w http.ResponseWriter, r *http.Request) {
+func RocinanteSysrcHandler(c *gin.Context) {
+
+	logRequest("debug", "RocinanteSysrcHandler", c, nil, nil)
 
 	cmdArgs := []string{"sysrc"}
-
-	args := getParam(r, "args")
-
+	args := getParam(c, "args")
 	if args == "" {
-		http.Error(w, "[ERROR]: Missing args parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
+		logRequest("error", "missing args parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, strings.Fields(args)...)
 
-	ParseAndRunRocinanteCommand(w, r, cmdArgs)
+	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
-func RocinanteTemplateHandler(w http.ResponseWriter, r *http.Request) {
+func RocinanteTemplateHandler(c *gin.Context) {
+
+	logRequest("debug", "RocinanteTemplateHandler", c, nil, nil)
 
 	cmdArgs := []string{"template"}
-
-	options := getParam(r, "options")
-	action := getParam(r, "action")
-	template := getParam(r, "template")
-	args := getParam(r, "args")
+	options := getParam(c, "options")
+	action := getParam(c, "action")
+	template := getParam(c, "template")
+	args := getParam(c, "args")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
@@ -223,7 +232,8 @@ func RocinanteTemplateHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, action)
 	}
 	if template == "" {
-		http.Error(w, "[ERROR]: Missing template parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing template parameter"})
+		logRequest("error", "missing template parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, template)
@@ -231,84 +241,90 @@ func RocinanteTemplateHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, strings.Fields(args)...)
 	}
 
-	ParseAndRunRocinanteCommand(w, r, cmdArgs)
+	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
-func RocinanteUpdateHandler(w http.ResponseWriter, r *http.Request) {
+func RocinanteUpdateHandler(c *gin.Context) {
+
+	logRequest("debug", "RocinanteUpdateHandler", c, nil, nil)
 
 	cmdArgs := []string{"update"}
-
-	args := getParam(r, "args")
-
+	args := getParam(c, "args")
 	if args == "" {
-		http.Error(w, "[ERROR]: Missing args parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
+		logRequest("error", "missing args parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, strings.Fields(args)...)
 
-	ParseAndRunRocinanteCommand(w, r, cmdArgs)
+	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
-func RocinanteUpgradeHandler(w http.ResponseWriter, r *http.Request) {
+func RocinanteUpgradeHandler(c *gin.Context) {
+
+	logRequest("debug", "RocinanteUpgradeHandler", c, nil, nil)
 
 	cmdArgs := []string{"upgrade"}
-
-	args := getParam(r, "args")
-
+	args := getParam(c, "args")
 	if args == "" {
-		http.Error(w, "[ERROR]: Missing args parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
+		logRequest("error", "missing args parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, strings.Fields(args)...)
 
-	ParseAndRunRocinanteCommand(w, r, cmdArgs)
+	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
-func RocinanteVerifyHandler(w http.ResponseWriter, r *http.Request) {
+func RocinanteVerifyHandler(c *gin.Context) {
+
+	logRequest("debug", "RocinanteVerifyHandler", c, nil, nil)
 
 	cmdArgs := []string{"verify"}
-
-	options := getParam(r, "options")
-	template := getParam(r, "template")
+	options := getParam(c, "options")
+	template := getParam(c, "template")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if template == "" {
-		http.Error(w, "[ERROR]: Missing template parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing template parameter"})
+		logRequest("error", "missing template parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, template)
 
-	ParseAndRunRocinanteCommand(w, r, cmdArgs)
+	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
-func RocinanteZfsHandler(w http.ResponseWriter, r *http.Request) {
+func RocinanteZfsHandler(c *gin.Context) {
+
+	logRequest("debug", "RocinanteZfsHandler", c, nil, nil)
 
 	cmdArgs := []string{"zfs"}
-
-	args := getParam(r, "args")
-
+	args := getParam(c, "args")
 	if args == "" {
-		http.Error(w, "[ERROR]: Missing args parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
+		logRequest("error", "missing args parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, strings.Fields(args)...)
 
-	ParseAndRunRocinanteCommand(w, r, cmdArgs)
+	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
-func RocinanteZpoolHandler(w http.ResponseWriter, r *http.Request) {
+func RocinanteZpoolHandler(c *gin.Context) {
+
+	logRequest("debug", "RocinanteZpoolHandler", c, nil, nil)
 
 	cmdArgs := []string{"zpool"}
-
-	args := getParam(r, "args")
-
+	args := getParam(c, "args")
 	if args == "" {
-		http.Error(w, "[ERROR]: Missing args parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
+		logRequest("error", "missing args parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, strings.Fields(args)...)
 
-	ParseAndRunRocinanteCommand(w, r, cmdArgs)
+	ParseAndRunRocinanteCommand(c, cmdArgs)
 }

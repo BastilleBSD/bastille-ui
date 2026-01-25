@@ -1,15 +1,50 @@
 package api
 
 import (
-	"net/http"
+	"github.com/gin-gonic/gin"
 )
 
-// Load valid routes and method
-func loadRoutes() {
+func loadRoutes(router *gin.Engine) {
 
-	mux := http.DefaultServeMux
+	router.Use(
+		loggingMiddleware(),
+		CORSMiddleware(),
+	)
 
-	bastilleRoutes := map[string]http.HandlerFunc{
+	v1 := router.Group("/api/v1")
+
+	bastille := v1.Group("/bastille")
+	bastilleLive := v1.Group("/bastille/live")
+
+	for path, handler := range bastilleRoutes() {
+		bastille.GET("/"+path, apiKeyMiddleware("bastille", path), GetCommandSpec(path, "bastille"))
+		bastille.POST("/"+path, apiKeyMiddleware("bastille", path), handler)
+
+		bastilleLive.GET("/"+path, apiKeyMiddleware("bastille", path), GetCommandSpec(path, "bastille"))
+		bastilleLive.POST("/"+path, apiKeyMiddleware("bastille", path), handler)
+	}
+
+	rocinante := v1.Group("/rocinante")
+	rocinanteLive := v1.Group("/rocinante/live")
+
+	for path, handler := range rocinanteRoutes() {
+		rocinante.GET("/"+path, apiKeyMiddleware("rocinante", path), GetCommandSpec(path, "rocinante"))
+		rocinante.POST("/"+path, apiKeyMiddleware("rocinante", path), handler)
+
+		rocinanteLive.GET("/"+path, apiKeyMiddleware("rocinante", path), GetCommandSpec(path, "rocinante"))
+		rocinanteLive.POST("/"+path, apiKeyMiddleware("rocinante", path), handler)
+	}
+
+	admin := v1.Group("/admin")
+	{
+		admin.POST("/add", apiKeyMiddleware("admin", "add"), AddKeyHandler)
+		admin.POST("/edit", apiKeyMiddleware("admin", "edit"), EditKeyHandler)
+		admin.POST("/delete", apiKeyMiddleware("admin", "delete"), DeleteKeyHandler)
+	}
+}
+
+func bastilleRoutes() map[string]gin.HandlerFunc {
+	return map[string]gin.HandlerFunc{
 		"bootstrap": BastilleBootstrapHandler,
 		"clone":     BastilleCloneHandler,
 		"cmd":       BastilleCmdHandler,
@@ -50,7 +85,10 @@ func loadRoutes() {
 		"verify":    BastilleVerifyHandler,
 		"zfs":       BastilleZfsHandler,
 	}
-	rocinanteRoutes := map[string]http.HandlerFunc{
+}
+
+func rocinanteRoutes() map[string]gin.HandlerFunc {
+	return map[string]gin.HandlerFunc{
 		"bootstrap": RocinanteBootstrapHandler,
 		"cmd":       RocinanteCmdHandler,
 		"limits":    RocinanteLimitsHandler,
@@ -66,22 +104,4 @@ func loadRoutes() {
 		"zfs":       RocinanteZfsHandler,
 		"zpool":     RocinanteZpoolHandler,
 	}
-
-	for path, handler := range bastilleRoutes {
-		staticPathBastille := "/api/v1/bastille/" + path
-		livePathBastille := "/api/v1/bastille/live/" + path
-
-		mux.Handle(staticPathBastille, loggingMiddleware(apiKeyMiddleware(validateMethodMiddleware(handler, path, "bastille"))))
-		mux.Handle(livePathBastille, loggingMiddleware(apiKeyMiddleware(validateMethodMiddleware(handler, path, "bastille"))))
-
-	}
-	for path, handler := range rocinanteRoutes {
-		staticPathRocinante := "/api/v1/rocinante/" + path
-		livePathRocinante := "/api/v1/rocinante/live/" + path
-
-		mux.Handle(staticPathRocinante, loggingMiddleware(apiKeyMiddleware(validateMethodMiddleware(handler, path, "rocinante"))))
-		mux.Handle(livePathRocinante, loggingMiddleware(apiKeyMiddleware(validateMethodMiddleware(handler, path, "rocinante"))))
-
-	}
-
 }

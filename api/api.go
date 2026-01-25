@@ -2,15 +2,32 @@ package api
 
 import (
 	"fmt"
-	"log"
-	"net/http"
+	"os"
+
+	"github.com/gin-gonic/gin"
 )
 
-func Start() {
+func Start(config string, port string) {
 
 	var bindAddr string
-	config := loadConfig()
-	setConfig(config)
+
+	if config != "" {
+		configFile = config
+	}
+
+	_, err := loadConfig()
+	if err != nil {
+		logRequest("error", "Failed to load config", nil, nil, err.Error())
+		os.Exit(1)
+	}
+
+	if port != "" {
+		Port = port
+	} else if cfg != nil && cfg.Port != "" {
+		Port = cfg.Port
+	} else {
+		Port = "8888"
+	}
 
 	if Host == "0.0.0.0" || Host == "localhost" || Host == "" {
 		bindAddr = "0.0.0.0"
@@ -21,10 +38,15 @@ func Start() {
 
 	addr := fmt.Sprintf("%s:%s", bindAddr, Port)
 
-	loadRoutes()
 	loadBastilleSpec()
 	loadRocinanteSpec()
 
-	log.Println("Starting BastilleBSD API server on", addr)
-	log.Fatal(http.ListenAndServe(addr, nil))
+	router := gin.New()
+	loadRoutes(router)
+
+	logRequest("info", fmt.Sprintf("Starting BastilleBSD API server on %s", addr), nil ,nil, nil)
+	if err := router.Run(addr); err != nil {
+		logRequest("error", "Server failed to start", nil, nil, err.Error())
+		os.Exit(1)
+	}
 }

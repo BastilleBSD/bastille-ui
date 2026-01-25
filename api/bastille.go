@@ -1,26 +1,30 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"os/exec"
 	"strings"
-	"sync"	
+	"sync"
+
+	"github.com/gin-gonic/gin"
 )
 
 var bastilleLock sync.Mutex
 
 func BastilleCommand(args ...string) (string, error) {
 
+	logRequest("debug", "BastilleCommand", nil, args, nil)
+
 	bastilleLock.Lock()
-	defer bastilleLock.Unlock() 
+	defer bastilleLock.Unlock()
 
 	cmd := exec.Command("bastille", args...)
 	out, err := cmd.CombinedOutput()
 	output := string(out)
 
 	if err != nil {
-		return output, fmt.Errorf("Bastille %v failed: %v\n%s", args, err, output)
+		logRequest("error", "command failed", nil, args, output)
+		return "", err
 	}
 
 	return output, nil
@@ -28,8 +32,10 @@ func BastilleCommand(args ...string) (string, error) {
 
 func BastilleCommandLive(args ...string) (string, error) {
 
+	logRequest("debug", "BastilleCommandLive", nil, args, nil)
+
 	bastilleLock.Lock()
-	defer bastilleLock.Unlock() 
+	defer bastilleLock.Unlock()
 
 	ttydArgs := []string{
 		"-t", "disableLeaveAlert=true",
@@ -40,278 +46,304 @@ func BastilleCommandLive(args ...string) (string, error) {
 		"-W",
 	}
 
-	var cmdArgs []string
-	cmdArgs = append(cmdArgs, ttydArgs...)
-	cmdArgs = append(cmdArgs, "bastille")
+	cmdArgs := append(ttydArgs, "bastille")
 	cmdArgs = append(cmdArgs, args...)
 
 	cmd := exec.Command("ttyd", cmdArgs...)
 	if err := cmd.Start(); err != nil {
-		return "", fmt.Errorf(
-			"Bastille live %v failed to start ttyd: %w",
-			args,
-			err,
-		)
+		logRequest("error", "ttyd command failed", nil, args, err)
+		return "", err
 	}
 
-	port := fmt.Sprintf("%d", 7681)
-	return port, nil
+	return "7681", nil
 }
 
-func ParseAndRunCommand(w http.ResponseWriter, r *http.Request, cmdArgs []string) {
+func ParseAndRunBastilleCommand(c *gin.Context, cmdArgs []string) {
 
-	if err := ValidateBastilleCommandParameters(r, cmdArgs); err != nil {
-		logAll("error", r, cmdArgs, err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	logRequest("debug", "ParseAndRunBastilleCommand", c, cmdArgs, nil)
+
+	if err := ValidateBastilleCommandParameters(c, cmdArgs); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		logRequest("error", "parameter validation failed", c, cmdArgs, err)
 		return
 	}
 
-	isLive := strings.Contains(r.URL.Path, "/api/v1/bastille/live/")
-
-	var (
-		result BastilleCommandOutputStruct
-		err    error
-	)
+	isLive := strings.Contains(c.FullPath(), "/api/v1/bastille/live/")
+	var result string
+	var err error
 
 	if isLive {
-		result.port, err = BastilleCommandLive(cmdArgs...)
+		result, err = BastilleCommandLive(cmdArgs...)
 	} else {
-		result.output, err = BastilleCommand(cmdArgs...)
+		result, err = BastilleCommand(cmdArgs...)
 	}
 
 	if err != nil {
-		logAll("error", r, cmdArgs, fmt.Sprintf("failed: %v", err))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		logRequest("error", "command failed", c, cmdArgs, err)
 		return
 	}
 
 	if isLive {
-		w.Header().Set("X-TTYD-Port", result.port)
+		c.Header("X-TTYD-Port", result)
+		c.JSON(http.StatusOK, gin.H{"port": result})
+		logRequest("info", "success (live)", c, cmdArgs, result)
 	} else {
-		fmt.Fprint(w, result.output)
+		c.String(http.StatusOK, result)
+		logRequest("info", "success", c, cmdArgs, result)
 	}
-
-	logAll("info", r, cmdArgs, "success")
 }
 
-func BastilleBootstrapHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleBootstrapHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleBootstrapHandler", c, nil, nil)
 
 	cmdArgs := []string{"bootstrap"}
-
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	arch := getParam(r, "arch")
+	options := getParam(c, "options")
+	url := getParam(c, "url")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
-	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+	if url == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing url parameter"})
+		logRequest("error", "missing url parameter", c, cmdArgs, nil)
 		return
 	}
-	cmdArgs = append(cmdArgs, target)
-	if arch != "" {
-		cmdArgs = append(cmdArgs, arch)
-	}
+	cmdArgs = append(cmdArgs, url)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleCloneHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleCloneHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleCloneHandler", c, nil, nil)
 
 	cmdArgs := []string{"clone"}
-
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	new_name := getParam(r, "new_name")
-	ip := getParam(r, "ip")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	new_name := getParam(c, "new_name")
+	ip := getParam(c, "ip")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing target parameter"})
+		logRequest("error", "missing target parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
+
 	if new_name == "" {
-		http.Error(w, "[ERROR]: Missing new_name parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing new_name parameter"})
+		logRequest("error", "missing new_name parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, new_name)
+
 	if ip == "" {
-		http.Error(w, "[ERROR]: Missing ip parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing ip parameter"})
+		logRequest("error", "missing ip parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, ip)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleCmdHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleCmdHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleCmdHandler", c, nil, nil)
 
 	cmdArgs := []string{"cmd"}
-
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	command := getParam(r, "command")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	command := getParam(c, "command")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing target parameter"})
+		logRequest("error", "missing target parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
+
 	if command == "" {
-		http.Error(w, "[ERROR]: Missing command parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing command parameter"})
+		logRequest("error", "missing command parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, strings.Fields(command)...)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleConfigHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleConfigHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleConfigHandler", c, nil, nil)
 
 	cmdArgs := []string{"config"}
-
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	action := getParam(r, "action")
-	property := getParam(r, "property")
-	value := getParam(r, "value")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	action := getParam(c, "action")
+	property := getParam(c, "property")
+	value := getParam(c, "value")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing target parameter"})
+		logRequest("error", "missing target parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
+
 	if action != "set" && action != "add" && action != "get" && action != "remove" {
-		http.Error(w, "[ERROR]: Unknown action parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unknown action parameter"})
+		logRequest("error", "unknown action parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, action)
+
 	if property == "" {
-		http.Error(w, "[ERROR]: Missing property parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing property parameter"})
+		logRequest("error", "missing property parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, property)
+
 	if value != "" {
 		cmdArgs = append(cmdArgs, value)
 	}
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleConsoleHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleConsoleHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleConsoleHandler", c, nil, nil)
 
 	cmdArgs := []string{"console"}
-
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	user := getParam(r, "user")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	user := getParam(c, "user")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing target parameter"})
+		logRequest("error", "missing target parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
+
 	if user != "" {
 		cmdArgs = append(cmdArgs, user)
 	}
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleConvertHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleConvertHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleConvertHandler", c, nil, nil)
 
 	cmdArgs := []string{"convert"}
-
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	release := getParam(r, "release")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	release := getParam(c, "release")
 
 	if options != "" {
 		options = options + " -ay"
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	} else {
-		options = "-ay"
-		cmdArgs = append(cmdArgs, strings.Fields(options)...)
+		cmdArgs = append(cmdArgs, "-ay")
 	}
+
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing target parameter"})
+		logRequest("error", "missing target parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
+
 	if release != "" {
 		cmdArgs = append(cmdArgs, release)
 	}
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleCpHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleCpHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleCpHandler", c, nil, nil)
 
 	cmdArgs := []string{"cp"}
-
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	host_path := getParam(r, "host_path")
-	jail_path := getParam(r, "jail_path")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	host_path := getParam(c, "host_path")
+	jail_path := getParam(c, "jail_path")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing target parameter"})
+		logRequest("error", "missing target parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
+
 	if host_path == "" {
-		http.Error(w, "[ERROR]: Missing host_path parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing host_path parameter"})
+		logRequest("error", "missing host_path parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, host_path)
+
 	if jail_path == "" {
-		http.Error(w, "[ERROR]: Missing jail_path parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing jail_path parameter"})
+		logRequest("error", "missing jail_path parameter", c, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, jail_path)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleCreateHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleCreateHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleCreateHandler", nil, nil, nil)
 
 	cmdArgs := []string{"create"}
 
-	options := getParam(r, "options")
-	name := getParam(r, "name")
-	release := getParam(r, "release")
-	ip := getParam(r, "ip")
-	iface := getParam(r, "iface")
+	options := getParam(c, "options")
+	name := getParam(c, "name")
+	release := getParam(c, "release")
+	ip := getParam(c, "ip")
+	iface := getParam(c, "iface")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if name == "" {
-		http.Error(w, "[ERROR]: Missing name paramerter.", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing name parameter.")
+		logRequest("error", "missing name parameter", nil, cmdArgs, nil)
 		return
 	}
 	if release == "" {
-		http.Error(w, "[ERROR]: Missing release parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing release parameter")
+		logRequest("error", "missing release parameter", nil, cmdArgs, nil)
 		return
 	}
 	if ip == "" {
-		http.Error(w, "[ERROR]: Missing ip parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing ip parameter")
+		logRequest("error", "missing ip parameter", nil, cmdArgs, nil)
 		return
 	}
 
@@ -321,45 +353,47 @@ func BastilleCreateHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, iface)
 	}
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleDestroyHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleDestroyHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleDestroyHandler", nil, nil, nil)
 
 	cmdArgs := []string{"destroy"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
 
 	if options != "" {
-		options = options + " -ay"
-		cmdArgs = append(cmdArgs, strings.Fields(options)...)
-	} else {
-		options = "-ay"
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleEditHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleEditHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleEditHandler", nil, nil, nil)
 
 	cmdArgs := []string{"edit"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	file := getParam(r, "file")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	file := getParam(c, "file")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
@@ -367,64 +401,74 @@ func BastilleEditHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, file)
 	}
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleEtcupdateHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleEtcupdateHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleEtcupdateHandler", nil, nil, nil)
 
 	cmdArgs := []string{"etcupdate"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	action := getParam(r, "action")
-	release := getParam(r, "release")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	action := getParam(c, "action")
+	release := getParam(c, "release")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
+
 	if action == "bootstrap" {
 		if release == "" {
-			http.Error(w, "[ERROR]: Missing release parameter", http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, "Missing release parameter")
+			logRequest("error", "missing release parameter", nil, cmdArgs, nil)
 			return
 		}
 		cmdArgs = append(cmdArgs, action, release)
 	} else {
 		if target == "" {
-			http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, "Missing target parameter")
+			logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 			return
 		}
 		cmdArgs = append(cmdArgs, target)
 		if action == "update" {
 			if release == "" {
-				http.Error(w, "[ERROR]: Missing release parameter", http.StatusBadRequest)
+				c.JSON(http.StatusBadRequest, "Missing release parameter")
+				logRequest("error", "missing release parameter", nil, cmdArgs, nil)
 				return
 			}
 			cmdArgs = append(cmdArgs, release)
 		} else {
 			if action == "" {
-				http.Error(w, "[ERROR]: Missing action parameter", http.StatusBadRequest)
+				c.JSON(http.StatusBadRequest, "Missing action parameter")
+				logRequest("error", "missing action parameter", nil, cmdArgs, nil)
 				return
 			}
 			cmdArgs = append(cmdArgs, action)
 		}
 	}
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleExportHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleExportHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleExportHandler", nil, nil, nil)
 
 	cmdArgs := []string{"export"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	path := getParam(r, "path")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	path := getParam(c, "path")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
@@ -432,41 +476,47 @@ func BastilleExportHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, path)
 	}
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleHtopHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleHtopHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleHtopHandler", nil, nil, nil)
 
 	cmdArgs := []string{"htop"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleImportHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleImportHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleImportHandler", nil, nil, nil)
 
 	cmdArgs := []string{"import"}
 
-	options := getParam(r, "options")
-	file := getParam(r, "file")
-	release := getParam(r, "release")
+	options := getParam(c, "options")
+	file := getParam(c, "file")
+	release := getParam(c, "release")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if file == "" {
-		http.Error(w, "[ERROR]: Missing file parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing file parameter")
+		logRequest("error", "missing file parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, file)
@@ -474,89 +524,104 @@ func BastilleImportHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, release)
 	}
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleJcpHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleJcpHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleJcpHandler", nil, nil, nil)
 
 	cmdArgs := []string{"jcp"}
 
-	options := getParam(r, "options")
-	source_jail := getParam(r, "source_jail")
-	source_path := getParam(r, "source_path")
-	destination_jail := getParam(r, "destination_jail")
-	destination_path := getParam(r, "destination_path")
+	options := getParam(c, "options")
+	source_jail := getParam(c, "source_jail")
+	source_path := getParam(c, "source_path")
+	destination_jail := getParam(c, "destination_jail")
+	destination_path := getParam(c, "destination_path")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if source_jail == "" {
-		http.Error(w, "[ERROR]: Missing source_jail parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing source_jail parameter")
+		logRequest("error", "missing source_jail parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, source_jail)
 	if source_path == "" {
-		http.Error(w, "[ERROR]: Missing source_path parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing source_path parameter")
+		logRequest("error", "missing source_path parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, source_path)
 	if destination_jail == "" {
-		http.Error(w, "[ERROR]: Missing destination_jail parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing destination_jail parameter")
+		logRequest("error", "missing destination_jail parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, destination_jail)
 	if destination_path == "" {
-		http.Error(w, "[ERROR]: Missing destination_path parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing destination_path parameter")
+		logRequest("error", "missing destination_path parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, destination_path)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleLimitsHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleLimitsHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleLimitsHandler", nil, nil, nil)
 
 	cmdArgs := []string{"limits"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	action := getParam(r, "action")
-	args := getParam(r, "args")
-	option := getParam(r, "option")
-	value := getParam(r, "value")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	action := getParam(c, "action")
+	args := getParam(c, "args")
+	option := getParam(c, "option")
+	value := getParam(c, "value")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
 	if action == "" {
-		http.Error(w, "[ERROR]: Missing action parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing action parameter")
+		logRequest("error", "missing action parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, action)
-	if action == "add" {
+
+	switch action {
+	case "add":
 		if option == "" {
-			http.Error(w, "[ERROR]: Missing option parameter", http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, "Missing option parameter")
+			logRequest("error", "missing option parameter", nil, cmdArgs, nil)
 			return
 		}
 		if value == "" {
-			http.Error(w, "[ERROR]: Missing value parameter", http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, "Missing value parameter")
+			logRequest("error", "missing value parameter", nil, cmdArgs, nil)
 			return
 		}
 		cmdArgs = append(cmdArgs, option, value)
-	} else if action == "remove" {
+	case "remove":
 		if option == "" {
-			http.Error(w, "[ERROR]: Missing option parameter", http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, "Missing option parameter")
+			logRequest("error", "missing option parameter", nil, cmdArgs, nil)
 			return
 		}
 		cmdArgs = append(cmdArgs, option)
-	} else if action == "clear" || action == "reset" || action == "stats" {
-		cmdArgs = append(cmdArgs, action)
-	} else if action == "list" || action == "show" {
+	case "clear", "reset", "stats":
+		// just append the action
+	case "list", "show":
 		if args == "active" {
 			cmdArgs = append(cmdArgs, action, args)
 		} else {
@@ -564,15 +629,17 @@ func BastilleLimitsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleListHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleListHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleListHandler", nil, nil, nil)
 
 	cmdArgs := []string{"list"}
 
-	options := getParam(r, "options")
-	item := getParam(r, "item")
+	options := getParam(c, "options")
+	item := getParam(c, "item")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
@@ -581,56 +648,67 @@ func BastilleListHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, item)
 	}
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleMigrateHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleMigrateHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleMigrateHandler", nil, nil, nil)
 
 	cmdArgs := []string{"migrate"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	destination := getParam(r, "destination")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	destination := getParam(c, "destination")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
 	if destination == "" {
-		http.Error(w, "[ERROR]: Missing destination parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing destination parameter")
+		logRequest("error", "missing destination parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, destination)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleMonitorHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleMonitorHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleMonitorHandler", nil, nil, nil)
 
 	cmdArgs := []string{"monitor"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	action := getParam(r, "action")
-	service := getParam(r, "service")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	action := getParam(c, "action")
+	service := getParam(c, "service")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
+
 	if action == "enable" || action == "disable" || action == "status" {
 		cmdArgs = append(cmdArgs, action)
 	} else if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
+	} else {
+		cmdArgs = append(cmdArgs, target)
 	}
-	cmdArgs = append(cmdArgs, target)
+
 	if action == "add" || action == "delete" {
 		if service == "" {
-			http.Error(w, "[ERROR]: Missing service parameter", http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, "Missing service parameter")
+			logRequest("error", "missing service parameter", nil, cmdArgs, nil)
 			return
 		}
 		cmdArgs = append(cmdArgs, action, service)
@@ -641,294 +719,326 @@ func BastilleMonitorHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleMountHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleMountHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleMountHandler", nil, nil, nil)
 
 	cmdArgs := []string{"mount"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	host_path := getParam(r, "host_path")
-	jail_path := getParam(r, "jail_path")
-	fs_type := getParam(r, "fs_type")
-	fs_options := getParam(r, "fs_options")
-	dump := getParam(r, "dump")
-	pass_number := getParam(r, "pass_number")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	host_path := getParam(c, "host_path")
+	jail_path := getParam(c, "jail_path")
+	fs_type := getParam(c, "fs_type")
+	fs_options := getParam(c, "fs_options")
+	dump := getParam(c, "dump")
+	pass_number := getParam(c, "pass_number")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
 	if host_path == "" {
-		http.Error(w, "[ERROR]: Missing host_path parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing host_path parameter")
+		logRequest("error", "missing host_path parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, host_path)
 	if jail_path == "" {
-		http.Error(w, "[ERROR]: Missing jail_path parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing jail_path parameter")
+		logRequest("error", "missing jail_path parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, jail_path)
+
 	if fs_type != "" || fs_options != "" || dump != "" || pass_number != "" {
-		if fs_type == "" {
-			http.Error(w, "[ERROR]: Missing fs_type parameter", http.StatusBadRequest)
-			return
-		}
-		if fs_options == "" {
-			http.Error(w, "[ERROR]: Missing fs_options parameter", http.StatusBadRequest)
-			return
-		}
-		if dump == "" {
-			http.Error(w, "[ERROR]: Missing dump parameter", http.StatusBadRequest)
-			return
-		}
-		if pass_number == "" {
-			http.Error(w, "[ERROR]: Missing pass_number parameter", http.StatusBadRequest)
+		if fs_type == "" || fs_options == "" || dump == "" || pass_number == "" {
+			c.JSON(http.StatusBadRequest, "Missing mount parameter(s)")
+			logRequest("error", "missing mount parameter(s)", nil, cmdArgs, nil)
 			return
 		}
 		cmdArgs = append(cmdArgs, fs_type, fs_options, dump, pass_number)
 	}
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleNetworkHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleNetworkHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleNetworkHandler", nil, nil, nil)
 
 	cmdArgs := []string{"network"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	action := getParam(r, "action")
-	iface := getParam(r, "iface")
-	ip := getParam(r, "ip")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	action := getParam(c, "action")
+	iface := getParam(c, "iface")
+	ip := getParam(c, "ip")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
+
 	if action == "add" {
 		if iface == "" {
-			http.Error(w, "[ERROR]: Missing iface parameter", http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, "Missing iface parameter")
+			logRequest("error", "missing iface parameter", nil, cmdArgs, nil)
 			return
 		}
 		cmdArgs = append(cmdArgs, action, iface)
 		if ip != "" {
 			cmdArgs = append(cmdArgs, ip)
 		}
-	} else {
-		if action == "remove" {
-			if iface == "" {
-				http.Error(w, "[ERROR]: Missing iface parameter", http.StatusBadRequest)
-				return
-			}
-			cmdArgs = append(cmdArgs, action, iface)
+	} else if action == "remove" {
+		if iface == "" {
+			c.JSON(http.StatusBadRequest, "Missing iface parameter")
+			logRequest("error", "missing iface parameter", nil, cmdArgs, nil)
+			return
 		}
+		cmdArgs = append(cmdArgs, action, iface)
 	}
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastillePkgHandler(w http.ResponseWriter, r *http.Request) {
+func BastillePkgHandler(c *gin.Context) {
+
+	logRequest("debug", "BastillePkgHandler", nil, nil, nil)
 
 	cmdArgs := []string{"pkg"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	args := getParam(r, "args")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	args := getParam(c, "args")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
+
 	if args == "" {
-		http.Error(w, "[ERROR]: Missing args parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing args parameter")
+		logRequest("error", "missing args parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, strings.Fields(args)...)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleRcpHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleRcpHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleRcpHandler", nil, nil, nil)
 
 	cmdArgs := []string{"rcp"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	jail_path := getParam(r, "jail_path")
-	host_path := getParam(r, "host_path")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	jailPath := getParam(c, "jail_path")
+	hostPath := getParam(c, "host_path")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
-	if jail_path == "" {
-		http.Error(w, "[ERROR]: Missing jail_path parameter", http.StatusBadRequest)
-		return
-	}
-	cmdArgs = append(cmdArgs, jail_path)
-	if host_path == "" {
-		http.Error(w, "[ERROR]: Missing host_path parameter", http.StatusBadRequest)
-		return
-	}
-	cmdArgs = append(cmdArgs, host_path)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	if jailPath == "" {
+		c.JSON(http.StatusBadRequest, "Missing jail_path parameter")
+		logRequest("error", "missing jail_path parameter", nil, cmdArgs, nil)
+		return
+	}
+	cmdArgs = append(cmdArgs, jailPath)
+
+	if hostPath == "" {
+		c.JSON(http.StatusBadRequest, "Missing host_path parameter")
+		logRequest("error", "missing host_path parameter", nil, cmdArgs, nil)
+		return
+	}
+	cmdArgs = append(cmdArgs, hostPath)
+
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleRdrHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleRdrHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleRdrHandler", nil, nil, nil)
 
 	cmdArgs := []string{"rdr"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	action := getParam(r, "action")
-	protocol := getParam(r, "protocol")
-	host_port := getParam(r, "host_port")
-	jail_port := getParam(r, "jail_port")
-	log_options := getParam(r, "log_options")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	action := getParam(c, "action")
+	protocol := getParam(c, "protocol")
+	hostPort := getParam(c, "host_port")
+	jailPort := getParam(c, "jail_port")
+	logOptions := getParam(c, "log_options")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
+
 	if action == "clear" || action == "reset" || action == "list" {
 		cmdArgs = append(cmdArgs, action)
 	} else {
 		if protocol == "" {
-			http.Error(w, "[ERROR]: Missing protocol parameter", http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, "Missing protocol parameter")
+			logRequest("error", "missing protocol parameter", nil, cmdArgs, nil)
 			return
 		}
 		cmdArgs = append(cmdArgs, protocol)
-		if host_port == "" {
-			http.Error(w, "[ERROR]: Missing host_port parameter", http.StatusBadRequest)
+
+		if hostPort == "" {
+			c.JSON(http.StatusBadRequest, "Missing host_port parameter")
+			logRequest("error", "missing host_port parameter", nil, cmdArgs, nil)
 			return
 		}
-		cmdArgs = append(cmdArgs, host_port)
-		if jail_port == "" {
-			http.Error(w, "[ERROR]: Missing jail_port parameter", http.StatusBadRequest)
+		cmdArgs = append(cmdArgs, hostPort)
+
+		if jailPort == "" {
+			c.JSON(http.StatusBadRequest, "Missing jail_port parameter")
+			logRequest("error", "missing jail_port parameter", nil, cmdArgs, nil)
 			return
 		}
-		cmdArgs = append(cmdArgs, jail_port)
+		cmdArgs = append(cmdArgs, jailPort)
+
 		if action == "log" {
-			if log_options == "" {
-				http.Error(w, "[ERROR]: Missing log_options parameter", http.StatusBadRequest)
+			if logOptions == "" {
+				c.JSON(http.StatusBadRequest, "Missing log_options parameter")
+				logRequest("error", "missing log_options parameter", nil, cmdArgs, nil)
 				return
 			}
-			cmdArgs = append(cmdArgs, action, log_options)
+			cmdArgs = append(cmdArgs, action, logOptions)
 		}
 	}
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleRenameHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleRenameHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleRenameHandler", nil, nil, nil)
 
 	cmdArgs := []string{"rename"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	new_name := getParam(r, "new_name")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	newName := getParam(c, "new_name")
 
 	if options != "" {
-		options = options + " -a"
-		cmdArgs = append(cmdArgs, strings.Fields(options)...)
-	} else {
-		options = "-a"
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
-	if new_name == "" {
-		http.Error(w, "[ERROR]: Missing new_name parameter", http.StatusBadRequest)
+	if newName == "" {
+		c.JSON(http.StatusBadRequest, "Missing new_name parameter")
+		logRequest("error", "missing new_name parameter", nil, cmdArgs, nil)
 		return
 	}
-	cmdArgs = append(cmdArgs, target, new_name)
+	cmdArgs = append(cmdArgs, target, newName)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleRestartHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleRestartHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleRestartHandler", nil, nil, nil)
 
 	cmdArgs := []string{"restart"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleServiceHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleServiceHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleServiceHandler", nil, nil, nil)
 
 	cmdArgs := []string{"service"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	service := getParam(r, "service")
-	args := getParam(r, "args")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	service := getParam(c, "service")
+	args := getParam(c, "args")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
 	if service == "" {
-		http.Error(w, "[ERROR]: Missing service parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing service parameter")
+		logRequest("error", "missing service parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, service)
 	if args == "" {
-		http.Error(w, "[ERROR]: Missing args parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing args parameter")
+		logRequest("error", "missing args parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, strings.Fields(args)...)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleSetupHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleSetupHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleSetupHandler", nil, nil, nil)
 
 	cmdArgs := []string{"setup"}
 
-	options := getParam(r, "options")
-	item := getParam(r, "item")
-	args := getParam(r, "args")
+	options := getParam(c, "options")
+	item := getParam(c, "item")
+	args := getParam(c, "args")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
@@ -940,92 +1050,107 @@ func BastilleSetupHandler(w http.ResponseWriter, r *http.Request) {
 		cmdArgs = append(cmdArgs, args)
 	}
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleStartHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleStartHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleStartHandler", nil, nil, nil)
 
 	cmdArgs := []string{"start"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleStopHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleStopHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleStopHandler", nil, nil, nil)
 
 	cmdArgs := []string{"stop"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleSysrcHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleSysrcHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleSysrcHandler", nil, nil, nil)
 
 	cmdArgs := []string{"sysrc"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	args := getParam(r, "args")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	args := getParam(c, "args")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
 	if args == "" {
-		http.Error(w, "[ERROR]: Missing args parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing args parameter")
+		logRequest("error", "missing args parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, strings.Fields(args)...)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleTagsHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleTagsHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleTagsHandler", nil, nil, nil)
 
 	cmdArgs := []string{"tags"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	action := getParam(r, "action")
-	tags := getParam(r, "tags")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	action := getParam(c, "action")
+	tags := getParam(c, "tags")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
+
 	if action == "add" || action == "delete" {
 		if tags == "" {
-			http.Error(w, "[ERROR]: Missing tags parameter", http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, "Missing tags parameter")
+			logRequest("error", "missing tags parameter", nil, cmdArgs, nil)
 			return
 		}
 		cmdArgs = append(cmdArgs, action, tags)
@@ -1035,214 +1160,252 @@ func BastilleTagsHandler(w http.ResponseWriter, r *http.Request) {
 			cmdArgs = append(cmdArgs, tags)
 		}
 	} else {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Invalid action parameter")
+		logRequest("error", "invalid action parameter", nil, cmdArgs, nil)
 		return
 	}
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleTemplateHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleTemplateHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleTemplateHandler", nil, nil, nil)
 
 	cmdArgs := []string{"template"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	action := getParam(r, "action")
-	template := getParam(r, "template")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	action := getParam(c, "action")
+	template := getParam(c, "template")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
+
 	if action == "convert" {
 		cmdArgs = append(cmdArgs, action)
 		if template == "" {
-			http.Error(w, "[ERROR]: Missing template parameter", http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, "Missing template parameter")
+			logRequest("error", "missing template parameter", nil, cmdArgs, nil)
 			return
 		}
 		cmdArgs = append(cmdArgs, template)
 	} else {
 		if target == "" {
-			http.Error(w, "[ERROR]: Missing tags parameter", http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, "Missing target parameter")
+			logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 			return
 		}
 		cmdArgs = append(cmdArgs, target)
 		if template == "" {
-			http.Error(w, "[ERROR]: Missing template parameter", http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, "Missing template parameter")
+			logRequest("error", "missing template parameter", nil, cmdArgs, nil)
 			return
 		}
 		cmdArgs = append(cmdArgs, template)
 	}
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleTopHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleTopHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleTopHandler", nil, nil, nil)
 
 	cmdArgs := []string{"top"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleUmountHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleUmountHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleUmountHandler", nil, nil, nil)
 
 	cmdArgs := []string{"umount"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	jail_path := getParam(r, "jail_path")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	jailPath := getParam(c, "jail_path")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
-	if jail_path == "" {
-		http.Error(w, "[ERROR]: Missing jail_path parameter", http.StatusBadRequest)
+	if jailPath == "" {
+		c.JSON(http.StatusBadRequest, "Missing jail_path parameter")
+		logRequest("error", "missing jail_path parameter", nil, cmdArgs, nil)
 		return
 	}
-	cmdArgs = append(cmdArgs, jail_path)
+	cmdArgs = append(cmdArgs, jailPath)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleUpdateHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleUpdateHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleUpdateHandler", nil, nil, nil)
 
 	cmdArgs := []string{"update"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleUpgradeHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleUpgradeHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleUpgradeHandler", nil, nil, nil)
 
 	cmdArgs := []string{"upgrade"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	new_release := getParam(r, "new_release")
-	action := getParam(r, "action")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	newRelease := getParam(c, "new_release")
+	action := getParam(c, "action")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
+
 	if action == "install" {
 		cmdArgs = append(cmdArgs, action)
 	} else {
-		if new_release == "" {
-			http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		if newRelease == "" {
+			c.JSON(http.StatusBadRequest, "Missing new_release parameter")
+			logRequest("error", "missing new_release parameter", nil, cmdArgs, nil)
 			return
 		}
-		cmdArgs = append(cmdArgs, new_release)
+		cmdArgs = append(cmdArgs, newRelease)
 	}
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleVerifyHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleVerifyHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleVerifyHandler", nil, nil, nil)
 
 	cmdArgs := []string{"verify"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }
 
-func BastilleZfsHandler(w http.ResponseWriter, r *http.Request) {
+func BastilleZfsHandler(c *gin.Context) {
+
+	logRequest("debug", "BastilleZfsHandler", nil, nil, nil)
 
 	cmdArgs := []string{"zfs"}
 
-	options := getParam(r, "options")
-	target := getParam(r, "target")
-	action := getParam(r, "action")
-	tag := getParam(r, "tag")
-	key_value := getParam(r, "key_value")
-	dataset := getParam(r, "dataset")
-	jail_path := getParam(r, "jail_path")
+	options := getParam(c, "options")
+	target := getParam(c, "target")
+	action := getParam(c, "action")
+	tag := getParam(c, "tag")
+	keyValue := getParam(c, "key_value")
+	dataset := getParam(c, "dataset")
+	jailPath := getParam(c, "jail_path")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
 	if target == "" {
-		http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, "Missing target parameter")
+		logRequest("error", "missing target parameter", nil, cmdArgs, nil)
 		return
 	}
 	cmdArgs = append(cmdArgs, target)
-	if action == "snapshot" || action == "destroy" || action == "rollback" {
+
+	switch action {
+	case "snapshot", "destroy", "rollback":
 		cmdArgs = append(cmdArgs, action)
 		if tag != "" {
 			cmdArgs = append(cmdArgs, tag)
 		}
-	} else if action == "df" || action == "usage" {
+	case "df", "usage":
 		cmdArgs = append(cmdArgs, action)
-	} else if action == "get" || action == "set" {
+	case "get", "set":
 		cmdArgs = append(cmdArgs, action)
-		if key_value == "" {
-			http.Error(w, "[ERROR]: Missing target parameter", http.StatusBadRequest)
+		if keyValue == "" {
+			c.JSON(http.StatusBadRequest, "Missing key_value parameter")
+			logRequest("error", "missing key_value parameter", nil, cmdArgs, nil)
 			return
 		}
-		cmdArgs = append(cmdArgs, key_value)
-	} else if action == "jail" {
+		cmdArgs = append(cmdArgs, keyValue)
+	case "jail":
 		cmdArgs = append(cmdArgs, action)
 		if dataset == "" {
-			http.Error(w, "[ERROR]: Missing dataset parameter", http.StatusBadRequest)
+			c.JSON(http.StatusBadRequest, "Missing dataset parameter")
+			logRequest("error", "missing dataset parameter", nil, cmdArgs, nil)
 			return
 		}
 		cmdArgs = append(cmdArgs, dataset)
-		if jail_path == "" {
-			http.Error(w, "[ERROR]: Missing jail_path parameter", http.StatusBadRequest)
+		if jailPath == "" {
+			c.JSON(http.StatusBadRequest, "Missing jail_path parameter")
+			logRequest("error", "missing jail_path parameter", nil, cmdArgs, nil)
 			return
 		}
-		cmdArgs = append(cmdArgs, jail_path)
-	} else if action == "unjail" {
+		cmdArgs = append(cmdArgs, jailPath)
+	case "unjail":
 		cmdArgs = append(cmdArgs, action)
-		if jail_path == "" {
-			http.Error(w, "[ERROR]: Missing jail_path parameter", http.StatusBadRequest)
+		if jailPath == "" {
+			c.JSON(http.StatusBadRequest, "Missing jail_path parameter")
+			logRequest("error", "missing jail_path parameter", nil, cmdArgs, nil)
 			return
 		}
-		cmdArgs = append(cmdArgs, jail_path)
+		cmdArgs = append(cmdArgs, jailPath)
+	default:
+		c.JSON(http.StatusBadRequest, "Invalid action parameter")
+		logRequest("error", "invalid action parameter", nil, cmdArgs, nil)
+		return
 	}
 
-	ParseAndRunCommand(w, r, cmdArgs)
+	ParseAndRunBastilleCommand(c, cmdArgs)
 }

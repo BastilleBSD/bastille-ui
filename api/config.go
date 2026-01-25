@@ -2,236 +2,108 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
-	"log"
-	"net/http"
 	"os"
-	"strconv"
-	"strings"
+	
+	"github.com/gin-gonic/gin"
 )
 
 var bastilleSpec *BastilleSpecStruct
 var rocinanteSpec *RocinanteSpecStruct
-var configFile = "api/config.json"
+var configFile = "/usr/local/etc/bastille-ui/config.json"
 var cfg *ConfigStruct
 var APIURL string
 var Host string
 var Port string
-var Key string
 
-func setAPIKey(key string) {
-	Key = key
+func getParam(c *gin.Context, key string) string {
+	return c.Query(key)
 }
 
-func getParam(r *http.Request, key string) string {
-	return r.URL.Query().Get(key)
-}
+func loadBastilleSpec() (*BastilleSpecStruct, error) {
 
-func ValidateBastilleCommandParameters(r *http.Request, cmdArgs []string) error {
-
-	query := r.URL.Query()
-
-	cmdName := cmdArgs[0]
-	var subcmd *BastilleCommandStruct
-	for _, c := range bastilleSpec.Commands {
-		if c.Command == cmdName {
-			subcmd = &c
-			break
-		}
-	}
-
-	paramsMap := make(map[string]struct{})
-	for _, params := range subcmd.Parameters {
-		paramsMap[strings.ToLower(params)] = struct{}{}
-	}
-
-	for param := range query {
-		if _, ok := paramsMap[strings.ToLower(param)]; !ok {
-			err := fmt.Errorf("invalid parameter %q for command %q", param, cmdName)
-			logAll("error", r, cmdArgs, err.Error())
-			return err
-		}
-	}
-
-	optionsValueMap := make(map[string]interface{})
-	for _, opt := range subcmd.Options {
-		if opt.SFlag != "" {
-			optionsValueMap[opt.SFlag] = opt.Value
-		}
-		if opt.LFlag != "" {
-			optionsValueMap[opt.LFlag] = opt.Value
-		}
-	}
-
-	optionsParam := query.Get("options")
-	if optionsParam != "" {
-
-		optionsParam = strings.ReplaceAll(optionsParam, "+", " ")
-		opts := strings.Fields(optionsParam)
-
-		for i := 0; i < len(opts); i++ {
-			arg := opts[i]
-			valueType, ok := optionsValueMap[arg]
-
-			if !ok {
-				err := fmt.Errorf("invalid option %q for command %q", arg, cmdName)
-				logAll("error", r, cmdArgs, err.Error())
-				return err
-			}
-
-			if valueType == "" || valueType == nil {
-				continue
-			}
-
-			if i+1 >= len(opts) {
-				err := fmt.Errorf("option %q requires a value", arg)
-				logAll("error", r, cmdArgs, err.Error())
-				return err
-			}
-
-			i++
-			val := opts[i]
-
-			if valueType == "int" {
-				if _, err := strconv.Atoi(val); err != nil {
-					err := fmt.Errorf("option %q requires a numeric value", arg)
-					logAll("error", r, cmdArgs, err.Error())
-					return err
-				}
-			}
-
-			if strings.HasPrefix(val, "-") {
-				err := fmt.Errorf("option %q requires a value", arg)
-				logAll("error", r, cmdArgs, err.Error())
-				return err
-			}
-		}
-	}
-
-	logAll("debug", r, cmdArgs, "command validated")
-
-	return nil
-}
-
-func ValidateRocinanteCommandParameters(r *http.Request, cmdArgs []string) error {
-
-	query := r.URL.Query()
-
-	cmdName := cmdArgs[0]
-	var subcmd *RocinanteCommandStruct
-	for _, c := range rocinanteSpec.Commands {
-		if c.Command == cmdName {
-			subcmd = &c
-			break
-		}
-	}
-
-	paramsMap := make(map[string]struct{})
-	for _, params := range subcmd.Parameters {
-		paramsMap[strings.ToLower(params)] = struct{}{}
-	}
-
-	for param := range query {
-		if _, ok := paramsMap[strings.ToLower(param)]; !ok {
-			err := fmt.Errorf("invalid parameter %q for command %q", param, cmdName)
-			logAll("error", r, cmdArgs, err.Error())
-			return err
-		}
-	}
-
-	optionsValueMap := make(map[string]interface{})
-	for _, opt := range subcmd.Options {
-		if opt.SFlag != "" {
-			optionsValueMap[opt.SFlag] = opt.Value
-		}
-		if opt.LFlag != "" {
-			optionsValueMap[opt.LFlag] = opt.Value
-		}
-	}
-
-	optionsParam := query.Get("options")
-	if optionsParam != "" {
-
-		optionsParam = strings.ReplaceAll(optionsParam, "+", " ")
-		opts := strings.Fields(optionsParam)
-
-		for i := 0; i < len(opts); i++ {
-
-			arg := opts[i]
-			_, ok := optionsValueMap[arg]
-
-			if !ok {
-				err := fmt.Errorf("invalid option %q for command %q", arg, cmdName)
-				logAll("error", r, cmdArgs, err.Error())
-				return err
-			}
-			i++
-		}
-	}
-
-	logAll("debug", r, cmdArgs, "command validated")
-
-	return nil
-}
-
-func loadBastilleSpec() *BastilleSpecStruct {
+	logRequest("debug", "loadBastilleSpec", nil, nil, nil)
 
 	specFile := "api/bastille.json"
 	var spec BastilleSpecStruct
 
 	data, err := os.ReadFile(specFile)
 	if err != nil {
-		log.Fatalf("Failed to read Bastille spec file: %v", err)
+		logRequest("error", "Failed to read Bastille spec file", nil, nil, err.Error())
+		return nil, err
 	}
 
 	if err := json.Unmarshal(data, &spec); err != nil {
-		log.Fatalf("Failed to parse Bastille spec: %v", err)
+		logRequest("error", "Failed to parse Bastille spec", nil, nil, err.Error())
+		return nil, err
 	}
 
 	bastilleSpec = &spec
-	return bastilleSpec
+	return bastilleSpec, nil
 }
 
-func loadRocinanteSpec() *RocinanteSpecStruct {
+func loadRocinanteSpec() (*RocinanteSpecStruct, error) {
+
+	logRequest("debug", "loadRocinanteSpec", nil, nil, nil)
 
 	specFile := "api/rocinante.json"
 	var spec RocinanteSpecStruct
 
 	data, err := os.ReadFile(specFile)
 	if err != nil {
-		log.Fatalf("Failed to read Rocinante spec file: %v", err)
+		logRequest("error", "Failed to read Rocinante spec file", nil, nil, err.Error())
+		return nil, err
 	}
 
 	if err := json.Unmarshal(data, &spec); err != nil {
-		log.Fatalf("Failed to parse Rocinante spec: %v", err)
+		logRequest("error", "Failed to parse Rocinante spec", nil, nil, err.Error())
+		return nil, err
 	}
 
 	rocinanteSpec = &spec
-	return rocinanteSpec
+	return rocinanteSpec, nil
 }
 
-func loadConfig() *ConfigStruct {
+func loadConfig() (*ConfigStruct, error) {
 
-	file, err := os.Open(configFile)
+	logRequest("debug", "loadConfig", nil, nil, nil)
+
+	data, err := os.ReadFile(configFile)
 	if err != nil {
-		log.Fatalf("Failed to open config file: %v", err)
+		logRequest("error", "Failed to read config file", nil, nil, err.Error())
+		return nil, err
 	}
-	defer file.Close()
 
 	var c ConfigStruct
-	if err := json.NewDecoder(file).Decode(&c); err != nil {
-		log.Fatalf("Failed to parse config file: %v", err)
+	if err := json.Unmarshal(data, &c); err != nil {
+		logRequest("error", "Failed to parse config file", nil, nil, err.Error())
+		return nil, err
+	}
+
+	if c.APIKeys == nil {
+		c.APIKeys = make(map[string]APIKeyStruct)
 	}
 
 	cfg = &c
-	return cfg
+	Host = c.Host
+	Port = c.Port
+	return cfg, nil
 }
 
-func setConfig(config *ConfigStruct) {
+func saveConfig() error {
 
-	Host = config.Host
-	Port = config.Port
-	Key = config.Key
+	logRequest("debug", "saveConfig", nil, nil, nil)
 
-	setAPIKey(Key)
+	data, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		logRequest("error", "Failed to marshal config for saving", nil, nil, err.Error())
+		return err
+	}
+
+	err = os.WriteFile(configFile, data, 0644)
+	if err != nil {
+		logRequest("error", "Failed to write config file", nil, nil, err.Error())
+		return err
+	}
+
+	return nil
 }

@@ -1,22 +1,26 @@
 package api
 
 import (
-	"encoding/json"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
-var DebugMode bool
 var logger *slog.Logger
 
 func InitLogger(debug bool) {
 
-	level := slog.LevelInfo
-	DebugMode = debug
-	if DebugMode {
+	var level slog.Level
+
+	if debug {
 		level = slog.LevelDebug
+		gin.SetMode(gin.DebugMode)
+	} else {
+		level = slog.LevelInfo
+		gin.SetMode(gin.ReleaseMode)
 	}
 
 	logger = slog.New(
@@ -28,98 +32,142 @@ func InitLogger(debug bool) {
 	slog.SetDefault(logger)
 }
 
-func logAll(level string, r *http.Request, cmdArgs []string, msg string) {
-
-	headers := r.Header.Clone()
-	headers.Del("Authorization")
+func logRequest(level string, msg string, c *gin.Context, cmdArgs any, err any) {
 
 	switch level {
+	case "info":
+		if c != nil {
+			// Original simple format when context is available
+			logger.Info(msg,
+				"method", c.Request.Method,
+				"path", c.Request.URL.Path,
+				"query", c.Request.URL.RawQuery,
+			)
+		} else {
+			// Message only
+			logger.Info(msg)
+		}
+
 	case "debug":
-		if DebugMode {
-			logger.Debug(msg,
-				"method", r.Method,
-				"path", r.URL.Path,
-				"query", r.URL.RawQuery,
-				"rawArgs", cmdArgs,
-				"remote", r.RemoteAddr,
-				"user_agent", r.UserAgent(),
+		var attrs []any
+		if c != nil {
+			headers := c.Request.Header.Clone()
+			headers.Del("Authorization")
+			attrs = append(attrs,
+				"method", c.Request.Method,
+				"path", c.Request.URL.Path,
+				"query", c.Request.URL.RawQuery,
+				"remote", c.ClientIP(),
+				"user_agent", c.Request.UserAgent(),
 				"headers", headers,
 			)
 		}
-	case "info":
-		logger.Info(msg,
-			"method", r.Method,
-			"path", r.URL.Path,
-			"query", r.URL.RawQuery,
-			"rawArgs", cmdArgs,
-		)
+		if cmdArgs != nil {
+			attrs = append(attrs, "rawArgs", cmdArgs)
+		}
+		logger.Debug(msg, attrs...)
+
 	case "error":
-		logger.Error(msg,
-			"method", r.Method,
-			"path", r.URL.Path,
-			"query", r.URL.RawQuery,
-			"rawArgs", cmdArgs,
-			"remote", r.RemoteAddr,
-		)
+		var attrs []any
+		if c != nil {
+			attrs = append(attrs,
+				"method", c.Request.Method,
+				"path", c.Request.URL.Path,
+				"query", c.Request.URL.RawQuery,
+				"remote", c.ClientIP(),
+			)
+		}
+		if err != nil {
+			attrs = append(attrs, "error", err)
+		}
+		logger.Error(msg, attrs...)
 	}
 }
 
-// Validate API key in request header
-func apiKeyMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Authorization") != "Bearer "+Key {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+func CORSMiddleware() gin.HandlerFunc {
+
+	logRequest("debug", "CORSMiddleware", nil, nil, nil)
+
+	return func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-TTYD-Port")
+		c.Header("Access-Control-Expose-Headers", "X-TTYD-Port")
+
+		if c.Request.Method == http.MethodOptions {
+			c.Status(http.StatusOK)
+			c.Abort()
 			return
 		}
-		next.ServeHTTP(w, r)
-	})
+
+		c.Next()
+	}
 }
 
-func validateMethodMiddleware(handler http.HandlerFunc, cmdName string, software string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func apiKeyMiddleware(scope string, action string) gin.HandlerFunc {
 
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-TTYD-Port")
-		w.Header().Set("Access-Control-Expose-Headers", "X-TTYD-Port")
+	logRequest("debug", "apiKeyMiddleware", nil, nil, nil)
 
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		} else if r.Method == http.MethodGet {
-			var cmd interface{}
+	return func(c *gin.Context) {
 
-			switch software {
-			case "bastille":
-				for _, c := range bastilleSpec.Commands {
-					if c.Command == cmdName {
-						cmd = c
-						break
-					}
-				}
-			case "rocinante":
-				for _, c := range rocinanteSpec.Commands {
-					if c.Command == cmdName {
-						cmd = c
-						break
-					}
-				}
-			}
+		auth := c.GetHeader("Authorization")
+		const prefix = "Bearer "
 
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(cmd)
-
-			logAll("debug", r, []string{cmdName}, "success")
+		if auth == "" || !strings.HasPrefix(auth, prefix) {
+			logRequest("error", "invalid authorization header", c, nil, nil)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Unauthorized",
+			})
 			return
 		}
-		handler(w, r)
+
+		providedKey := auth[len(prefix):]
+		keyDetails, exists := cfg.APIKeys[providedKey]
+
+		if !exists {
+			logRequest("error", "Access denied: Invalid Key", c, nil, nil)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			return
+		}
+
+		var allowed []string
+		switch scope {
+		case "bastille":
+			allowed = keyDetails.Permissions.Bastille
+		case "rocinante":
+			allowed = keyDetails.Permissions.Rocinante
+		case "admin":
+			allowed = keyDetails.Permissions.Admin
+		}
+
+		hasPermission := false
+		for _, a := range allowed {
+			if a == "*" || a == action {
+				hasPermission = true
+				break
+			}
+		}
+
+		if !hasPermission {
+			logRequest("error", "forbidden action", c, action, nil)
+			c.AbortWithStatusJSON(403, gin.H{
+				"error": "Forbidden",
+				"details": "Requires " + scope + " permission: " + action,
+			})
+			return
+		}
+
+		c.Next()
 	}
 }
 
 // Log all API requests
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("[API] %s %s %s", r.Method, r.URL.String(), r.RemoteAddr)
-		next.ServeHTTP(w, r)
-	})
+func loggingMiddleware() gin.HandlerFunc {
+
+	logRequest("debug", "loggingMiddleware", nil, nil, nil)
+
+	return func(c *gin.Context) {
+		logRequest("info", "request", c, nil, nil)
+		c.Next()
+	}
 }

@@ -1,9 +1,19 @@
 package api
 
 type ConfigStruct struct {
-	Host string `json:"host"`
-	Port string `json:"port"`
-	Key  string `json:"key"`
+	Host string                  `json:"host"`
+	Port string                  `json:"port"`
+	APIKeys map[string]APIKeyStruct `json:"apiKeys"`
+}
+
+type PermissionsStruct struct {
+	Bastille  []string `json:"bastille"`
+	Rocinante []string `json:"rocinante"`
+	Admin     []string `json:"admin"`
+}
+
+type APIKeyStruct struct {
+	Permissions PermissionsStruct `json:"permissions"`
 }
 
 type BastilleSpecStruct struct {
