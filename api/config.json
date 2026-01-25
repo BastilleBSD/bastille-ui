@@ -2,19 +2,6 @@
   "host": "localhost",
   "port": "8888",
   "apiKeys": {
-    "test1": {
-      "permissions": {
-        "bastille": [
-          "*"
-        ],
-        "rocinante": [
-          "*"
-        ],
-        "admin": [
-          "add"
-        ]
-      }
-    },
     "testapikey": {
       "permissions": {
         "bastille": [
