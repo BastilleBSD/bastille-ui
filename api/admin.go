@@ -254,6 +254,6 @@ func DeleteKeyHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Key deleted "})
+	c.JSON(http.StatusOK, gin.H{"message": "Key deleted"})
 	logRequest("info", "key deleted", c, nil, nil)
 }
