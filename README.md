@@ -63,7 +63,12 @@ a `+` or `%20` as the space character. See examples below...
 The API supports adding additional keys as well as setting permissions on them. The documentation
 at /swagger/index.html should have all you need to get started. Keys are stored in `api/config.json`
 as the hashed value of the specified key. The initial hash in the sample file comes from the following
-command, `printf "testapikey" | sha256`.
+command, `printf "my-random-saltbastille-api-key" | sha256sum`.
+
+The API key structure has a keyID (easy to remember name), under which are the 
+salt, hash and permissions. The key ID must be passed under the `Authorization-ID` header
+ and the actual API key must be passed with the `Authorization` header.The API has no way
+ of remembering or storing your actual API key, so keep it safe.
 
 You can add keys manually, but we recommend adding them through the API interface.
 

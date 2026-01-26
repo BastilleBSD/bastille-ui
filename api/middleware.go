@@ -91,7 +91,7 @@ func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-TTYD-Port, X-API-Key")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, Authorization-ID, X-TTYD-Port, X-API-Key, X-API-Key-ID")
 		c.Header("Access-Control-Expose-Headers", "X-TTYD-Port")
 
 		if c.Request.Method == http.MethodOptions {
@@ -110,35 +110,52 @@ func apiKeyMiddleware(scope string, action string) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
-		auth := c.GetHeader("Authorization")
+		key := c.GetHeader("Authorization")
+		keyID := c.GetHeader("Authorization-ID")
 		const prefix = "Bearer "
 
-		if auth == "" || !strings.HasPrefix(auth, prefix) {
-			logRequest("error", "invalid authorization header", c, nil, nil)
+		if key == "" || !strings.HasPrefix(key, prefix) {
+			logRequest("error", "missin Authorization header", c, nil, nil)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Unauthorized",
+			})
+			return
+		}
+		if keyID == "" {
+			logRequest("error", "missing Authorization-ID header", c, nil, nil)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": "Unauthorized",
 			})
 			return
 		}
 
-		providedKey := auth[len(prefix):]
-		hash := generateHash(providedKey)
-		keyDetails, exists := cfg.APIKeys[hash]
+		providedKey := key[len(prefix):]
 
+		keyData, exists := cfg.APIKeys[keyID]
 		if !exists {
-			logRequest("error", "Access denied: Invalid Key", c, nil, nil)
+			logRequest("error", "invalid API keyID", c, nil, nil)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			return
+		}
+
+		trialHash := generateHash(providedKey, keyData.Salt)
+
+		if !compareHash(trialHash, keyData.Hash) {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Unauthorized",
+			})
+			logRequest("error", "key hash mismatch", c, nil, nil)
 			return
 		}
 
 		var allowed []string
 		switch scope {
 		case "bastille":
-			allowed = keyDetails.Permissions.Bastille
+			allowed = keyData.Permissions.Bastille
 		case "rocinante":
-			allowed = keyDetails.Permissions.Rocinante
+			allowed = keyData.Permissions.Rocinante
 		case "admin":
-			allowed = keyDetails.Permissions.Admin
+			allowed = keyData.Permissions.Admin
 		}
 
 		hasPermission := false
@@ -151,7 +168,7 @@ func apiKeyMiddleware(scope string, action string) gin.HandlerFunc {
 
 		if !hasPermission {
 			logRequest("error", "forbidden action", c, action, nil)
-			c.AbortWithStatusJSON(403, gin.H{
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"error": "Forbidden",
 				"details": "Requires " + scope + " permission: " + action,
 			})

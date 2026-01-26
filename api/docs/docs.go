@@ -37,8 +37,22 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "API key ID for authorization.",
+                        "name": "Authorization-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "API key on which to perform the action.",
                         "name": "X-API-Key",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "API key ID on which to perform the action.",
+                        "name": "X-API-Key-ID",
                         "in": "header",
                         "required": true
                     },
@@ -87,8 +101,22 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "API key ID for authorization.",
+                        "name": "Authorization-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "API key on which to perform the action.",
                         "name": "X-API-Key",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "API key ID on which to perform the action.",
+                        "name": "X-API-Key-ID",
                         "in": "header",
                         "required": true
                     }
@@ -125,8 +153,22 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "API key ID for authorization.",
+                        "name": "Authorization-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "API key on which to perform the action.",
                         "name": "X-API-Key",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "API key ID on which to perform the action.",
+                        "name": "X-API-Key-ID",
                         "in": "header",
                         "required": true
                     },

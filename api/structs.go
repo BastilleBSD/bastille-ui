@@ -13,6 +13,8 @@ type PermissionsStruct struct {
 }
 
 type APIKeyStruct struct {
+	Salt        string            `json:"salt"`
+	Hash        string            `json:"hash"`
 	Permissions PermissionsStruct `json:"permissions"`
 }
 

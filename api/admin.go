@@ -1,7 +1,9 @@
 package api
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
 	"net/http"
@@ -10,9 +12,24 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func generateHash(key string) string {
-    hash := sha256.Sum256([]byte(key))
-    return hex.EncodeToString(hash[:])
+func generateSalt() (string, error) {
+	saltRaw := make([]byte, 16)
+	if _, err := rand.Read(saltRaw); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(saltRaw), nil
+}
+
+func generateHash(key, salt string) string {
+	fullString := salt + key
+	hash := sha256.Sum256([]byte(fullString))
+	return hex.EncodeToString(hash[:])
+}
+
+func compareHash(inputHash, storedHash string) bool {
+	inputBytes, _ := hex.DecodeString(inputHash)
+	storedBytes, _ := hex.DecodeString(storedHash)
+	return subtle.ConstantTimeCompare(inputBytes, storedBytes) == 1
 }
 
 func validateParameters(scope string, permissions []string, c *gin.Context) error {
@@ -71,7 +88,9 @@ func validateParameters(scope string, permissions []string, c *gin.Context) erro
 // Admin add POST
 // @Description Add an API key.
 // @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param Authorization-ID header string true "API key ID for authorization."
 // @Param X-API-Key header string true "API key on which to perform the action."
+// @Param X-API-Key-ID header string true "API key ID on which to perform the action."
 // @Param scope query string false "scope"
 // @Param permissions query string false "permissions"
 // @Tags admin
@@ -82,6 +101,7 @@ func validateParameters(scope string, permissions []string, c *gin.Context) erro
 func AddKeyHandler(c *gin.Context) {
 
 	key := c.GetHeader("X-API-Key")
+	keyID := c.GetHeader("X-API-Key-ID")
 	scope := c.Query("scope")
 	permissionsQuery := c.Query("permissions")
 	var permissions []string
@@ -89,6 +109,11 @@ func AddKeyHandler(c *gin.Context) {
 	if key == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing X-API-Key header"})
 		logRequest("error", "missing X-API-Key header", c, nil, nil)
+		return
+	}
+	if keyID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing X-API-Key-ID header"})
+		logRequest("error", "missing X-API-Key-ID header", c, nil, nil)
 		return
 	}
 	if scope == "" {
@@ -104,9 +129,7 @@ func AddKeyHandler(c *gin.Context) {
 		permissions = append(permissions, strings.Fields(permissionsQuery)...)
 	}
 
-	hash := generateHash(key)
-
-	if _, exists := cfg.APIKeys[hash]; exists {
+	if _, exists := cfg.APIKeys[keyID]; exists {
 		c.JSON(http.StatusConflict, gin.H{"error": "Key already exists"})
 		logRequest("error", "key already exists", c, nil, nil)
 		return
@@ -118,7 +141,18 @@ func AddKeyHandler(c *gin.Context) {
 		return
 	}
 
+	salt, err := generateSalt()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal security error"})
+		logRequest("error", "internal security error", c, nil, err.Error())
+		return
+	}
+
+	saltedHash := generateHash(key, salt)
+
 	newKey := APIKeyStruct{
+		Salt: salt,
+		Hash: saltedHash,
 		Permissions: PermissionsStruct{
 			Bastille:  []string{},
 			Rocinante: []string{},
@@ -139,7 +173,7 @@ func AddKeyHandler(c *gin.Context) {
 		return
 	}
 
-	cfg.APIKeys[hash] = newKey
+	cfg.APIKeys[keyID] = newKey
 
 	if err := saveConfig(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save key"})
@@ -154,7 +188,9 @@ func AddKeyHandler(c *gin.Context) {
 // Admin edit POST
 // @Description Edit an API key.
 // @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param Authorization-ID header string true "API key ID for authorization."
 // @Param X-API-Key header string true "API key on which to perform the action."
+// @Param X-API-Key-ID header string true "API key ID on which to perform the action."
 // @Param scope query string false "scope"
 // @Param permissions query string false "permissions"
 // @Tags admin
@@ -165,6 +201,7 @@ func AddKeyHandler(c *gin.Context) {
 func EditKeyHandler(c *gin.Context) {
 
 	key := c.GetHeader("X-API-Key")
+	keyID := c.GetHeader("X-API-Key-ID")
 	scope := c.Query("scope")
 	permissionsQuery := c.Query("permissions")
 	var permissions []string
@@ -187,12 +224,17 @@ func EditKeyHandler(c *gin.Context) {
 		permissions = append(permissions, strings.Fields(permissionsQuery)...)
 	}
 
-	hash := generateHash(key)
-
-	keyData, exists := cfg.APIKeys[hash]
+	keyData, exists := cfg.APIKeys[keyID]
 	if !exists {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Key not found"})
 		logRequest("error", "key not found", c, nil, nil)
+		return
+	}
+
+	trialHash := generateHash(key, keyData.Salt)
+	if !compareHash(trialHash, keyData.Hash) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid API keyID"})
+		logRequest("error", "invalid API keyID", c, nil, nil)
 		return
 	}
 
@@ -215,7 +257,7 @@ func EditKeyHandler(c *gin.Context) {
 		return
 	}
 
-	cfg.APIKeys[hash] = keyData
+	cfg.APIKeys[keyID] = keyData
 
 	if err := saveConfig(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save config"})
@@ -227,10 +269,12 @@ func EditKeyHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Key updated"})
 }
 
-// Admin add POST
+// Admin delete POST
 // @Description Delete an API key.
 // @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param Authorization-ID header string true "API key ID for authorization."
 // @Param X-API-Key header string true "API key on which to perform the action."
+// @Param X-API-Key-ID header string true "API key ID on which to perform the action."
 // @Tags admin
 // @Accept json
 // @Produce json
@@ -239,27 +283,38 @@ func EditKeyHandler(c *gin.Context) {
 func DeleteKeyHandler(c *gin.Context) {
 
 	key := c.GetHeader("X-API-Key")
+	keyID := c.GetHeader("X-API-Key-ID")
 
 	if key == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing key parameter"})
-		logRequest("error", "missing key parameter", c, nil, nil)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing X-API-Key header"})
+		logRequest("error", "missing X-API-Key header", c, nil, nil)
 		return
 	} else if len(c.Request.URL.Query()) != 0 {
 	        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid parameters"})
 	        logRequest("error", "invalid parameters", c, nil, nil)
 	        return
 	}
+	if keyID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing X-API-Key-ID header"})
+		logRequest("error", "missing X-API-KeyID header", c, nil, nil)
+		return
+	}
 
-	hash := generateHash(key)
-
-	_, exists := cfg.APIKeys[hash]
+	keyData, exists := cfg.APIKeys[keyID]
 	if !exists {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Key not found"})
 		logRequest("error", "key not found", c, nil, nil)
 		return
 	}
 
-	delete(cfg.APIKeys, hash)
+	trialHash := generateHash(key, keyData.Salt)
+	if !compareHash(trialHash, keyData.Hash) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid API keyID"})
+		logRequest("error", "invalid API keyID", c, nil, nil)
+		return
+	}
+
+	delete(cfg.APIKeys, keyID)
 
 	if err := saveConfig(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save config"})

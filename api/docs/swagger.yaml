@@ -41,9 +41,19 @@ paths:
         name: Authorization
         required: true
         type: string
+      - description: API key ID for authorization.
+        in: header
+        name: Authorization-ID
+        required: true
+        type: string
       - description: API key on which to perform the action.
         in: header
         name: X-API-Key
+        required: true
+        type: string
+      - description: API key ID on which to perform the action.
+        in: header
+        name: X-API-Key-ID
         required: true
         type: string
       - description: scope
@@ -74,9 +84,19 @@ paths:
         name: Authorization
         required: true
         type: string
+      - description: API key ID for authorization.
+        in: header
+        name: Authorization-ID
+        required: true
+        type: string
       - description: API key on which to perform the action.
         in: header
         name: X-API-Key
+        required: true
+        type: string
+      - description: API key ID on which to perform the action.
+        in: header
+        name: X-API-Key-ID
         required: true
         type: string
       produces:
@@ -99,9 +119,19 @@ paths:
         name: Authorization
         required: true
         type: string
+      - description: API key ID for authorization.
+        in: header
+        name: Authorization-ID
+        required: true
+        type: string
       - description: API key on which to perform the action.
         in: header
         name: X-API-Key
+        required: true
+        type: string
+      - description: API key ID on which to perform the action.
+        in: header
+        name: X-API-Key-ID
         required: true
         type: string
       - description: scope
