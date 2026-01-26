@@ -12,6 +12,7 @@ type Node struct {
 	Name   string `json:"name"`
 	Host     string `json:"host"`
 	Port   string `json:"port"`
+	KeyID    string `json:"keyid"`
 	Key    string `json:"key"`
 }
 

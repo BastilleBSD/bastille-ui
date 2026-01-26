@@ -7,7 +7,8 @@
             <th>Name</th>
             <th>Host</th>
             <th>Port</th>
-            <th>API Key</th>
+            <th>KeyID</th>
+            <th>Key</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -17,6 +18,7 @@
             <td>{{ .Name }}</td>
             <td>{{ .Host }}</td>
             <td>{{ .Port }}</td>
+            <td>{{ .KeyID }}</td>
             <td>{{ .Key }}</td>
             <td>
                 <form method="POST" action="/api/v1/node/delete">
@@ -44,7 +46,10 @@
     <label>Port</label>
     <input type="text" name="port" value="8888" required>
 
-    <label>API Key</label>
+    <label>Key ID</label>
+    <input type="text" name="keyid" required>
+
+    <label>Key</label>
     <input type="text" name="key" required>
 
     <button class="nodes-button" type="submit" class="button">Add Node</button>

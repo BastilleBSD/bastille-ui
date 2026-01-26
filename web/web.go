@@ -23,7 +23,11 @@ func Start() {
 
 	loadRoutes()
 
-	activeNode = &cfg.Nodes[0]
+	if len(cfg.Nodes) > 0 {
+		activeNode = &cfg.Nodes[0]
+	} else {
+		activeNode = nil
+	}
 
 	log.Println("Starting BastilleBSD WebUI server on", addr)
 	log.Fatal(http.ListenAndServe(addr, nil))

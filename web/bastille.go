@@ -15,9 +15,9 @@ func callBastilleAPI(path string, params map[string]string) (string, error) {
 	}
 
 	scheme := "http"
-    if node.Port == "443" {
-        scheme = "https"
-    }
+	if node.Port == "443" {
+		scheme = "https"
+	}
 	
 	rawurl := fmt.Sprintf("%s://%s:%s%s", scheme, node.Host, node.Port, path)
 	u, err := url.Parse(rawurl)
@@ -32,6 +32,7 @@ func callBastilleAPI(path string, params map[string]string) (string, error) {
 	u.RawQuery = q.Encode()
 
 	req, _ := http.NewRequest("POST", u.String(), nil)
+	req.Header.Set("Authorization-ID", node.KeyID)
 	req.Header.Set("Authorization", "Bearer "+node.Key)
 
 	client := &http.Client{}
@@ -56,9 +57,9 @@ func callBastilleAPILive(path string, params map[string]string) (string, error) 
 	}
 
 	scheme := "http"
-    if node.Port == "443" {
-        scheme = "https"
-    }
+	if node.Port == "443" {
+		scheme = "https"
+	}
 	
 	rawurl := fmt.Sprintf("%s://%s:%s%s", scheme, node.Host, node.Port, path)
 	u, err := url.Parse(rawurl)
@@ -76,6 +77,7 @@ func callBastilleAPILive(path string, params map[string]string) (string, error) 
 	if err != nil {
 		return "", err
 	}
+	req.Header.Set("Authorization-ID", node.KeyID)
 	req.Header.Set("Authorization", "Bearer "+node.Key)
 	client := &http.Client{}
 	resp, err := client.Do(req)

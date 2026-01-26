@@ -23,9 +23,10 @@ func nodeAddHandler(w http.ResponseWriter, r *http.Request) {
 		name := r.FormValue("node")
 		host := r.FormValue("host")
 		port := r.FormValue("port")
+		keyid := r.FormValue("keyid")
 		key := r.FormValue("key")
 
-		if name == "" || host == "" || port == "" || key == "" {
+		if name == "" || host == "" || port == "" || key == "" || keyid == "" {
 			data.Error = "Please fill out all fields."
 			render(w, "nodes", data)
 			return
@@ -36,6 +37,7 @@ func nodeAddHandler(w http.ResponseWriter, r *http.Request) {
 			Name:   name,
 			Host:     host,
 			Port:   port,
+			KeyID: keyid,
 			Key: key,
 		}
 
