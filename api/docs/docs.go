@@ -37,9 +37,10 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "key",
-                        "name": "key",
-                        "in": "query"
+                        "description": "API key on which to perform the action.",
+                        "name": "X-API-Key",
+                        "in": "header",
+                        "required": true
                     },
                     {
                         "type": "string",
@@ -86,9 +87,10 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "key",
-                        "name": "key",
-                        "in": "query"
+                        "description": "API key on which to perform the action.",
+                        "name": "X-API-Key",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -123,9 +125,10 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "key",
-                        "name": "key",
-                        "in": "query"
+                        "description": "API key on which to perform the action.",
+                        "name": "X-API-Key",
+                        "in": "header",
+                        "required": true
                     },
                     {
                         "type": "string",

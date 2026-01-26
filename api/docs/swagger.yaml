@@ -41,9 +41,10 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: key
-        in: query
-        name: key
+      - description: API key on which to perform the action.
+        in: header
+        name: X-API-Key
+        required: true
         type: string
       - description: scope
         in: query
@@ -73,9 +74,10 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: key
-        in: query
-        name: key
+      - description: API key on which to perform the action.
+        in: header
+        name: X-API-Key
+        required: true
         type: string
       produces:
       - application/json
@@ -97,9 +99,10 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: key
-        in: query
-        name: key
+      - description: API key on which to perform the action.
+        in: header
+        name: X-API-Key
+        required: true
         type: string
       - description: scope
         in: query

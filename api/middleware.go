@@ -91,7 +91,7 @@ func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-TTYD-Port")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-TTYD-Port, X-API-Key")
 		c.Header("Access-Control-Expose-Headers", "X-TTYD-Port")
 
 		if c.Request.Method == http.MethodOptions {
@@ -122,7 +122,8 @@ func apiKeyMiddleware(scope string, action string) gin.HandlerFunc {
 		}
 
 		providedKey := auth[len(prefix):]
-		keyDetails, exists := cfg.APIKeys[providedKey]
+		hash := generateHash(providedKey)
+		keyDetails, exists := cfg.APIKeys[hash]
 
 		if !exists {
 			logRequest("error", "Access denied: Invalid Key", c, nil, nil)

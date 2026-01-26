@@ -2,7 +2,7 @@
   "host": "localhost",
   "port": "8888",
   "apiKeys": {
-    "testapikey": {
+    "b6c2e845ccf94bcaa67b9c4caf07f909fb10cc0911daef7b6bc3f301bea4e571": {
       "permissions": {
         "bastille": [
           "*"

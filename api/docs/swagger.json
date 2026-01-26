@@ -26,9 +26,10 @@
                     },
                     {
                         "type": "string",
-                        "description": "key",
-                        "name": "key",
-                        "in": "query"
+                        "description": "API key on which to perform the action.",
+                        "name": "X-API-Key",
+                        "in": "header",
+                        "required": true
                     },
                     {
                         "type": "string",
@@ -75,9 +76,10 @@
                     },
                     {
                         "type": "string",
-                        "description": "key",
-                        "name": "key",
-                        "in": "query"
+                        "description": "API key on which to perform the action.",
+                        "name": "X-API-Key",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -112,9 +114,10 @@
                     },
                     {
                         "type": "string",
-                        "description": "key",
-                        "name": "key",
-                        "in": "query"
+                        "description": "API key on which to perform the action.",
+                        "name": "X-API-Key",
+                        "in": "header",
+                        "required": true
                     },
                     {
                         "type": "string",

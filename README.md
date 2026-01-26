@@ -60,6 +60,13 @@ Rocinante endpoint: `/api/v1/rocinante/command`
 Any parameter/option string that has spaces should be passed with either
 a `+` or `%20` as the space character. See examples below...
 
+The API supports adding additional keys as well as setting permissions on them. The documentation
+at /swagger/index.html should have all you need to get started. Keys are stored in `api/config.json`
+as the hashed value of the specified key. The initial hash in the sample file comes from the following
+command, `printf "testapikey" | sha256`.
+
+You can add keys manually, but we recommend adding them through the API interface.
+
 ## API Examples
 
 Get supported options and parameters for create
