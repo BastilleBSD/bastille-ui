@@ -3,8 +3,6 @@ package api
 import (
 	"encoding/json"
 	"os"
-	
-	"github.com/gin-gonic/gin"
 )
 
 var bastilleSpec *BastilleSpecStruct
@@ -14,10 +12,6 @@ var cfg *ConfigStruct
 var APIURL string
 var Host string
 var Port string
-
-func getParam(c *gin.Context, key string) string {
-	return c.Query(key)
-}
 
 func loadBastilleSpec() (*BastilleSpecStruct, error) {
 

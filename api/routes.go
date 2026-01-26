@@ -2,6 +2,10 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+
+	_ "bastille-ui/api/docs"
+	swaggerFiles "github.com/swaggo/files"
+	swaggerGin "github.com/swaggo/gin-swagger"
 )
 
 func loadRoutes(router *gin.Engine) {
@@ -10,6 +14,8 @@ func loadRoutes(router *gin.Engine) {
 		loggingMiddleware(),
 		CORSMiddleware(),
 	)
+
+	router.GET("/swagger/*any", swaggerGin.WrapHandler(swaggerFiles.Handler))
 
 	v1 := router.Group("/api/v1")
 

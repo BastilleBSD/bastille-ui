@@ -61,6 +61,17 @@ func validateParameters(scope string, permissions []string, c *gin.Context) erro
     return nil
 }
 
+// Admin add POST
+// @Description Add an API key.
+// @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param key query string false "key"
+// @Param scope query string false "scope"
+// @Param permissions query string false "permissions"
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Success 200 {string} string
+// @Router /api/v1/admin/add [post]
 func AddKeyHandler(c *gin.Context) {
 
 	key := c.Query("key")
@@ -131,6 +142,17 @@ func AddKeyHandler(c *gin.Context) {
 	logRequest("info", "key created", c, nil, nil)
 }
 
+// Admin edit POST
+// @Description Edit an API key.
+// @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param key query string false "key"
+// @Param scope query string false "scope"
+// @Param permissions query string false "permissions"
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Success 200 {string} string
+// @Router /api/v1/admin/edit [post]
 func EditKeyHandler(c *gin.Context) {
 
 	key := c.Query("key")
@@ -195,6 +217,15 @@ func EditKeyHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Key updated"})
 }
 
+// Admin add POST
+// @Description Delete an API key.
+// @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param key query string false "key"
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Success 200 {string} string
+// @Router /api/v1/admin/delete [post]
 func DeleteKeyHandler(c *gin.Context) {
 
 	key := c.Query("key")

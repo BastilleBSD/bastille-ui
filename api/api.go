@@ -7,6 +7,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// @title BastilleBSD-API
+// @version 0.0.1
+// @description API interface for Bastille and Rocinante
+// @termsOfService http://swagger.io/terms/
+// @license.name BSD-3-Clause
+// @license.url https://opensource.org/license/bsd-3-clause
+// @BasePath /
 func Start(config string, port string) {
 
 	var bindAddr string

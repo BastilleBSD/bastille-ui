@@ -85,13 +85,23 @@ func ParseAndRunRocinanteCommand(c *gin.Context, cmdArgs []string) {
 	}
 }
 
+// Rocinante Bootstrap POST
+// @Description 
+// @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param options query string false "options"
+// @Param url query string false "url"
+// @Tags rocinante
+// @Accept application/x-www-form-urlencoded
+// @Produce text/plain
+// @Success 200 {string} string
+// @Router /api/v1/rocinante/bootstrap [post]
 func RocinanteBootstrapHandler(c *gin.Context) {
 
 	logRequest("debug", "RocinanteBootstrapHandler", c, nil, nil)
 
 	cmdArgs := []string{"bootstrap"}
-	options := getParam(c, "options")
-	url := getParam(c, "url")
+	options := c.Query("options")
+	url := c.Query("url")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
@@ -106,12 +116,21 @@ func RocinanteBootstrapHandler(c *gin.Context) {
 	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
+// Rocinante cmd POST
+// @Description 
+// @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param args query string false "args"
+// @Tags rocinante
+// @Accept application/x-www-form-urlencoded
+// @Produce text/plain
+// @Success 200 {string} string
+// @Router /api/v1/rocinante/cmd [post]
 func RocinanteCmdHandler(c *gin.Context) {
 
 	logRequest("debug", "RocinanteCmdHandler", c, nil, nil)
 
 	cmdArgs := []string{"cmd"}
-	args := getParam(c, "args")
+	args := c.Query("args")
 	if args == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
 		logRequest("error", "missing args parameter", c, cmdArgs, nil)
@@ -122,12 +141,21 @@ func RocinanteCmdHandler(c *gin.Context) {
 	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
+// Rocinante limits POST
+// @Description 
+// @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param args query string false "args"
+// @Tags rocinante
+// @Accept application/x-www-form-urlencoded
+// @Produce text/plain
+// @Success 200 {string} string
+// @Router /api/v1/rocinante/limits [post]
 func RocinanteLimitsHandler(c *gin.Context) {
 
 	logRequest("debug", "RocinanteLimitsHandler", c, nil, nil)
 
 	cmdArgs := []string{"limits"}
-	args := getParam(c, "args")
+	args := c.Query("args")
 	if args == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
 		logRequest("error", "missing args parameter", c, cmdArgs, nil)
@@ -138,12 +166,21 @@ func RocinanteLimitsHandler(c *gin.Context) {
 	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
+// Rocinante list POST
+// @Description 
+// @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param options query string false "options"
+// @Tags rocinante
+// @Accept application/x-www-form-urlencoded
+// @Produce text/plain
+// @Success 200 {string} string
+// @Router /api/v1/rocinante/list [post]
 func RocinanteListHandler(c *gin.Context) {
 
 	logRequest("debug", "RocinanteListHandler", c, nil, nil)
 
 	cmdArgs := []string{"list"}
-	options := getParam(c, "options")
+	options := c.Query("options")
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
 	}
@@ -151,12 +188,21 @@ func RocinanteListHandler(c *gin.Context) {
 	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
+// Rocinante pkg POST
+// @Description 
+// @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param args query string false "args"
+// @Tags rocinante
+// @Accept application/x-www-form-urlencoded
+// @Produce text/plain
+// @Success 200 {string} string
+// @Router /api/v1/rocinante/pkg [post]
 func RocinantePkgHandler(c *gin.Context) {
 
 	logRequest("debug", "RocinantePkgHandler", c, nil, nil)
 
 	cmdArgs := []string{"pkg"}
-	args := getParam(c, "args")
+	args := c.Query("args")
 	if args == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
 		logRequest("error", "missing args parameter", c, cmdArgs, nil)
@@ -167,12 +213,21 @@ func RocinantePkgHandler(c *gin.Context) {
 	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
+// Rocinante service POST
+// @Description 
+// @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param ARGS query string false "ARGS"
+// @Tags rocinante
+// @Accept application/x-www-form-urlencoded
+// @Produce text/plain
+// @Success 200 {string} string
+// @Router /api/v1/rocinante/service [post]
 func RocinanteServiceHandler(c *gin.Context) {
 
 	logRequest("debug", "RocinanteServiceHandler", c, nil, nil)
 
 	cmdArgs := []string{"service"}
-	args := getParam(c, "args")
+	args := c.Query("args")
 	if args == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
 		logRequest("error", "missing args parameter", c, cmdArgs, nil)
@@ -183,12 +238,21 @@ func RocinanteServiceHandler(c *gin.Context) {
 	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
+// Rocinante sysctl POST
+// @Description 
+// @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param args query string false "args"
+// @Tags rocinante
+// @Accept application/x-www-form-urlencoded
+// @Produce text/plain
+// @Success 200 {string} string
+// @Router /api/v1/rocinante/sysctl [post]
 func RocinanteSysctlHandler(c *gin.Context) {
 
 	logRequest("debug", "RocinanteSysctlHandler", c, nil, nil)
 
 	cmdArgs := []string{"sysctl"}
-	args := getParam(c, "args")
+	args := c.Query("args")
 	if args == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
 		logRequest("error", "missing args parameter", c, cmdArgs, nil)
@@ -199,12 +263,21 @@ func RocinanteSysctlHandler(c *gin.Context) {
 	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
+// Rocinante sysrc POST
+// @Description 
+// @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param args query string false "args"
+// @Tags rocinante
+// @Accept application/x-www-form-urlencoded
+// @Produce text/plain
+// @Success 200 {string} string
+// @Router /api/v1/rocinante/sysrc [post]
 func RocinanteSysrcHandler(c *gin.Context) {
 
 	logRequest("debug", "RocinanteSysrcHandler", c, nil, nil)
 
 	cmdArgs := []string{"sysrc"}
-	args := getParam(c, "args")
+	args := c.Query("args")
 	if args == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
 		logRequest("error", "missing args parameter", c, cmdArgs, nil)
@@ -215,15 +288,27 @@ func RocinanteSysrcHandler(c *gin.Context) {
 	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
+// Rocinante template POST
+// @Description 
+// @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param options query string false "options"
+// @Param action query string false "action"
+// @Param template query string false "template"
+// @Param args query string false "args"
+// @Tags rocinante
+// @Accept application/x-www-form-urlencoded
+// @Produce text/plain
+// @Success 200 {string} string
+// @Router /api/v1/rocinante/template [post]
 func RocinanteTemplateHandler(c *gin.Context) {
 
 	logRequest("debug", "RocinanteTemplateHandler", c, nil, nil)
 
 	cmdArgs := []string{"template"}
-	options := getParam(c, "options")
-	action := getParam(c, "action")
-	template := getParam(c, "template")
-	args := getParam(c, "args")
+	options := c.Query("options")
+	action := c.Query("action")
+	template := c.Query("template")
+	args := c.Query("args")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
@@ -244,12 +329,21 @@ func RocinanteTemplateHandler(c *gin.Context) {
 	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
+// Rocinante update POST
+// @Description 
+// @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param args query string false "args"
+// @Tags rocinante
+// @Accept application/x-www-form-urlencoded
+// @Produce text/plain
+// @Success 200 {string} string
+// @Router /api/v1/rocinante/update [post]
 func RocinanteUpdateHandler(c *gin.Context) {
 
 	logRequest("debug", "RocinanteUpdateHandler", c, nil, nil)
 
 	cmdArgs := []string{"update"}
-	args := getParam(c, "args")
+	args := c.Query("args")
 	if args == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
 		logRequest("error", "missing args parameter", c, cmdArgs, nil)
@@ -260,12 +354,21 @@ func RocinanteUpdateHandler(c *gin.Context) {
 	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
+// Rocinante upgrade POST
+// @Description 
+// @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param args query string false "args"
+// @Tags rocinante
+// @Accept application/x-www-form-urlencoded
+// @Produce text/plain
+// @Success 200 {string} string
+// @Router /api/v1/rocinante/upgrade [post]
 func RocinanteUpgradeHandler(c *gin.Context) {
 
 	logRequest("debug", "RocinanteUpgradeHandler", c, nil, nil)
 
 	cmdArgs := []string{"upgrade"}
-	args := getParam(c, "args")
+	args := c.Query("args")
 	if args == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
 		logRequest("error", "missing args parameter", c, cmdArgs, nil)
@@ -276,13 +379,23 @@ func RocinanteUpgradeHandler(c *gin.Context) {
 	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
+// Rocinante verify POST
+// @Description 
+// @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param options query string false "options"
+// @Param template query string false "template"
+// @Tags rocinante
+// @Accept application/x-www-form-urlencoded
+// @Produce text/plain
+// @Success 200 {string} string
+// @Router /api/v1/rocinante/verify [post]
 func RocinanteVerifyHandler(c *gin.Context) {
 
 	logRequest("debug", "RocinanteVerifyHandler", c, nil, nil)
 
 	cmdArgs := []string{"verify"}
-	options := getParam(c, "options")
-	template := getParam(c, "template")
+	options := c.Query("options")
+	template := c.Query("template")
 
 	if options != "" {
 		cmdArgs = append(cmdArgs, strings.Fields(options)...)
@@ -297,12 +410,21 @@ func RocinanteVerifyHandler(c *gin.Context) {
 	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
+// Rocinante zfs POST
+// @Description 
+// @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param args query string false "args"
+// @Tags rocinante
+// @Accept application/x-www-form-urlencoded
+// @Produce text/plain
+// @Success 200 {string} string
+// @Router /api/v1/rocinante/zfs [post]
 func RocinanteZfsHandler(c *gin.Context) {
 
 	logRequest("debug", "RocinanteZfsHandler", c, nil, nil)
 
 	cmdArgs := []string{"zfs"}
-	args := getParam(c, "args")
+	args := c.Query("args")
 	if args == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
 		logRequest("error", "missing args parameter", c, cmdArgs, nil)
@@ -313,12 +435,21 @@ func RocinanteZfsHandler(c *gin.Context) {
 	ParseAndRunRocinanteCommand(c, cmdArgs)
 }
 
+// Rocinante zpool POST
+// @Description 
+// @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param args query string false "args"
+// @Tags rocinante
+// @Accept application/x-www-form-urlencoded
+// @Produce text/plain
+// @Success 200 {string} string
+// @Router /api/v1/rocinante/zpool [post]
 func RocinanteZpoolHandler(c *gin.Context) {
 
 	logRequest("debug", "RocinanteZpoolHandler", c, nil, nil)
 
 	cmdArgs := []string{"zpool"}
-	args := getParam(c, "args")
+	args := c.Query("args")
 	if args == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing args parameter"})
 		logRequest("error", "missing args parameter", c, cmdArgs, nil)

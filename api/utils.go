@@ -154,6 +154,16 @@ func ValidateRocinanteCommandParameters(c *gin.Context, cmdArgs []string) error 
 	return nil
 }
 
+// Return command options and parameters GET
+// @Description Return supported options and parameters for any command
+// @Tags spec
+// @Accept application/x-www-form-urlencoded
+// @Produce json
+// @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
+// @Param software path string true "Software name (either 'bastille' or 'rocinante')"
+// @Param command path string true "Command name"
+// @Success 200 {object} interface{} "Command specs for the requested command"
+// @Router /api/v1/{software}/{command} [get]
 func GetCommandSpec(cmdName, software string) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
