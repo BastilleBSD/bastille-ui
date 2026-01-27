@@ -12,7 +12,7 @@ install:
 	@cp -Rv api/config.json /usr/local/etc/bastille-api/config.json
 	@echo
 	@mkdir -p /usr/local/share/bastille-api
-	@cp -Rv web/* /usr/local/share/bastille-api/
+	@cp -Rv web /usr/local/share/bastille-api/
 	@echo
 	@mkdir -p /usr/local/etc/rc.d
 	@cp -Rv etc/rc.d/* /usr/local/etc/rc.d/
