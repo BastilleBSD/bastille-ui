@@ -39,5 +39,5 @@ uninstall:
 	@echo "Removing startup script..."
 	@rm -vf /usr/local/etc/rc.d/bastille-api
 	@echo
-	@echo "You may need to manually remove /usr/local/etc/bastille-api/config.json 
+	@echo "You may need to manually remove /usr/local/etc/bastille-api/config.json"
 	@echo "and /usr/local/share/bastille-api/config.json if they are no longer needed."
