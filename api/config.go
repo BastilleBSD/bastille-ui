@@ -17,10 +17,9 @@ func loadBastilleSpec() (*BastilleSpecStruct, error) {
 
 	logRequest("debug", "loadBastilleSpec", nil, nil, nil)
 
-	specFile := "api/bastille.json"
 	var spec BastilleSpecStruct
 
-	data, err := os.ReadFile(specFile)
+	data, err := specSheets.ReadFile("bastille.json")
 	if err != nil {
 		logRequest("error", "Failed to read Bastille spec file", nil, nil, err.Error())
 		return nil, err
@@ -39,10 +38,9 @@ func loadRocinanteSpec() (*RocinanteSpecStruct, error) {
 
 	logRequest("debug", "loadRocinanteSpec", nil, nil, nil)
 
-	specFile := "api/rocinante.json"
 	var spec RocinanteSpecStruct
 
-	data, err := os.ReadFile(specFile)
+	data, err := specSheets.ReadFile("rocinante.json")
 	if err != nil {
 		logRequest("error", "Failed to read Rocinante spec file", nil, nil, err.Error())
 		return nil, err

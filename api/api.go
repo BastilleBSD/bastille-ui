@@ -1,11 +1,15 @@
 package api
 
 import (
+	"embed"
 	"fmt"
 	"os"
 
 	"github.com/gin-gonic/gin"
 )
+
+//go:embed bastille.json rocinante.json
+var specSheets embed.FS
 
 // @title BastilleBSD-API
 // @version 0.0.1

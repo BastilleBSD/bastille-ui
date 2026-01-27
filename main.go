@@ -1,8 +1,8 @@
 package main
 
 import (
-    "bastille-ui/api"
-    "bastille-ui/web"
+    "bastille-api/api"
+    "bastille-api/web"
     "flag"
 )
 

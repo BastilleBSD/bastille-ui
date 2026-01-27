@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 
-	_ "bastille-ui/api/docs"
+	_ "bastille-api/api/docs"
 	swaggerFiles "github.com/swaggo/files"
 	swaggerGin "github.com/swaggo/gin-swagger"
 )

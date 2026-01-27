@@ -1,4 +1,4 @@
-module bastille-ui
+module bastille-api
 
 go 1.24.9
 
