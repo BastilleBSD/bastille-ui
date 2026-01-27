@@ -8,15 +8,15 @@ import (
 )
 
 var webDir = "/usr/local/share/bastille-api/"
-var configFile = (webDir + "web/config.json")
+var configFile = (webDir + "config.json")
 
 func Start(webPath string) {
 
 	var bindAddr string
 
 	if webPath != "" {
-		webDir = (webPath+"/")
-		configFile = (webDir + "web/config.json")
+		webDir = (webPath + "/")
+		configFile = (webDir + "config.json")
 	}
 
 	_, err := loadConfig()
@@ -29,9 +29,9 @@ func Start(webPath string) {
 		bindAddr = "0.0.0.0"
 		Host = "localhost"
 	} else {
-	       bindAddr = Host
+		bindAddr = Host
 	}
-	
+
 	addr := fmt.Sprintf("%s:%s", bindAddr, Port)
 
 	loadRoutes()

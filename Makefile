@@ -9,10 +9,11 @@ install:
 	@go build -o /usr/local/bin/bastille-api main.go
 	@echo
 	@mkdir -p /usr/local/etc/bastille-api
-	@cp -Rv api/config.json /usr/local/etc/bastille-api/config.json
 	@echo
 	@mkdir -p /usr/local/share/bastille-api
 	@cp -Rv web /usr/local/share/bastille-api/
+	@echo
+	@cp -Rv web/config.json.sample /usr/local/share/bastille-api/config.json.sample
 	@echo
 	@mkdir -p /usr/local/etc/rc.d
 	@cp -Rv etc/rc.d/* /usr/local/etc/rc.d/
@@ -28,7 +29,7 @@ uninstall:
 	@echo
 	@rm -vf /usr/local/bin/bastille-api
 	@echo
-	@rm -rvf /usr/local/share/bastille-api
+	@rm -rvf /usr/local/share/bastille-api/web
 	@echo
 	@echo "removing configuration file"
 	@rm -rvf /usr/local/etc/bastille-api/config.json.sample
