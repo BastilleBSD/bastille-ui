@@ -12,7 +12,7 @@ func RocinanteCommand(args ...string) (string, error) {
 
 	logRequest("debug", "RocinanteCommand", nil, args, nil)
 
-	cmd := exec.Command("rocinante", args...)
+	cmd := exec.Command("/usr/local/bin/rocinante", args...)
 	out, err := cmd.CombinedOutput()
 	output := string(out)
 
@@ -29,7 +29,10 @@ func RocinanteCommandLive(args ...string) (string, error) {
 	logRequest("debug", "RocinanteCommandLive", nil, args, nil)
 
 	ttydArgs := []string{
+		"-i", "127.0.0.1",
 		"-t", "disableLeaveAlert=true",
+		"-b", "/api/v1/rocinante/console/ttyd",
+		"-O",
 		"-o",
 		"--ipv6",
 		"-m", "1",
@@ -37,7 +40,7 @@ func RocinanteCommandLive(args ...string) (string, error) {
 		"-W",
 	}
 
-	cmdArgs := append(ttydArgs, "rocinante")
+	cmdArgs := append(ttydArgs, "/usr/local/bin/rocinante")
 	cmdArgs = append(cmdArgs, args...)
 
 	cmd := exec.Command("ttyd", cmdArgs...)
@@ -46,7 +49,7 @@ func RocinanteCommandLive(args ...string) (string, error) {
 		return "", err
 	}
 
-	return "7681", nil
+	return "/api/v1/rocinante/console/ttyd", nil
 }
 
 func ParseAndRunRocinanteCommand(c *gin.Context, cmdArgs []string) {
@@ -76,8 +79,8 @@ func ParseAndRunRocinanteCommand(c *gin.Context, cmdArgs []string) {
 	}
 
 	if isLive {
-		c.Header("X-TTYD-Port", result)
-		c.JSON(http.StatusOK, gin.H{"port": result})
+		c.Header("X-TTYD-Url", result)
+		c.JSON(http.StatusOK, gin.H{"path": result})
 		logRequest("info", "success (live)", c, cmdArgs, result)
 	} else {
 		c.String(http.StatusOK, result)

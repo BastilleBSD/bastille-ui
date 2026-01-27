@@ -8,7 +8,6 @@ import (
 )
 
 var (
-	configFile = "web/config.json"
 	cfg                    *ConfigStruct
 	activeNode      *Node
 	activeNodeMu sync.RWMutex
@@ -18,7 +17,7 @@ var (
 	Password string
 )
 
-func loadConfig() *ConfigStruct {
+func loadConfig() (*ConfigStruct, error) {
 
 	file, err := os.Open(configFile)
 	if err != nil {
@@ -32,7 +31,11 @@ func loadConfig() *ConfigStruct {
 	}
 
 	cfg = &c
-	return cfg
+	Host = c.Host
+	Port = c.Port
+	User = c.User
+	Password = c.Password
+	return cfg, nil
 }
 
 func saveConfig(config *ConfigStruct) error {
@@ -49,9 +52,9 @@ func saveConfig(config *ConfigStruct) error {
 	return enc.Encode(config)
 }
 
-func setConfig(config *ConfigStruct) {
-	Host = config.Host
-	Port = config.Port
-	User  = config.User
-	Password  = config.Password
+func setConfig(c *ConfigStruct) {
+	Host = c.Host
+	Port = c.Port
+	User  = c.User
+	Password  = c.Password
 }

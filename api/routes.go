@@ -21,6 +21,11 @@ func loadRoutes(router *gin.Engine) {
 
 	bastille := v1.Group("/bastille")
 	bastilleLive := v1.Group("/bastille/live")
+	bastilleConsole := v1.Group("/bastille/console/ttyd")
+
+	// use the following to require auth
+	// bastilleConsole.Any("/*any", apiKeyMiddleware("bastille", "console"), consoleProxy("http://localhost:7681"))
+	bastilleConsole.Any("/*any", consoleProxy("http://localhost:7681"))
 
 	for path, handler := range bastilleRoutes() {
 		bastille.GET("/"+path, apiKeyMiddleware("bastille", path), GetCommandSpec(path, "bastille"))
@@ -32,6 +37,11 @@ func loadRoutes(router *gin.Engine) {
 
 	rocinante := v1.Group("/rocinante")
 	rocinanteLive := v1.Group("/rocinante/live")
+	rocinanteConsole := v1.Group("/rocinante/console/ttyd")
+
+	// use the following to require auth
+	// rocinanteConsole.Any("/*any", apiKeyMiddleware("bastille", "console"), consoleProxy("http://localhost:7681"))
+	rocinanteConsole.Any("/*any", consoleProxy("http://localhost:7681"))
 
 	for path, handler := range rocinanteRoutes() {
 		rocinante.GET("/"+path, apiKeyMiddleware("rocinante", path), GetCommandSpec(path, "rocinante"))

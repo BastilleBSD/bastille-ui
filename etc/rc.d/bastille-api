@@ -10,6 +10,7 @@
 # bastille_api_enable (YES/NO): Enable or disable the service.
 # bastille_api_port (port):     Service port.
 # bastille_api_config (path):   Path to config file.
+# bastille_api_webdir (path):   Path to web files.
 # bastille_api_flags (flags):   --debug for debug mode
 #                               --api-only to only run the API
 
@@ -25,11 +26,12 @@ load_rc_config $name
 : ${bastille_api_enable:="NO"}
 : ${bastille_api_port:="8888"}
 : ${bastille_api_config:="/usr/local/etc/bastille-api/config.json"}
+: ${bastille_api_webdir:="/usr/local/share/bastille-api"}
 : ${bastille_api_flags:=""}
 
 pidfile="/var/run/${name}/${name}.pid"
 command=/usr/sbin/daemon
-command_args="-P ${pidfile} -H -o /var/log/${name}/${name}.log /usr/local/bin/bastille-api --api-port ${bastille_api_port} --config ${bastille_api_config} ${bastille_api_flags}"
+command_args="-P ${pidfile} -H -o /var/log/${name}/${name}.log /usr/local/bin/bastille-api --api-port ${bastille_api_port} --config ${bastille_api_config} --webdir ${bastille_api_webdir} ${bastille_api_flags}"
 
 start_precmd=bastille_api_startprecmd
 

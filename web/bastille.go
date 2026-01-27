@@ -91,10 +91,10 @@ func callBastilleAPILive(path string, params map[string]string) (string, error) 
 	}
 
 	// Get the port from a header instead of body
-	port := resp.Header.Get("X-TTYD-Port")
-	if port == "" {
-		return "", fmt.Errorf("API did not return ttyd port")
+	ttydpath := resp.Header.Get("X-TTYD-Url")
+	if ttydpath == "" {
+		return "", fmt.Errorf("API did not return ttyd info")
 	}
 
-	return fmt.Sprintf("%s:%s", node.Host, port), nil
+	return fmt.Sprintf("%s://%s:%s%s", scheme, node.Host, node.Port, ttydpath), nil
 }

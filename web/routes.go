@@ -26,6 +26,7 @@ func loadRoutes() {
 	http.Handle("/api/v1/node/select", loggingMiddleware(requireLogin(nodeSelectHandler)))
 
 	// Serve static files
-	http.Handle("/static/", http.StripPrefix("/static/",
-		http.FileServer(http.Dir("web/static"))))
+
+http.Handle("/static/", http.StripPrefix("/static/",
+		http.FileServer(http.Dir(webDir+"web/static"))))
 }

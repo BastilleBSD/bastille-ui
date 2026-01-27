@@ -4,13 +4,26 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 )
 
-func Start() {
+var webDir = "/usr/local/share/bastille-api/"
+var configFile = (webDir + "web/config.json")
+
+func Start(webPath string) {
 
 	var bindAddr string
-	config := loadConfig()
-	setConfig(config)
+
+	if webPath != "" {
+		webDir = (webPath+"/")
+		configFile = (webDir + "web/config.json")
+	}
+
+	_, err := loadConfig()
+	if err != nil {
+		log.Println("Failed to load config", err.Error())
+		os.Exit(1)
+	}
 
 	if Host == "0.0.0.0" || Host == "localhost" || Host == "" {
 		bindAddr = "0.0.0.0"

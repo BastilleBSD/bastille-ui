@@ -18,7 +18,7 @@ func BastilleCommand(args ...string) (string, error) {
 	bastilleLock.Lock()
 	defer bastilleLock.Unlock()
 
-	cmd := exec.Command("bastille", args...)
+	cmd := exec.Command("/usr/local/bin/bastille", args...)
 	out, err := cmd.CombinedOutput()
 	output := string(out)
 
@@ -38,15 +38,18 @@ func BastilleCommandLive(args ...string) (string, error) {
 	defer bastilleLock.Unlock()
 
 	ttydArgs := []string{
+		"-i", "127.0.0.1",
 		"-t", "disableLeaveAlert=true",
+		"-b", "/api/v1/bastille/console/ttyd",
 		"-o",
+		"-O",
 		"--ipv6",
 		"-m", "1",
 		"-p", "7681",
 		"-W",
 	}
 
-	cmdArgs := append(ttydArgs, "bastille")
+	cmdArgs := append(ttydArgs, "/usr/local/bin/bastille")
 	cmdArgs = append(cmdArgs, args...)
 
 	cmd := exec.Command("ttyd", cmdArgs...)
@@ -55,7 +58,7 @@ func BastilleCommandLive(args ...string) (string, error) {
 		return "", err
 	}
 
-	return "7681", nil
+	return "/api/v1/bastille/console/ttyd", nil
 }
 
 func ParseAndRunBastilleCommand(c *gin.Context, cmdArgs []string) {
@@ -85,8 +88,8 @@ func ParseAndRunBastilleCommand(c *gin.Context, cmdArgs []string) {
 	}
 
 	if isLive {
-		c.Header("X-TTYD-Port", result)
-		c.JSON(http.StatusOK, gin.H{"port": result})
+		c.Header("X-TTYD-Url", result)
+		c.JSON(http.StatusOK, gin.H{"path": result})
 		logRequest("info", "success (live)", c, cmdArgs, result)
 	} else {
 		c.String(http.StatusOK, result)

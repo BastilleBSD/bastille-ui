@@ -32,7 +32,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Login page needs its own template
-	tmpl := "web/static/login.html"
+	tmpl := webDir + "web/static/login.html"
 	t, err := template.ParseFiles(tmpl)
 	if err != nil {
 		http.Error(w, "Template ERROR: "+err.Error(), http.StatusInternalServerError)

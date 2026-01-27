@@ -48,7 +48,6 @@ func homePageHandler(w http.ResponseWriter, r *http.Request) {
     render(w, "home", data)
 }
 
-
 func settingsPageHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := PageData{
@@ -90,9 +89,9 @@ func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodGet {
-        render(w, subcommandpath, data)
-        return
-    }
+		render(w, subcommandpath, data)
+		return
+	}
 
 	r.ParseForm()
 	params := map[string]string{}
@@ -108,15 +107,13 @@ func bastilleWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if subcommand == "console" || subcommand == "top" {
-		// This call returns a URL instead of normal output
 		urlPath, err := callBastilleAPILive(apiPathLive, params)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		// Return the URL directly as plain text for JS iframe
-		url := fmt.Sprintf("http://%s", urlPath)
+		url := fmt.Sprintf("%s", urlPath)
 		w.Header().Set("Content-Type", "text/plain")
 		w.Write([]byte(url))
 		return

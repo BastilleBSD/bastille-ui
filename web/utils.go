@@ -12,29 +12,29 @@ func render(w http.ResponseWriter, page string, data PageData) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	// Get all subcommand files
-	templatePages, err := filepath.Glob("web/static/templates/*.html")
+	templatePages, err := filepath.Glob(filepath.Join(webDir, "web/static/templates/*.html"))
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
-	partialsPages, err := filepath.Glob("web/static/partials/*.html")
+	partialsPages, err := filepath.Glob(filepath.Join(webDir, "web/static/partials/*.html"))
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
 	mainPages := []string{
-        "web/static/home.html",
-        "web/static/login.html",
-        "web/static/settings.html",
-        "web/static/nodes.html",
-		"web/static/bastille-logo.png",
+        webDir + "web/static/home.html",
+        webDir + "web/static/login.html",
+        webDir + "web/static/settings.html",
+        webDir + "web/static/nodes.html",
+	webDir + "web/static/bastille-logo.png",
 	}
 
     requestedPage := page
     if !filepath.IsAbs(requestedPage) {
-        requestedPage = filepath.Join("web/static", requestedPage+".html")
+        requestedPage = filepath.Join(webDir, "web/static", requestedPage+".html")
     }
 
     // Ensure it exists
