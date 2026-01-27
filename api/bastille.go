@@ -52,7 +52,7 @@ func BastilleCommandLive(args ...string) (string, error) {
 	cmdArgs := append(ttydArgs, "/usr/local/bin/bastille")
 	cmdArgs = append(cmdArgs, args...)
 
-	cmd := exec.Command("ttyd", cmdArgs...)
+	cmd := exec.Command("/usr/local/bin/ttyd", cmdArgs...)
 	if err := cmd.Start(); err != nil {
 		logRequest("error", "ttyd command failed", nil, args, err)
 		return "", err

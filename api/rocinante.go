@@ -43,7 +43,7 @@ func RocinanteCommandLive(args ...string) (string, error) {
 	cmdArgs := append(ttydArgs, "/usr/local/bin/rocinante")
 	cmdArgs = append(cmdArgs, args...)
 
-	cmd := exec.Command("ttyd", cmdArgs...)
+	cmd := exec.Command("/usr/local/bin/ttyd", cmdArgs...)
 	if err := cmd.Start(); err != nil {
 		logRequest("error", "ttyd command failed", nil, args, err)
 		return "", err
@@ -89,7 +89,7 @@ func ParseAndRunRocinanteCommand(c *gin.Context, cmdArgs []string) {
 }
 
 // Rocinante Bootstrap POST
-// @Description 
+// @Description
 // @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
 // @Param options query string false "options"
 // @Param url query string false "url"
@@ -120,7 +120,7 @@ func RocinanteBootstrapHandler(c *gin.Context) {
 }
 
 // Rocinante cmd POST
-// @Description 
+// @Description
 // @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
 // @Param args query string false "args"
 // @Tags rocinante
@@ -145,7 +145,7 @@ func RocinanteCmdHandler(c *gin.Context) {
 }
 
 // Rocinante limits POST
-// @Description 
+// @Description
 // @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
 // @Param args query string false "args"
 // @Tags rocinante
@@ -170,7 +170,7 @@ func RocinanteLimitsHandler(c *gin.Context) {
 }
 
 // Rocinante list POST
-// @Description 
+// @Description
 // @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
 // @Param options query string false "options"
 // @Tags rocinante
@@ -192,7 +192,7 @@ func RocinanteListHandler(c *gin.Context) {
 }
 
 // Rocinante pkg POST
-// @Description 
+// @Description
 // @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
 // @Param args query string false "args"
 // @Tags rocinante
@@ -217,7 +217,7 @@ func RocinantePkgHandler(c *gin.Context) {
 }
 
 // Rocinante service POST
-// @Description 
+// @Description
 // @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
 // @Param ARGS query string false "ARGS"
 // @Tags rocinante
@@ -242,7 +242,7 @@ func RocinanteServiceHandler(c *gin.Context) {
 }
 
 // Rocinante sysctl POST
-// @Description 
+// @Description
 // @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
 // @Param args query string false "args"
 // @Tags rocinante
@@ -267,7 +267,7 @@ func RocinanteSysctlHandler(c *gin.Context) {
 }
 
 // Rocinante sysrc POST
-// @Description 
+// @Description
 // @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
 // @Param args query string false "args"
 // @Tags rocinante
@@ -292,7 +292,7 @@ func RocinanteSysrcHandler(c *gin.Context) {
 }
 
 // Rocinante template POST
-// @Description 
+// @Description
 // @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
 // @Param options query string false "options"
 // @Param action query string false "action"
@@ -333,7 +333,7 @@ func RocinanteTemplateHandler(c *gin.Context) {
 }
 
 // Rocinante update POST
-// @Description 
+// @Description
 // @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
 // @Param args query string false "args"
 // @Tags rocinante
@@ -358,7 +358,7 @@ func RocinanteUpdateHandler(c *gin.Context) {
 }
 
 // Rocinante upgrade POST
-// @Description 
+// @Description
 // @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
 // @Param args query string false "args"
 // @Tags rocinante
@@ -383,7 +383,7 @@ func RocinanteUpgradeHandler(c *gin.Context) {
 }
 
 // Rocinante verify POST
-// @Description 
+// @Description
 // @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
 // @Param options query string false "options"
 // @Param template query string false "template"
@@ -414,7 +414,7 @@ func RocinanteVerifyHandler(c *gin.Context) {
 }
 
 // Rocinante zfs POST
-// @Description 
+// @Description
 // @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
 // @Param args query string false "args"
 // @Tags rocinante
@@ -439,7 +439,7 @@ func RocinanteZfsHandler(c *gin.Context) {
 }
 
 // Rocinante zpool POST
-// @Description 
+// @Description
 // @Param Authorization header string true "Authentication token (e.g., Bearer <token>)"
 // @Param args query string false "args"
 // @Tags rocinante
