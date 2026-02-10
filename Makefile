@@ -11,11 +11,6 @@ install:
 	@mkdir -p /usr/local/etc/bastille-api
 	@cp -Rv api/config.json.sample /usr/local/etc/bastille-api/config.json.sample
 	@echo
-	@mkdir -p /usr/local/share/bastille-api
-	@cp -Rv web /usr/local/share/bastille-api/
-	@echo
-	@cp -Rv web/config.json.sample /usr/local/share/bastille-api/config.json.sample
-	@echo
 	@mkdir -p /usr/local/etc/rc.d
 	@cp -Rv etc/rc.d/* /usr/local/etc/rc.d/
 	@echo
@@ -30,11 +25,8 @@ uninstall:
 	@echo
 	@rm -vf /usr/local/bin/bastille-api
 	@echo
-	@rm -rvf /usr/local/share/bastille-api/web
-	@echo
 	@echo "Removing configuration files..."
 	@rm -rvf /usr/local/etc/bastille-api/config.json.sample
-	@rm -rvf /usr/local/share/bastille-api/config.json.sample
 	@echo
 	@echo "Removing startup script..."
 	@rm -vf /usr/local/etc/rc.d/bastille-api

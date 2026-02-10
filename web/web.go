@@ -1,47 +1,22 @@
 package web
 
 import (
-	"fmt"
-	"log"
+	"embed"
 	"net/http"
-	"os"
+	"log"
 )
 
-var webDir = "/usr/local/share/bastille-api/"
-var configFile = (webDir + "config.json")
+//go:embed index.html bastilleapi.js
+var folder embed.FS
 
-func Start(webPath string) {
+func Start() {
+	// http.FS converts our embed.FS into the interface http.FileServer needs
+	handler := http.FileServer(http.FS(folder))
 
-	var bindAddr string
-
-	if webPath != "" {
-		webDir = (webPath + "/")
-		configFile = (webDir + "config.json")
+	log.Println("Web server starting on :8081 (Embedded mode)")
+	
+	// This will automatically serve index.html when you visit http://localhost:8081
+	if err := http.ListenAndServe(":8081", handler); err != nil {
+		log.Fatalf("Failed to start web server: %v", err)
 	}
-
-	_, err := loadConfig()
-	if err != nil {
-		log.Println("Failed to load config", err.Error())
-		os.Exit(1)
-	}
-
-	if Host == "0.0.0.0" || Host == "localhost" || Host == "" {
-		bindAddr = "0.0.0.0"
-		Host = "localhost"
-	} else {
-		bindAddr = Host
-	}
-
-	addr := fmt.Sprintf("%s:%s", bindAddr, Port)
-
-	loadRoutes()
-
-	if len(cfg.Nodes) > 0 {
-		activeNode = &cfg.Nodes[0]
-	} else {
-		activeNode = nil
-	}
-
-	log.Println("Starting BastilleBSD WebUI server on", addr)
-	log.Fatal(http.ListenAndServe(addr, nil))
 }
