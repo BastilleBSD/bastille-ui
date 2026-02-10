@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>BastilleBSD Panopticon: Nowhere to Hide</title>
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+        <link rel="icon" href="favicon.ico" type="image/x-icon">
+
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+        <script>
+            tailwind.config = {
+                darkMode: 'class',
+                theme: {
+                    extend: {
+                        fontFamily: { sans: ['Inter', 'sans-serif'] },
+                        colors: {
+                            bastille: { 50: '#fdf2f2', 100: '#fde8e8', 500: '#ef4444', 600: '#dc2626', 800: '#991b1b', 900: '#7f1d1d' },
+                            slate: { 850: '#151f32', 900: '#0f172a' }
+                        }
+                    }
+                }
+            }
+        </script>
+
+        <style>
+[x-cloak] { display: none !important; }
+.scroller::-webkit-scrollbar { height: 8px; width: 8px; }
+.scroller::-webkit-scrollbar-track { background: transparent; }
+.scroller::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+.dark .scroller::-webkit-scrollbar-thumb { background-color: #475569; }
+        </style>
+    </head>
+
+    <body class="bg-gray-50 text-gray-900 dark:bg-slate-900 dark:text-gray-100 transition-colors duration-200 antialiased"
+          x-data="bastilleApp()">
+
+        <div x-cloak x-show="showVerifyModal"
+                     class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm transition-opacity"
+                     x-transition.opacity>
+            <div class="w-full max-w-2xl bg-black rounded-lg shadow-2xl border border-gray-700 overflow-hidden transform transition-all"
+                 @click.outside="showVerifyModal = false">
+                <div class="p-3 bg-gray-900 border-b border-gray-800 flex justify-between items-center">
+                    <h3 class="text-sm font-mono text-gray-400"><i class="fa-solid fa-terminal mr-2"></i>Template Inspection</h3>
+                    <button @click="showVerifyModal = false" class="text-gray-500 hover:text-white transition-colors">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="p-0 overflow-auto max-h-[70vh]">
+                    <pre class="p-4 font-mono text-sm text-green-400 bg-black whitespace-pre-wrap leading-relaxed" x-text="verifyOutput"></pre>
+                </div>
+            </div>
+        </div>
+
+        <div x-cloak x-show="showApplyModal"
+                     class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm transition-opacity"
+                     x-transition.opacity>
+            <div class="w-full max-w-4xl bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden flex flex-col max-h-[90vh]"
+                 @click.outside="showApplyModal = false">
+
+                <div class="p-6 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center bg-gray-50 dark:bg-slate-900/50">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Apply Configuration</h3>
+                        <p class="text-sm text-gray-500 mt-1">Template: <span class="font-mono text-bastille-600 dark:text-bastille-400" x-text="applyTargetTemplate"></span></p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="flex flex-wrap gap-2 justify-end max-w-md">
+                            <template x-for="tag in uniqueTags" :key="tag">
+                                <button @click="selectJailsByTag(tag)"
+                                      class="px-2 py-1 text-[10px] uppercase font-bold rounded border transition-colors"
+                                      :class="isTagSelected(tag) ? 'bg-bastille-100 text-bastille-700 border-bastille-300 dark:bg-bastille-900/40 dark:text-bastille-300 dark:border-bastille-700' : 'bg-white dark:bg-slate-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-slate-600 hover:border-gray-300'">
+                                    <span x-text="tag"></span>
+                                </button>
+                            </template>
+                        </div>
+                        <button @click="toggleSelectAll()" class="text-sm font-medium px-3 py-1.5 rounded border border-gray-300 dark:border-slate-600 hover:bg-white dark:hover:bg-slate-700 transition-colors flex-shrink-0">
+                            <span x-text="selectedJails.length === jails.length ? 'Deselect All' : 'Select All'"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-6 overflow-y-auto scroller">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <template x-for="jail in jails" :key="jail.Name">
+                            <div @click="toggleJailSelection(jail.Name)"
+                                  class="cursor-pointer p-4 rounded-lg border-2 transition-all duration-200 relative group"
+                                  :class="selectedJails.includes(jail.Name) ? 'border-bastille-500 bg-bastille-50 dark:bg-bastille-900/20' : 'border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600'">
+
+                                <div class="absolute top-3 right-3 w-5 h-5 rounded-full border flex items-center justify-center transition-colors"
+                                     :class="selectedJails.includes(jail.Name) ? 'bg-bastille-500 border-bastille-500' : 'border-gray-300 dark:border-slate-500'">
+                                    <i x-show="selectedJails.includes(jail.Name)" class="fa-solid fa-check text-white text-xs"></i>
+                                </div>
+
+                                <h4 class="font-bold text-gray-900 dark:text-white" x-text="jail.Name"></h4>
+                                <div class="text-xs text-gray-500 mt-1 font-mono max-w-[200px]">
+                                <template x-for="ip in (jail.IP || '').split(',')">
+                                    <div class="truncate" x-text="ip.trim()" :title="ip.trim()"></div>
+                                </template>
+                            </div>
+                                <span class="inline-block mt-2 px-2 py-0.5 rounded text-[10px] bg-gray-200 dark:bg-slate-600 text-gray-700 dark:text-gray-300" x-text="jail.Release"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="p-4 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/50">
+                    <button @click="executeTemplate" :disabled="selectedJails.length === 0" class="w-full py-3 bg-bastille-600 hover:bg-bastille-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg shadow-md transition-all text-lg tracking-wide">APPLY TEMPLATE</button>
+                </div>
+            </div>
+        </div>
+
+        <div x-cloak x-show="showImportModal"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm transition-opacity"
+         x-transition.opacity>
+        <div class="w-full max-w-lg bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden"
+             @click.outside="showImportModal = false">
+            <div class="p-6 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Import Jail</h3>
+                <button @click="showImportModal = false" class="text-gray-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Backup Archive</label>
+                    <select x-model="newImport.file" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 focus:ring-2 focus:ring-bastille-500 outline-none text-sm font-mono">
+                        <option value="" disabled>Select a backup...</option>
+                        <template x-for="file in backups" :key="file">
+                            <option :value="file" x-text="file"></option>
+                        </template>
+                    </select>
+                    <p x-show="backups.length === 0" class="text-xs text-red-400 mt-1">No backups found in /usr/local/bastille/backups</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Target Release</label>
+                    <select x-model="newImport.release" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 focus:ring-2 focus:ring-bastille-500 outline-none text-sm">
+                        <template x-for="rel in releases" :key="rel">
+                            <option :value="rel" x-text="rel"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <div class="flex gap-6 pt-2">
+                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
+                        <input type="checkbox" x-model="newImport.force" class="rounded border-gray-300 dark:border-slate-600 text-bastille-600 focus:ring-bastille-500">
+                        <span>Force (-f)</span>
+                    </label>
+                    <div class="flex items-center gap-3">
+                        <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
+                            <input type="checkbox" x-model="newImport.staticMac" class="rounded border-gray-300 dark:border-slate-600 text-bastille-600 focus:ring-bastille-500">
+                            <span>Static MAC (-M)</span>
+                        </label>
+                        <input type="text" x-show="newImport.staticMac" x-transition x-model="newImport.mac" placeholder="00:11:22:33:44:55"
+                               class="px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 focus:ring-1 focus:ring-bastille-500 outline-none font-mono w-40">
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-gray-50 dark:bg-slate-900/50 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-3">
+                <button @click="showImportModal = false" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors">Cancel</button>
+                <button @click="importJail" :disabled="!newImport.file || !newImport.release" class="px-4 py-2 bg-bastille-600 hover:bg-bastille-700 disabled:opacity-50 text-white font-medium rounded-lg shadow-sm transition-colors">IMPORT</button>
+            </div>
+        </div>
+    </div>
+
+    <div x-cloak x-show="showExportModal"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm transition-opacity"
+         x-transition.opacity>
+        <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden"
+             @click.outside="showExportModal = false">
+            <div class="p-6 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Export Jail</h3>
+                <button @click="showExportModal = false" class="text-gray-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-500 dark:text-gray-400">Export <span class="font-bold text-bastille-600 dark:text-bastille-400" x-text="exportSettings.target"></span> to a compressed archive.</p>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Compression Format</label>
+                    <select x-model="exportSettings.compression" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 focus:ring-2 focus:ring-bastille-500 outline-none text-sm font-mono">
+                        <optgroup label="Archives (Standard)">
+                            <option value="txz">.txz (XZ Archive)</option>
+                            <option value="tgz">.tgz (GZIP Archive)</option>
+                            <option value="tzst">.tzst (ZSTD Archive)</option>
+                        </optgroup>
+                        <optgroup label="ZFS Streams (Native)">
+                            <option value="xz">.xz (XZ Stream)</option>
+                            <option value="gz">.gz (GZIP Stream)</option>
+                            <option value="zst">.zst (ZSTD Stream)</option>
+                            <option value="raw">.raw (Uncompressed)</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="flex flex-col gap-3 pt-2">
+                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
+                        <input type="checkbox" x-model="exportSettings.live" class="rounded border-gray-300 dark:border-slate-600 text-bastille-600 focus:ring-bastille-500">
+                        <span>Live Export (--live) <span class="text-xs text-gray-500 block pl-6">Export running jail (ZFS Only)</span></span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
+                        <input type="checkbox" x-model="exportSettings.auto" class="rounded border-gray-300 dark:border-slate-600 text-bastille-600 focus:ring-bastille-500">
+                        <span>Auto Manage (--auto) <span class="text-xs text-gray-500 block pl-6">Safely stop/start jail if required</span></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="p-4 bg-gray-50 dark:bg-slate-900/50 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-3">
+                <button @click="showExportModal = false" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors">Cancel</button>
+                <button @click="performExport" class="px-4 py-2 bg-bastille-600 hover:bg-bastille-700 text-white font-medium rounded-lg shadow-sm transition-colors"><i class="fa-solid fa-download mr-2"></i>EXPORT</button>
+            </div>
+        </div>
+    </div>
+
+        <div x-cloak x-show="showCreateModal" 
+                     class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm transition-opacity"
+                     x-transition.opacity>
+            <div class="w-full max-w-2xl bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden flex flex-col max-h-[90vh]"
+                 @click.outside="showCreateModal = false">
+
+                <div class="p-6 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center bg-gray-50 dark:bg-slate-900/50">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">Create New Jail</h3>
+                    <button @click="showCreateModal = false" class="text-gray-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <div class="flex border-b border-gray-200 dark:border-slate-700">
+                    <button @click="createTab = 'basic'" class="flex-1 py-3 text-sm font-medium transition-colors" :class="createTab === 'basic' ? 'border-b-2 border-bastille-600 text-bastille-600 dark:text-bastille-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">Basic Info</button>
+                    <button @click="createTab = 'network'" class="flex-1 py-3 text-sm font-medium transition-colors" :class="createTab === 'network' ? 'border-b-2 border-bastille-600 text-bastille-600 dark:text-bastille-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">Networking</button>
+                    <button @click="createTab = 'options'" class="flex-1 py-3 text-sm font-medium transition-colors" :class="createTab === 'options' ? 'border-b-2 border-bastille-600 text-bastille-600 dark:text-bastille-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">Options</button>
+                </div>
+
+                <div class="p-6 overflow-y-auto scroller space-y-6">
+
+                    <div x-show="createTab === 'basic'" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Jail Name <span class="text-red-500">*</span></label>
+                            <input type="text" x-model="newJail.name" placeholder="webserver01" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 focus:ring-2 focus:ring-bastille-500 outline-none font-mono text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Base Release <span class="text-red-500">*</span></label>
+                            <select x-model="newJail.release" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 focus:ring-2 focus:ring-bastille-500 outline-none text-sm">
+                                <option value="" disabled>Select a release...</option>
+                                <template x-for="rel in releases" :key="rel">
+                                    <option :value="rel" x-text="rel"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-3 border border-gray-200 dark:border-slate-700 rounded-lg flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50" @click="newJail.flags.thick = !newJail.flags.thick">
+                                <span class="text-sm font-medium dark:text-gray-300">Thick Jail (-T)</span>
+                                <div class="w-4 h-4 border rounded flex items-center justify-center" :class="newJail.flags.thick ? 'bg-bastille-600 border-bastille-600' : 'border-gray-400'"><i x-show="newJail.flags.thick" class="fa-solid fa-check text-white text-[10px]"></i></div>
+                            </div>
+                            <div class="p-3 border border-gray-200 dark:border-slate-700 rounded-lg flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50" @click="newJail.flags.clone = !newJail.flags.clone">
+                                <span class="text-sm font-medium dark:text-gray-300">Clone Jail (-C)</span>
+                                <div class="w-4 h-4 border rounded flex items-center justify-center" :class="newJail.flags.clone ? 'bg-bastille-600 border-bastille-600' : 'border-gray-400'"><i x-show="newJail.flags.clone" class="fa-solid fa-check text-white text-[10px]"></i></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div x-show="createTab === 'network'" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">IP Address <span class="text-red-500">*</span></label>
+                            <input type="text" x-model="newJail.ip" placeholder="10.0.0.50" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 focus:ring-2 focus:ring-bastille-500 outline-none font-mono text-sm">
+                            <p class="text-xs text-gray-500 mt-1">For VNET/Bridge, standard notation. For loopback, can be just IP.</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Interface (Optional)</label>
+                            <input type="text" x-model="newJail.interface" placeholder="em0 or bastille0" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 focus:ring-2 focus:ring-bastille-500 outline-none font-mono text-sm">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 pt-2">
+                            <div class="p-3 border border-gray-200 dark:border-slate-700 rounded-lg flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50" @click="newJail.flags.vnet = !newJail.flags.vnet; if(newJail.flags.vnet) newJail.flags.bridge = false;">
+                                <div><span class="block text-sm font-medium dark:text-gray-300">VNET (-V)</span><span class="text-xs text-gray-500">Virtual Network Stack</span></div>
+                                <div class="w-4 h-4 border rounded flex items-center justify-center" :class="newJail.flags.vnet ? 'bg-bastille-600 border-bastille-600' : 'border-gray-400'"><i x-show="newJail.flags.vnet" class="fa-solid fa-check text-white text-[10px]"></i></div>
+                            </div>
+                            <div class="p-3 border border-gray-200 dark:border-slate-700 rounded-lg flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50" @click="newJail.flags.bridge = !newJail.flags.bridge; if(newJail.flags.bridge) newJail.flags.vnet = false;">
+                                <div><span class="block text-sm font-medium dark:text-gray-300">Bridge (-B)</span><span class="text-xs text-gray-500">VNET + Bridge</span></div>
+                                <div class="w-4 h-4 border rounded flex items-center justify-center" :class="newJail.flags.bridge ? 'bg-bastille-600 border-bastille-600' : 'border-gray-400'"><i x-show="newJail.flags.bridge" class="fa-solid fa-check text-white text-[10px]"></i></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div x-show="createTab === 'options'" class="space-y-4">
+                        <div class="grid grid-cols-1 gap-3">
+                            <div class="p-3 border border-gray-200 dark:border-slate-700 rounded-lg flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50" @click="newJail.flags.linux = !newJail.flags.linux">
+                                <div><span class="block text-sm font-medium dark:text-gray-300">Linux Jail (-L)</span><span class="text-xs text-gray-500">Experimental Linux compatibility</span></div>
+                                <div class="w-4 h-4 border rounded flex items-center justify-center" :class="newJail.flags.linux ? 'bg-bastille-600 border-bastille-600' : 'border-gray-400'"><i x-show="newJail.flags.linux" class="fa-solid fa-check text-white text-[10px]"></i></div>
+                            </div>
+                            <div class="p-3 border border-gray-200 dark:border-slate-700 rounded-lg flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50" @click="newJail.flags.empty = !newJail.flags.empty">
+                                <div><span class="block text-sm font-medium dark:text-gray-300">Empty Jail (-E)</span><span class="text-xs text-gray-500">Create without bootstrapping userland</span></div>
+                                <div class="w-4 h-4 border rounded flex items-center justify-center" :class="newJail.flags.empty ? 'bg-bastille-600 border-bastille-600' : 'border-gray-400'"><i x-show="newJail.flags.empty" class="fa-solid fa-check text-white text-[10px]"></i></div>
+                            </div>
+                            <div class="p-3 border border-gray-200 dark:border-slate-700 rounded-lg flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50" @click="newJail.flags.noBoot = !newJail.flags.noBoot">
+                                <div><span class="block text-sm font-medium dark:text-gray-300">No Boot</span><span class="text-xs text-gray-500">Do not start automatically</span></div>
+                                <div class="w-4 h-4 border rounded flex items-center justify-center" :class="newJail.flags.noBoot ? 'bg-bastille-600 border-bastille-600' : 'border-gray-400'"><i x-show="newJail.flags.noBoot" class="fa-solid fa-check text-white text-[10px]"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-gray-50 dark:bg-slate-900/50 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-3">
+                    <button @click="showCreateModal = false" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors">Cancel</button>
+                    <button @click="createJail" :disabled="!newJail.name || !newJail.release || !newJail.ip" class="px-6 py-2 bg-bastille-600 hover:bg-bastille-700 disabled:opacity-50 text-white font-medium rounded-lg shadow-sm transition-colors flex items-center gap-2">
+                        <i x-show="loading" class="fa-solid fa-circle-notch fa-spin"></i> CREATE JAIL
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <div x-cloak x-show="showTemplateInputModal"
+                     class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm transition-opacity"
+                     x-transition.opacity>
+            <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden"
+                 @click.outside="showTemplateInputModal = false">
+                <div class="p-6 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">Apply Template</h3>
+                    <button @click="showTemplateInputModal = false" class="text-gray-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Apply a specific template to <span class="font-bold text-bastille-600 dark:text-bastille-400" x-text="templateTargetJail"></span>.</p>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Template Name</label>
+                        <select x-model="templateNameInput" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 focus:ring-2 focus:ring-bastille-500 outline-none font-mono text-sm">
+                            <option value="" disabled>Select a template...</option>
+                            <template x-for="tpl in templates" :key="tpl.name">
+                                <option :value="tpl.name" x-text="tpl.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+                <div class="p-4 bg-gray-50 dark:bg-slate-900/50 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-3">
+                    <button @click="showTemplateInputModal = false" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors">Cancel</button>
+                    <button @click="submitTemplateInput" :disabled="!templateNameInput" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-medium rounded-lg shadow-sm transition-colors">APPLY</button>
+                </div>
+            </div>
+        </div>
+
+        <div x-cloak x-show="showReleaseModal"
+                     class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm transition-opacity"
+                     x-transition.opacity>
+            <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden"
+                 @click.outside="showReleaseModal = false">
+                <div class="p-6 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">Bootstrap Release</h3>
+                    <button @click="showReleaseModal = false" class="text-gray-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Enter the release version to bootstrap (e.g., 15.0-RELEASE). <br><span class="text-xs text-orange-500"><i class="fa-solid fa-triangle-exclamation mr-1"></i>This process may take several minutes.</span></p>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Release Name</label>
+                        <input type="text" x-model="newReleaseName" placeholder="15.0-RELEASE" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 focus:ring-2 focus:ring-bastille-500 outline-none font-mono text-sm" @keyup.enter="bootstrapRelease">
+                    </div>
+
+                    <div class="flex items-center justify-between bg-gray-50 dark:bg-slate-900 p-3 rounded-lg border border-gray-200 dark:border-slate-700">
+                        <div>
+                            <span class="text-sm font-medium text-gray-900 dark:text-white">Apply Release Patches</span>
+                            <p class="text-xs text-gray-500">Apply patches immediately after install.</p>
+                        </div>
+                        <button @click="bootstrapUpdate = !bootstrapUpdate" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none" :class="bootstrapUpdate ? 'bg-bastille-600' : 'bg-gray-200 dark:bg-slate-600'">
+                            <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" :class="bootstrapUpdate ? 'translate-x-5' : 'translate-x-0'"></span>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-4 bg-gray-50 dark:bg-slate-900/50 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-3">
+                    <button @click="showReleaseModal = false" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors">Cancel</button>
+                    <button @click="bootstrapRelease" :disabled="loading || !newReleaseName" class="px-4 py-2 bg-bastille-600 hover:bg-bastille-700 disabled:opacity-50 text-white font-medium rounded-lg shadow-sm transition-colors flex items-center gap-2"><i x-show="loading" class="fa-solid fa-circle-notch fa-spin"></i> BOOTSTRAP</button>
+                </div>
+            </div>
+        </div>
+
+        <div x-cloak x-show="showConsoleModal"
+                     class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm transition-opacity"
+                     x-transition.opacity>
+            <div class="w-full max-w-5xl h-[80vh] bg-black rounded-lg shadow-2xl border border-gray-700 overflow-hidden flex flex-col"
+                 @click.outside="closeConsole">
+                <div class="p-3 bg-gray-900 border-b border-gray-800 flex justify-between items-center flex-shrink-0">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                        <span class="w-3 h-3 rounded-full bg-yellow-500"></span>
+                        <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                        <span class="ml-3 text-sm font-mono text-gray-400" x-text="consoleTitle"></span>
+                    </div>
+                    <button @click="closeConsole" class="text-gray-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <iframe :src="consoleUrl" class="w-full h-full border-0 bg-black"></iframe>
+            </div>
+        </div>
+
+        <div x-show="!isAuthenticated"
+             class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/90 backdrop-blur-sm transition-opacity"
+             x-transition.opacity>
+            <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+                <div class="p-8">
+                    <div class="text-center mb-8">
+                        <img src="/static/img/BastilleBSD.jpg" alt="Logo" class="h-16 w-auto mx-auto mb-4 rounded-md">
+                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Panopticon</h2>
+                        <p class="text-med text-gray-500 dark:text-gray-400 mt-2">Nowhere to hide.</p>
+                    </div>
+                    <form @submit.prevent="login" class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Username</label>
+                            <input type="text" x-model="credentials.username" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-bastille-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Password</label>
+                            <input type="password" x-model="credentials.password" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-bastille-500 outline-none">
+                        </div>
+                        <button type="submit" class="w-full py-2.5 px-4 bg-bastille-600 hover:bg-bastille-700 text-white font-medium rounded-lg shadow-sm transition-colors">Sign In</button>
+                    </form>
+                    <div class="mt-6">
+                        <div class="relative">
+                            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200 dark:border-slate-600"></div></div>
+                            <div class="relative flex justify-center text-sm"><span class="px-2 bg-white dark:bg-slate-800 text-gray-500">Or continue with</span></div>
+                        </div>
+                        <button type="button" class="mt-6 w-full py-2.5 px-4 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 text-gray-700 dark:text-white font-medium rounded-lg border border-gray-300 dark:border-slate-600 shadow-sm transition-colors flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-building-shield"></i>
+                            Enterprise SSO
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div x-cloak x-show="showFirewallModal" 
+                     class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm transition-opacity"
+                     x-transition.opacity>
+            <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden" @click.outside="showFirewallModal = false">
+                <div class="p-6 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/50">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">Add Port Forward</h3>
+                    <p class="text-sm text-gray-500">Expose a service from <span class="font-mono font-bold text-bastille-600" x-text="newRule.target"></span> to the host.</p>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Protocol</label>
+                        <select x-model="newRule.protocol" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 focus:ring-2 focus:ring-bastille-500 outline-none text-sm">
+                            <option value="tcp">TCP</option>
+                            <option value="udp">UDP</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Host Port</label>
+                            <input type="number" x-model="newRule.hostPort" placeholder="8080" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 focus:ring-2 focus:ring-bastille-500 outline-none font-mono text-sm">
+                            <p class="text-[10px] text-gray-500 mt-1">External Port</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Jail Port</label>
+                            <input type="number" x-model="newRule.jailPort" placeholder="80" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 focus:ring-2 focus:ring-bastille-500 outline-none font-mono text-sm">
+                            <p class="text-[10px] text-gray-500 mt-1">Internal Port</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 bg-gray-50 dark:bg-slate-900/50 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-3">
+                    <button @click="showFirewallModal = false" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors">Cancel</button>
+                    <button @click="submitFirewallRule" class="px-6 py-2 bg-bastille-600 hover:bg-bastille-700 text-white font-medium rounded-lg shadow-sm transition-colors">
+                        Add Rule
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <div x-cloak x-show="showApiModal"
+                     class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm transition-opacity"
+                     x-transition.opacity>
+            <div class="w-full max-w-lg bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden transform transition-all"
+                 @click.outside="showApiModal = false">
+                <div class="p-6 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">API Connection Settings</h3>
+                    <button @click="showApiModal = false" class="text-gray-500 hover:text-gray-700 dark:hover:text-white">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 p-3 rounded-lg text-sm flex items-start gap-2">
+                        <i class="fa-solid fa-circle-info mt-0.5"></i>
+                        <p>Enter your Bastille API base URL (no trailing paths). API Key is optional.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">API URL</label>
+                        <input type="text" x-model="apiConfig.url" placeholder="https://bastille.example.com" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 focus:ring-2 focus:ring-bastille-500 outline-none font-mono text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">API Key</label>
+                        <input type="password" x-model="apiConfig.key" placeholder="Bearer Token" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 focus:ring-2 focus:ring-bastille-500 outline-none font-mono text-sm">
+                    </div>
+                </div>
+                <div class="p-4 bg-gray-50 dark:bg-slate-900/50 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-3">
+                    <button @click="showApiModal = false" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors">Cancel</button>
+                    <button @click="saveApiSettings" class="px-4 py-2 bg-bastille-600 hover:bg-bastille-700 text-white font-medium rounded-lg shadow-sm transition-colors">Save & Connect</button>
+                </div>
+            </div>
+        </div>
+
+        <div x-cloak x-show="isAuthenticated" class="flex h-screen overflow-hidden">
+
+            <div x-show="sidebarExpanded" class="fixed inset-0 bg-gray-900/50 z-40 md:hidden transition-opacity" @click="sidebarExpanded = false" x-transition.opacity></div>
+
+        <aside class="bg-white dark:bg-slate-850 border-gray-200 dark:border-slate-700 flex flex-col fixed inset-y-0 left-0 z-50 md:static transition-all duration-300 ease-in-out overflow-hidden shadow-2xl md:shadow-none"
+                   :class="sidebarExpanded ? 'w-64 border-r' : 'w-0 border-none'">
+                <div class="h-16 flex items-center px-6 border-b border-gray-200 dark:border-slate-700">
+                    <img src="/static/img/BastilleBSD.jpg" alt="Logo" class="h-8 w-auto mr-3 rounded-sm">
+                    <span class="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Bastille<span class="text-bastille-500">BSD</span></span>
+                </div>
+
+                <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+                    <template x-for="item in navItems">
+                        <a href="#" @click.prevent="navigate(item.id)"
+                           class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors mb-1"
+                           :class="currentView === item.id
+                                   ? 'bg-bastille-50 dark:bg-bastille-900/20 text-bastille-700 dark:text-bastille-400'
+                                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800'">
+                            <i :class="item.icon + ' text-lg w-6 text-center'"></i>
+                            <span x-text="item.label"></span>
+                        </a>
+                    </template>
+                </nav>
+
+                <div class="p-4 border-t border-gray-200 dark:border-slate-700">
+                    <button @click="logout" class="flex w-full items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                        <i class="fa-solid fa-right-from-bracket text-lg w-6 text-center"></i>
+                        Sign Out
+                    </button>
+                </div>
+            </aside>
+
+            <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+
+                <header class="h-16 bg-white dark:bg-slate-850 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between px-6 z-10">
+                    <div class="flex items-center gap-3">
+                        <button @click="sidebarExpanded = !sidebarExpanded" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white transition-colors mr-1" title="Toggle Sidebar">
+                            <i class="fa-solid fa-bars text-lg"></i>
+                        </button>
+                        <h1 class="text-lg font-semibold text-gray-800 dark:text-white capitalize" x-text="currentView"></h1>
+                        <span class="flex h-2.5 w-2.5 relative" title="API Status">
+                            <span x-show="apiConnected" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2.5 w-2.5" :class="apiConnected ? 'bg-green-500' : 'bg-gray-400'"></span>
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+
+                        <div x-show="currentView === 'jails'" class="flex items-center bg-gray-100 dark:bg-slate-700 rounded-lg p-1 mr-4 border border-gray-200 dark:border-slate-600">
+                            <button @click="viewMode = 'list'"
+                                                              class="w-10 py-1.5 rounded-md transition-all duration-200 flex items-center justify-center"
+                                                              :class="viewMode === 'list' ? 'bg-white dark:bg-slate-600 text-bastille-600 dark:text-bastille-400 shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'">
+                                <i class="fa-solid fa-list text-xs"></i>
+                            </button>
+                            <button @click="viewMode = 'grid'"
+                                   class="w-10 py-1.5 rounded-md transition-all duration-200 flex items-center justify-center"
+                                   :class="viewMode === 'grid' ? 'bg-white dark:bg-slate-600 text-bastille-600 dark:text-bastille-400 shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'">
+                                <i class="fa-solid fa-border-all text-xs"></i>
+                            </button>
+                        </div>
+
+                        <div class="h-6 w-px bg-gray-200 dark:bg-slate-700 hidden sm:block"></div>
+
+                        <button @click="showApiModal = true" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 transition-colors" title="API Settings">
+                            <i class="fa-solid fa-plug text-lg"></i>
+                        </button>
+
+                        <div class="relative flex items-center" @click.outside="showRefreshMenu = false">
+                            <button @click="refreshData" :class="{'animate-spin': loading}" class="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 transition-colors rounded-l-full hover:bg-gray-100 dark:hover:bg-slate-700" title="Refresh Now">
+                                <i class="fa-solid fa-rotate text-lg"></i>
+                            </button>
+                            <button @click="showRefreshMenu = !showRefreshMenu" class="p-2 pr-1 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors rounded-r-full hover:bg-gray-100 dark:hover:bg-slate-700 -ml-1 flex items-center gap-1">
+                                <span x-show="autoRefreshLabel !== 'Off'" class="text-[10px] font-bold bg-green-100 text-green-700 px-1 rounded" x-text="autoRefreshLabel"></span>
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </button>
+
+                            <div x-cloak x-show="showRefreshMenu"
+                                         x-transition:enter="transition ease-out duration-100"
+                                         x-transition:enter-start="transform opacity-0 scale-95"
+                                         x-transition:enter-end="transform opacity-100 scale-100"
+                                         class="absolute top-full right-0 mt-2 w-32 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden z-50">
+                                <div class="py-1">
+                                    <button @click="updateAutoRefresh(0, 'Off')" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-slate-700" :class="autoRefreshLabel === 'Off' ? 'text-bastille-600 font-bold dark:text-bastille-400' : 'text-gray-700 dark:text-gray-300'">Off</button>
+                                    <button @click="updateAutoRefresh(10, '10s')" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-slate-700" :class="autoRefreshLabel === '10s' ? 'text-bastille-600 font-bold dark:text-bastille-400' : 'text-gray-700 dark:text-gray-300'">Every 10s</button>
+                                    <button @click="updateAutoRefresh(30, '30s')" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-slate-700" :class="autoRefreshLabel === '30s' ? 'text-bastille-600 font-bold dark:text-bastille-400' : 'text-gray-700 dark:text-gray-300'">Every 30s</button>
+                                    <button @click="updateAutoRefresh(60, '1m')" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-slate-700" :class="autoRefreshLabel === '1m' ? 'text-bastille-600 font-bold dark:text-bastille-400' : 'text-gray-700 dark:text-gray-300'">Every 1m</button>
+                                    <button @click="updateAutoRefresh(300, '5m')" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-slate-700" :class="autoRefreshLabel === '5m' ? 'text-bastille-600 font-bold dark:text-bastille-400' : 'text-gray-700 dark:text-gray-300'">Every 5m</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button @click="toggleTheme" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 transition-colors">
+                            <i x-show="theme === 'light'" class="fa-solid fa-moon text-lg"></i>
+                            <i x-show="theme === 'dark'" class="fa-solid fa-lightbulb text-lg text-yellow-400"></i>
+                        </button>
+
+                        <div class="relative cursor-pointer" title="Admin User">
+                            <div class="w-9 h-9 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-bastille-50 hover:text-bastille-600 transition-colors border border-gray-200 dark:border-slate-600">
+                                <i class="fa-solid fa-user-shield text-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <main class="flex-1 overflow-auto bg-gray-50 dark:bg-slate-900 p-6 scroller">
+
+                    <div x-show="currentView === 'jails'" x-transition:enter.duration.300ms>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                            <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total Jails</p>
+                                <p class="text-2xl font-bold text-gray-900 dark:text-white" x-text="jails.length"></p>
+                            </div>
+                            <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Running</p>
+                                <p class="text-2xl font-bold text-green-600 dark:text-green-400" x-text="jails.filter(j => j.State === 'Up').length"></p>
+                            </div>
+                            <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Stopped</p>
+                                <p class="text-2xl font-bold text-gray-500 dark:text-gray-400" x-text="jails.filter(j => j.State === 'Down').length"></p>
+                            </div>
+                            <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm flex items-center justify-center cursor-pointer hover:border-bastille-500 transition-colors border-dashed" @click="openImportModal()">
+                                <span class="text-sm font-semibold text-bastille-600 dark:text-bastille-400">+ Import Jail</span>
+                            </div>
+                            <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm flex items-center justify-center cursor-pointer hover:border-bastille-500 transition-colors border-dashed" @click="openCreateModal()">
+                                <span class="text-sm font-semibold text-bastille-600 dark:text-bastille-400">+ New Jail</span>
+                            </div>
+                        </div>
+
+                        <div x-show="viewMode === 'list'" x-transition:enter.duration.200ms>
+                            <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                                <div class="overflow-x-auto min-h-[400px]">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr class="bg-gray-50 dark:bg-slate-850 border-b border-gray-200 dark:border-slate-700 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                                <th class="p-4 font-semibold w-16">JID</th>
+                                                <th class="p-4 font-semibold">Name</th>
+                                                <th class="p-4 font-semibold">Type</th>
+                                                <th class="p-4 font-semibold">IP Address</th>
+                                                <th class="p-4 font-semibold">Release</th>
+                                                <th class="p-4 font-semibold">Proto / Ports</th>
+                                                <th class="p-4 font-semibold">Priority</th>
+                                                <th class="p-4 font-semibold">Boot</th>
+                                                <th class="p-4 font-semibold">Status</th>
+                                                <th class="p-4 font-semibold">Tags</th>
+                                                <th class="p-4 font-semibold text-right">Quick Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
+                                            <template x-for="jail in jails" :key="jail.Name">
+                                                <tr class="group hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
+                                                    <td class="p-4 font-mono text-sm text-gray-500" x-text="jail.JID"></td>
+                                                    <td class="p-4 font-medium text-gray-900 dark:text-white" x-text="jail.Name"></td>
+                                                    <td class="p-4 text-sm text-gray-600 dark:text-gray-400"><span class="px-2 py-0.5 bg-gray-100 dark:bg-slate-700 rounded text-xs border border-gray-200 dark:border-slate-600" x-text="jail.Type"></span></td>
+                                                    <td class="p-4 text-sm text-gray-600 dark:text-gray-300 font-mono max-w-[150px]">
+                                                    <template x-for="ip in (jail.IP || '').split(',')">
+                                                        <div class="truncate" x-text="ip.trim()" :title="ip.trim()"></div>
+                                                    </template>
+                                                </td>
+                                                    <td class="p-4 text-sm text-gray-600 dark:text-gray-300"><span class="px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded text-xs" x-text="jail.Release"></span></td>
+                                                    <td class="p-4 text-sm text-gray-600 dark:text-gray-400 font-mono text-xs max-w-[120px] truncate" :title="jail.Ports" x-text="jail.Ports || '-'"></td>
+                                                    <td class="p-4 text-sm font-mono">
+                                                        <input type="number"
+                                                               class="w-12 bg-transparent border-b border-dashed border-gray-300 dark:border-slate-600 text-center focus:outline-none focus:border-bastille-500 transition-colors text-gray-600 dark:text-gray-400"
+                                                               :value="jail.Prio"
+                                                               @change="updateJailConfig(jail.Name, 'priority', $el.value)"
+                                                               min="1" max="99">
+                                                    </td>
+                                                    <td class="p-4 text-sm">
+                                                        <button @click="updateJailConfig(jail.Name, 'boot', jail.Boot === 'on' ? 'off' : 'on')"
+                                                        class="focus:outline-none transition-transform hover:scale-110"
+                                                        :title="jail.Boot === 'on' ? 'Disable Auto-Boot' : 'Enable Auto-Boot'">
+                                                            <i class="fa-solid fa-power-off" :class="jail.Boot === 'on' ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'"></i>
+                                                        </button>
+                                                    </td>
+                                                    <td class="p-4">
+                                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border"
+                                                              :class="jail.State === 'Up' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800' : 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-slate-700 dark:text-gray-400 dark:border-slate-600'">
+                                                            <span class="w-1.5 h-1.5 rounded-full" :class="jail.State === 'Up' ? 'bg-green-600' : 'bg-gray-400'"></span>
+                                                            <span x-text="jail.State"></span>
+                                                        </span>
+                                                    </td>
+                                                    <td class="p-4 text-sm">
+                                                        <div class="flex gap-1 flex-wrap max-w-[150px]">
+                                                            <template x-if="jail.Tags">
+                                                                <template x-for="tag in jail.Tags.split(',')">
+                                                                    <span class="px-1.5 py-0.5 bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 rounded text-[10px] border border-blue-100 dark:border-blue-800" x-text="tag"></span>
+                                                                </template>
+                                                            </template>
+                                                            <span x-show="!jail.Tags" class="text-gray-400 text-xs">-</span>
+                                                        </div>
+                                                    </td>
+                                                    <td class="p-4 text-right">
+                                                        <div class="grid grid-cols-4 gap-2 w-fit ml-auto">
+                                                            <button @click="apiAction(jail.Name, 'start')" x-show="jail.State === 'Down'" class="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded border border-transparent hover:border-green-200" title="Start"><i class="fa-solid fa-play"></i></button>
+                                                            <button @click="apiAction(jail.Name, 'stop')" x-show="jail.State === 'Up'" class="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded border border-transparent hover:border-red-200" title="Stop"><i class="fa-solid fa-stop"></i></button>
+                                                            <button @click="apiAction(jail.Name, 'restart')" x-show="jail.State === 'Up'" class="p-1.5 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded border border-transparent hover:border-orange-200" title="Restart"><i class="fa-solid fa-rotate-right"></i></button>
+                                                            <button @click="openTemplateInput(jail.Name)" class="p-1.5 text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded border border-transparent hover:border-purple-200" title="Apply Template"><i class="fa-solid fa-clone"></i></button>
+                                                            <button @click="apiAction(jail.Name, 'console')" class="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700 rounded border border-transparent hover:border-gray-300" title="Console"><i class="fa-solid fa-terminal"></i></button>
+
+                                                            <button @click="snapshotJail(jail.Name)" class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-white rounded border border-transparent hover:border-gray-300" title="Snapshot Jail"><i class="fa-solid fa-images"></i></button>
+                                                            <button @click="upgradePkgs(jail.Name)" class="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded border border-transparent hover:border-blue-200" title="Upgrade Packages"><i class="fa-solid fa-cloud-arrow-up"></i></button>
+                                                            <button @click="scanSecurity(jail.Name)" class="p-1.5 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded border border-transparent hover:border-indigo-200" title="Package Audit"><i class="fa-solid fa-shield-virus" :class="securityData[jail.Name]?.loading ? 'fa-spin' : ''"></i></button>
+                                                            <button @click="rollbackJail(jail.Name)" class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-white rounded border border-transparent hover:border-gray-300" title="Rollback Jail"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                                                            <button @click="apiAction(jail.Name, 'destroy')" x-show="jail.State === 'Down'" class="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded border border-transparent hover:border-red-200" title="Destroy Jail"><i class="fa-solid fa-skull"></i></button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                    <div x-show="jails.length === 0 && !loading" class="text-center py-20"><p class="text-gray-500 dark:text-gray-400">No Jails found.</p></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div x-show="viewMode === 'grid'" x-transition:enter.duration.200ms>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <template x-for="jail in jails" :key="jail.Name">
+                                    <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                                        <div class="absolute left-0 top-0 bottom-0 w-1.5" :class="jail.State === 'Up' ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'"></div>
+
+                                        <div class="flex justify-between items-start mb-4 pl-3">
+                                            <div class="flex-1 min-w-0 pr-2">
+                                                <div class="flex items-center gap-2 flex-wrap mb-1">
+                                                    <h3 class="font-bold text-lg text-gray-900 dark:text-white leading-tight truncate" x-text="jail.Name"></h3>
+                                                    <template x-if="jail.Tags">
+                                                        <div class="flex flex-wrap gap-1">
+                                                            <template x-for="tag in jail.Tags.split(',')">
+                                                                <span class="px-1.5 py-0.5 bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 rounded text-[10px] border border-blue-100 dark:border-blue-800 font-medium" x-text="tag"></span>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                                <p class="text-xs font-mono text-gray-400 mt-1">JID: <span x-text="jail.JID"></span> <span class="mx-1">|</span> <span class="uppercase" x-text="jail.Type"></span></p>
+                                            </div>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border flex-shrink-0"
+                                                  :class="jail.State === 'Up' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800' : 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-slate-700 dark:text-gray-400 dark:border-slate-600'">
+                                                <span class="w-1.5 h-1.5 rounded-full" :class="jail.State === 'Up' ? 'bg-green-600' : 'bg-gray-400'"></span>
+                                                <span x-text="jail.State"></span>
+                                            </span>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-4 pl-3 mb-4">
+                                            <div>
+                                            <p class="text-[10px] uppercase tracking-wider text-gray-400 font-semibold">IP Address</p>
+                                            <div class="font-mono text-sm text-gray-700 dark:text-gray-300">
+                                                <template x-for="ip in (jail.IP || '').split(',')">
+                                                    <div class="truncate" x-text="ip.trim()" :title="ip.trim()"></div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                            <div><p class="text-[10px] uppercase tracking-wider text-gray-400 font-semibold">Release</p><p class="text-sm text-gray-700 dark:text-gray-300" x-text="jail.Release"></p></div>
+                                            <div><p class="text-[10px] uppercase tracking-wider text-gray-400 font-semibold">Ports</p><p class="font-mono text-xs text-gray-700 dark:text-gray-300 truncate" x-text="jail.Ports || '-'"></p></div>
+                                            <div class="flex justify-between items-start pr-4">
+                                                <div>
+                                                    <p class="text-[10px] uppercase tracking-wider text-gray-400 font-semibold">Prio</p>
+                                                    <input type="number"
+                                                           class="w-12 bg-transparent border-b border-dashed border-gray-300 dark:border-slate-600 text-left focus:outline-none focus:border-bastille-500 transition-colors text-gray-700 dark:text-gray-300 font-mono text-sm"
+                                                           :value="jail.Prio"
+                                                           @change="updateJailConfig(jail.Name, 'priority', $el.value)">
+                                                </div>
+                                                <div class="text-right">
+                                                    <p class="text-[10px] uppercase tracking-wider text-gray-400 font-semibold">Boot</p>
+                                                    <button @click="updateJailConfig(jail.Name, 'boot', jail.Boot === 'on' ? 'off' : 'on')"
+                                                       class="focus:outline-none transition-transform hover:scale-110 mt-0.5"
+                                                       :title="jail.Boot === 'on' ? 'Disable Auto-Boot' : 'Enable Auto-Boot'">
+                                                        <i class="fa-solid fa-power-off" :class="jail.Boot === 'on' ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="pt-4 border-t border-gray-100 dark:border-slate-700 flex flex-wrap justify-between items-center px-1 gap-y-2">
+                                            <div class="flex gap-1 flex-wrap">
+                                                <button @click="apiAction(jail.Name, 'start')" x-show="jail.State === 'Down'" class="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors"><i class="fa-solid fa-play"></i></button>
+                                                <button @click="apiAction(jail.Name, 'stop')" x-show="jail.State === 'Up'" class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"><i class="fa-solid fa-stop"></i></button>
+                                                <button @click="apiAction(jail.Name, 'restart')" x-show="jail.State === 'Up'" class="p-2 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded transition-colors"><i class="fa-solid fa-rotate-right"></i></button>
+                                                <button @click="openTemplateInput(jail.Name)" class="p-2 text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded transition-colors" title="Apply Template"><i class="fa-solid fa-clone"></i></button>
+                                                <button @click="scanSecurity(jail.Name)" class="p-2 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded transition-colors" title="Package Audit"><i class="fa-solid fa-shield-virus" :class="securityData[jail.Name]?.loading ? 'fa-spin' : ''"></i></button>
+                                                <button @click="upgradePkgs(jail.Name)" class="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors" title="Upgrade Packages"><i class="fa-solid fa-cloud-arrow-up"></i></button>
+                                                <button @click="openExportModal(jail.Name)" class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-white rounded border border-transparent hover:border-gray-300" title="Export Jail"><i class="fa-solid fa-download"></i></button>
+                                                <button @click="snapshotJail(jail.Name)" class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-white rounded border border-transparent hover:border-gray-300" title="Snapshot Jail"><i class="fa-solid fa-images"></i></button>
+                                                <button @click="apiAction(jail.Name, 'destroy')" x-show="jail.State === 'Down'" class="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded border border-transparent hover:border-red-200" title="Destroy Jail"><i class="fa-solid fa-skull"></i></button>
+                                            </div>
+                                            <div class="flex gap-1 border-l border-gray-200 dark:border-slate-700 pl-2">
+                                                <button @click="apiAction(jail.Name, 'console')" class="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700 rounded transition-colors"><i class="fa-solid fa-terminal"></i></button>
+                                                <button @click="openExportModal(jail.Name)" class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-white rounded border border-transparent hover:border-gray-300" title="Export Jail"><i class="fa-solid fa-download"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div x-show="jails.length === 0 && !loading" class="col-span-full text-center py-20 bg-white dark:bg-slate-800 rounded-xl border border-dashed border-gray-300 dark:border-slate-700">
+                                    <p class="text-gray-500 dark:text-gray-400">No Jails found.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div x-show="currentView === 'releases'" x-transition:enter.duration.300ms>
+                        <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Bootstrapped Releases</h3>
+                                <button @click="showReleaseModal = true" class="px-4 py-2 bg-bastille-600 text-white rounded-lg text-sm hover:bg-bastille-700 transition"><i class="fa-solid fa-download mr-2"></i>Bootstrap Release</button>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <template x-for="release in releases" :key="release">
+                                    <div class="p-4 border border-gray-200 dark:border-slate-700 rounded-lg flex items-center justify-between hover:border-bastille-500 dark:hover:border-bastille-500 transition-colors">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-bastille-600"><i class="fa-brands fa-freebsd text-2xl"></i></div>
+                                            <div><p class="font-bold text-gray-800 dark:text-white" x-text="release"></p><p class="text-xs text-gray-500">/usr/local/bastille/releases</p></div>
+                                        </div>
+                                        <div class="flex gap-3">
+                                            <button @click="updateRelease(release)" class="text-gray-400 hover:text-blue-500 transition-colors" title="Update Release"><i class="fa-solid fa-rotate"></i></button>
+                                            <button @click="destroyRelease(release)" class="text-gray-400 hover:text-red-500 transition-colors" title="Destroy Release"><i class="fa-solid fa-trash"></i></button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div x-show="currentView === 'templates'" x-transition:enter.duration.300ms>
+                        <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                            <div class="p-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Automation Templates</h3>
+                                <div class="flex gap-2">
+                                    <input type="text" x-model="templateFilter" placeholder="Filter:" class="px-3 py-1.5 text-sm bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-lg outline-none focus:border-bastille-500">
+                                    <button @click="pullTemplates" class="px-3 py-1.5 bg-bastille-600 hover:bg-bastille-700 transition-colors text-white rounded-lg text-sm"><i class="fa-solid fa-cloud-arrow-down mr-2"></i>Sync Templates</button>
+                                </div>
+                            </div>
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 dark:bg-slate-900 text-xs uppercase text-gray-500 dark:text-gray-400">
+                                    <tr><th class="p-4">Template</th><th class="p-4">Source</th><th class="p-4 text-right">Quick Actions</th></tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
+                                    <template x-for="tpl in filteredTemplates" :key="tpl.name">
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                                            <td class="p-4">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-gray-500 dark:text-gray-400 flex-shrink-0">
+                                                    <i :class="getTemplateIcon(tpl.name)"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="font-medium text-gray-900 dark:text-white" x-text="tpl.name"></p>
+                                                    <p class="text-xs text-gray-500" x-text="tpl.description"></p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                            <td class="p-4 text-sm text-gray-600 dark:text-gray-300 font-mono" x-text="tpl.source"></td>
+                                            <td class="p-4 text-right">
+                                                <button @click="verifyTemplate(tpl.name)" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white text-sm font-medium mr-3"><i class="fa-solid fa-check-to-slot mr-1"></i>Inspect</button>
+                                                <button @click="openApplyModal(tpl.name)" class="text-bastille-600 hover:text-bastille-700 text-sm font-medium">Apply</button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div x-show="currentView === 'storage'" x-transition:enter.duration.300ms>
+                        <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                            <div class="p-4 border-b border-gray-200 dark:border-slate-700">
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-white">ZFS Usage</h3>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="bg-gray-50 dark:bg-slate-900 text-xs uppercase text-gray-500 dark:text-gray-400">
+                                        <tr>
+                                            <th class="p-4">Name</th>
+                                            <th class="p-4">Used</th>
+                                            <th class="p-4">Avail</th>
+                                            <th class="p-4">Mountpoint</th>
+                                            <th class="p-4">Compress</th>
+                                            <th class="p-4 text-right">Ratio</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
+                                        <template x-for="zfs in storage" :key="zfs.name">
+                                            <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                                                <td class="p-4 font-mono text-xs text-gray-700 dark:text-gray-300" x-text="zfs.name"></td>
+                                                <td class="p-4 text-sm font-medium text-gray-900 dark:text-white" x-text="zfs.used"></td>
+                                                <td class="p-4 text-sm text-gray-500" x-text="zfs.avail"></td>
+                                                <td class="p-4 font-mono text-xs text-gray-500 truncate max-w-xs" x-text="zfs.mountpoint"></td>
+                                                <td class="p-4 text-sm text-gray-500" x-text="zfs.compress"></td>
+                                                <td class="p-4 text-sm text-right font-mono" x-text="zfs.ratio"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div x-show="currentView === 'network'" x-transition:enter.duration.300ms class="h-full flex flex-col">
+                        <div class="mb-6">
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Network Management</h3>
+                        <p class="text-sm text-gray-500">Add or remove network interfaces from jails.</p>
+                    </div>
+
+                    <div class="flex-1 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-8 overflow-y-auto">
+                        <div class="max-w-4xl mx-auto space-y-8">
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Target Jail</label>
+                                    <select x-model="networkForm.target" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 focus:ring-2 focus:ring-bastille-500 outline-none">
+                                        <option value="" disabled>Select a Jail...</option>
+                                        <template x-for="jail in jails" :key="jail.Name">
+                                            <option :value="jail.Name" x-text="jail.Name"></option>
+                                        </template>
+                                    </select>
+                                    </div>
+                                    <div>
+                                    <label class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Action</label>
+                                    <div class="flex bg-gray-100 dark:bg-slate-900 rounded-lg p-1">
+                                        <button @click="networkForm.action = 'add'" class="flex-1 py-2 rounded-md text-sm font-bold transition-all" :class="networkForm.action === 'add' ? 'bg-white dark:bg-slate-700 shadow text-bastille-600 dark:text-bastille-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">ADD INTERFACE</button>
+                                        <button @click="networkForm.action = 'remove'" class="flex-1 py-2 rounded-md text-sm font-bold transition-all" :class="networkForm.action === 'remove' ? 'bg-white dark:bg-slate-700 shadow text-red-600 dark:text-red-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">REMOVE INTERFACE</button>
+                                    </div>
+                                </div>
+                                </div>
+
+                                <div class="p-6 bg-gray-50 dark:bg-slate-900/50 rounded-lg border border-gray-100 dark:border-slate-700">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                                    <div>
+                                        <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Interface Name</label>
+                                        <input type="text" x-model="networkForm.interface" placeholder="e.g. vtnet0, bridge0" class="w-full px-4 py-2 rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-bastille-500 outline-none font-mono">
+                                    </div>
+                                    <div x-show="networkForm.action === 'add' && !networkForm.flags.noIp">
+                                        <label class="block text-xs font-bold uppercase text-gray-500 mb-1">IP Address</label>
+                                        <input type="text" x-model="networkForm.ip" placeholder="e.g. 10.0.0.50/24 or DHCP" class="w-full px-4 py-2 rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-bastille-500 outline-none font-mono">
+                                    </div>
+                                    </div>
+
+                                    <div x-show="networkForm.action === 'add'" class="space-y-3 pt-4 border-t border-gray-200 dark:border-slate-700">
+                                    <label class="block text-xs font-bold uppercase text-gray-500">Mode & Options</label>
+
+                                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        <label class="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-gray-100 dark:hover:bg-slate-800 border border-transparent hover:border-gray-200 dark:hover:border-slate-700">
+                                            <input type="checkbox" x-model="networkForm.flags.vnet" class="rounded text-bastille-600 focus:ring-bastille-500">
+                                            <span class="text-sm">VNET Interface <span class="text-gray-400 text-xs">(-V)</span></span>
+                                        </label>
+                                        <label class="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-gray-100 dark:hover:bg-slate-800 border border-transparent hover:border-gray-200 dark:hover:border-slate-700">
+                                            <input type="checkbox" x-model="networkForm.flags.bridge" class="rounded text-bastille-600 focus:ring-bastille-500">
+                                            <span class="text-sm">Bridge Interface <span class="text-gray-400 text-xs">(-B)</span></span>
+                                        </label>
+                                        <label class="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-gray-100 dark:hover:bg-slate-800 border border-transparent hover:border-gray-200 dark:hover:border-slate-700">
+                                            <input type="checkbox" x-model="networkForm.flags.passthrough" class="rounded text-bastille-600 focus:ring-bastille-500">
+                                            <span class="text-sm">Passthrough <span class="text-gray-400 text-xs">(-P)</span></span>
+                                        </label>
+                                        <label class="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-gray-100 dark:hover:bg-slate-800 border border-transparent hover:border-gray-200 dark:hover:border-slate-700">
+                                            <input type="checkbox" x-model="networkForm.flags.staticMac" class="rounded text-bastille-600 focus:ring-bastille-500">
+                                            <span class="text-sm">Static MAC <span class="text-gray-400 text-xs">(-M)</span></span>
+                                        </label>
+                                        <label class="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-gray-100 dark:hover:bg-slate-800 border border-transparent hover:border-gray-200 dark:hover:border-slate-700">
+                                            <input type="checkbox" x-model="networkForm.flags.noIp" class="rounded text-bastille-600 focus:ring-bastille-500">
+                                            <span class="text-sm">No IP Address <span class="text-gray-400 text-xs">(-n)</span></span>
+                                            </div>
+                                            </div>
+
+                                    <div class="mt-4 pt-2 border-t border-gray-200 dark:border-slate-700">
+                                        <div class="flex items-center gap-3">
+                                            <label class="text-sm font-medium whitespace-nowrap">VLAN ID <span class="text-gray-400 text-xs">(-v)</span></label>
+                                            <input type="text" x-model="networkForm.vlan" placeholder="e.g. 100" class="w-24 px-2 py-1 text-sm rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-bastille-500 outline-none">
+                                            <span class="text-xs text-gray-400 italic">Optional. VNET only.</span>
+                                        </div>
+                                        </div>
+
+                                        </div>
+
+                                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
+                                    <label class="flex items-center gap-2 cursor-pointer w-fit">
+                                        <input type="checkbox" x-model="networkForm.flags.auto" class="rounded text-bastille-600 focus:ring-bastille-500">
+                                        <span class="text-sm font-bold">Auto Manage <span class="text-gray-400 font-normal">(-a)</span></span>
+                                        <span class="text-xs text-gray-500 ml-2">Safely restart jail if required</span>
+                                    </label>
+                                </div>
+                              </div>
+                            <div class="flex justify-end pt-4">
+                                <button @click="manageNetwork"
+                                        :class="networkForm.action === 'add' ? 'bg-bastille-600 hover:bg-bastille-700' : 'bg-red-600 hover:bg-red-700'"
+                                        class="px-8 py-3 text-white font-bold rounded-lg shadow-lg transition-all flex items-center gap-2">
+                                    <i class="fa-solid" :class="networkForm.action === 'add' ? 'fa-plus-circle' : 'fa-trash-can'"></i>
+                                    <span x-text="networkForm.action === 'add' ? 'ADD INTERFACE' : 'REMOVE INTERFACE'"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- INSIGHTS -->
+                    <div x-show="currentView === 'insights'" x-transition:enter.duration.300ms>
+                        <div class="mb-6 flex justify-between items-center">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Jail Insights</h3>
+                                <p class="text-sm text-gray-500">Real-time insights about jail status, health and configuration.</p>
+                            </div>
+                            <button @click="generateInsights()" class="px-4 py-2 bg-bastille-600 hover:bg-bastille-700 text-white font-bold rounded-lg shadow-sm transition-colors text-sm">
+                                <i class="fa-solid fa-microchip mr-2"></i>GENERATE ALL INSIGHTS
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <template x-for="jail in jails" :key="jail.Name">
+                                <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6 shadow-sm flex flex-col h-[500px]">
+
+                                    <div class="flex flex-col gap-4 mb-4">
+                                    <div class="flex flex-wrap items-center justify-between gap-3">
+                                        <div class="flex flex-wrap items-center gap-4">
+                                            <div class="flex items-center gap-2">
+                                                <h3 class="font-bold text-lg text-gray-900 dark:text-white leading-none" x-text="jail.Name"></h3>
+                                                <button @click="generateInsights(jail.Name)" class="text-gray-400 hover:text-bastille-600 transition-colors" title="Refresh Insights">
+                                                    <i class="fa-solid fa-rotate-right" :class="insightsData[jail.Name]?.loading ? 'fa-spin' : ''"></i>
+                                                </button>
+                                            </div>
+
+                                            <div class="flex flex-wrap items-center gap-2 text-xs">
+                                                <div class="px-2 py-0.5 rounded bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-slate-600 font-medium flex items-center gap-1.5">
+                                                    <i class="fa-solid fa-tag text-[10px] opacity-70"></i>
+                                                    <span x-text="jail.Release"></span>
+                                                </div>
+
+                                                <div class="px-2 py-0.5 rounded bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-slate-600 font-medium font-mono flex items-center gap-2">
+                                                    <i class="fa-solid fa-network-wired text-[10px] opacity-70"></i>
+                                                    <div class="flex flex-wrap gap-2">
+                                                        <template x-for="ip in (jail.IP || '').split(',')">
+                                                            <span x-text="ip.trim()"></span>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex bg-gray-100 dark:bg-slate-700 rounded-lg p-1 text-xs font-bold overflow-x-auto no-scrollbar">
+                                        <button @click="insightsTab = 'ps'" class="flex-1 px-3 py-1.5 rounded transition-colors whitespace-nowrap" :class="insightsTab === 'ps' ? 'bg-white dark:bg-slate-600 text-bastille-600 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'">Processes</button>
+                                        <button @click="insightsTab = 'socks'" class="flex-1 px-3 py-1.5 rounded transition-colors whitespace-nowrap" :class="insightsTab === 'socks' ? 'bg-white dark:bg-slate-600 text-bastille-600 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'">Network</button>
+                                        <button @click="insightsTab = 'sysrc'" class="flex-1 px-3 py-1.5 rounded transition-colors whitespace-nowrap" :class="insightsTab === 'sysrc' ? 'bg-white dark:bg-slate-600 text-bastille-600 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'">Config</button>
+                                        <button @click="insightsTab = 'last'" class="flex-1 px-3 py-1.5 rounded transition-colors whitespace-nowrap" :class="insightsTab === 'last' ? 'bg-white dark:bg-slate-600 text-bastille-600 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'">Logins</button>
+                                        <button @click="insightsTab = 'mount'" class="flex-1 px-3 py-1.5 rounded transition-colors whitespace-nowrap" :class="insightsTab === 'mount' ? 'bg-white dark:bg-slate-600 text-bastille-600 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'">Mounts</button>
+                                        <button @click="insightsTab = 'cron'" class="flex-1 px-3 py-1.5 rounded transition-colors whitespace-nowrap" :class="insightsTab === 'cron' ? 'bg-white dark:bg-slate-600 text-bastille-600 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'">Cron</button>
+                                    </div>
+                                </div>
+
+                                    <div class="flex-1 bg-gray-900 rounded-lg p-4 font-mono text-[10px] md:text-xs text-green-400 overflow-auto border border-gray-800 relative shadow-inner">
+
+                                        <div x-show="insightsData[jail.Name]?.loading" class="absolute inset-0 flex items-center justify-center bg-gray-900/80 z-10">
+                                            <i class="fa-solid fa-circle-notch fa-spin text-2xl text-bastille-500"></i>
+                                        </div>
+
+                                        <div x-show="!insightsData[jail.Name] && !insightsData[jail.Name]?.loading" class="absolute inset-0 flex items-center justify-center text-gray-600">
+                                            <span>Waiting for generation...</span>
+                                        </div>
+
+                                        <!--<pre x-show="tab === 'ps' && insightsData[jail.Name]" x-text="insightsData[jail.Name]?.ps"></pre>-->
+                                        <pre x-show="insightsTab === 'ps' && insightsData[jail.Name]" x-text="insightsData[jail.Name]?.ps"></pre>
+                                        <pre x-show="insightsTab === 'socks' && insightsData[jail.Name]" x-text="insightsData[jail.Name]?.socks"></pre>
+                                        <pre x-show="insightsTab === 'sysrc' && insightsData[jail.Name]" x-text="insightsData[jail.Name]?.sysrc"></pre>
+                                        <pre x-show="insightsTab === 'last' && insightsData[jail.Name]" x-text="insightsData[jail.Name]?.last"></pre>
+                                        <pre x-show="insightsTab === 'mount' && insightsData[jail.Name]" x-text="insightsData[jail.Name]?.mount"></pre>
+                                        <pre x-show="insightsTab === 'cron' && insightsData[jail.Name]" x-text="insightsData[jail.Name]?.cron"></pre>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- SECURITY -->
+                    <div x-show="currentView === 'security'" x-transition:enter.duration.300ms>
+                        <div class="mb-6 flex justify-between items-center">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Security Audit</h3>
+                                <p class="text-sm text-gray-500">Vulnerability assessment using <code>pkg audit</code>.</p>
+                            </div>
+                            <div class="flex gap-3">
+                                <button @click="scanSecurity()" class="px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 font-bold rounded-lg shadow-sm transition-colors text-sm">
+                                    <i class="fa-solid fa-radar mr-2"></i>SCAN ALL
+                                </button>
+                                <button @click="upgradePkgs()" class="px-4 py-2 bg-bastille-600 hover:bg-bastille-700 text-white font-bold rounded-lg shadow-sm transition-colors text-sm">
+                                    <i class="fa-solid fa-circle-arrow-up mr-2"></i>UPGRADE ALL
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <template x-for="jail in jails" :key="jail.Name">
+                                <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6 shadow-sm flex flex-col h-full">
+                                    <div class="flex justify-between items-start mb-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="p-2 rounded bg-gray-100 dark:bg-slate-700"><i class="fa-solid fa-cube text-gray-500 dark:text-gray-400"></i></div>
+                                            <h3 class="font-bold text-lg text-gray-900 dark:text-white" x-text="jail.Name"></h3>
+                                            <button @click="scanSecurity(jail.Name)" class="text-gray-400 hover:text-bastille-600 transition-colors" title="Scan Packages">
+                                                <i class="fa-solid fa-rotate-right" :class="insightsData[jail.Name]?.loading ? 'fa-spin' : ''"></i>
+                                            </button>
+                                        </div>
+                                        <div x-show="securityData[jail.Name] && !securityData[jail.Name]?.loading">
+                                            <span x-show="securityData[jail.Name]?.status === 'secure'" class="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-3 py-1 rounded-full text-xs font-bold uppercase"><i class="fa-solid fa-check mr-1"></i>Secure</span>
+                                            <span x-show="securityData[jail.Name]?.status === 'vulnerable'" class="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 px-3 py-1 rounded-full text-xs font-bold uppercase"><i class="fa-solid fa-bug mr-1"></i>Vulnerable</span>
+                                            <span x-show="securityData[jail.Name]?.status === 'upgraded'" class="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-3 py-1 rounded-full text-xs font-bold uppercase"><i class="fa-solid fa-check-double mr-1"></i>Upgraded</span>
+                                            <span x-show="securityData[jail.Name]?.status === 'error'" class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold uppercase">Error</span>
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <button @click="scanSecurity(jail.Name)" class="p-1.5 text-gray-400 hover:text-bastille-600 transition-colors" title="Scan Packages"><i class="fa-solid fa-radar" :class="securityData[jail.Name]?.loading && securityData[jail.Name]?.status !== 'upgraded' ? 'fa-spin' : ''"></i></button>
+                                            <button @click="upgradePkgs(jail.Name)" class="p-1.5 text-gray-400 hover:text-blue-600 transition-colors" title="Upgrade Packages"><i class="fa-solid fa-cloud-arrow-up"></i></button>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex-1 bg-gray-50 dark:bg-slate-900 rounded-lg p-4 font-mono text-xs text-gray-600 dark:text-gray-300 overflow-auto max-h-64 border border-gray-200 dark:border-slate-700 relative">
+
+                                        <div x-show="securityData[jail.Name]?.loading" class="absolute inset-0 flex items-center justify-center bg-gray-50/80 dark:bg-slate-900/80 z-10">
+                                            <div class="text-center">
+                                                <i class="fa-solid fa-circle-notch fa-spin text-2xl text-bastille-500 mb-2"></i>
+                                                <p class="text-bastille-600 font-bold">Processing...</p>
+                                            </div>
+                                        </div>
+
+                                        <div x-show="!securityData[jail.Name]" class="text-center py-8 text-gray-400 italic">No audit data. Click scan to start.</div>
+                                        <pre x-show="securityData[jail.Name] && !securityData[jail.Name]?.loading" x-text="securityData[jail.Name]?.output" class="whitespace-pre-wrap"></pre>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div x-show="currentView === 'resources'" x-transition:enter.duration.300ms>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+                            <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full text-blue-600"><i class="fa-solid fa-microchip text-xl"></i></div>
+                            <div>
+                                <p class="text-sm text-gray-500 uppercase font-bold">Host CPU Cores</p>
+                                <p class="text-2xl font-bold text-gray-900 dark:text-white" x-text="hostStats.ncpu || '-'">-</p>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+                            <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full text-purple-600"><i class="fa-solid fa-memory text-xl"></i></div>
+                            <div>
+                                <p class="text-sm text-gray-500 uppercase font-bold">Host Memory</p>
+                                <p class="text-2xl font-bold text-gray-900 dark:text-white" x-text="hostStats.memoryHuman || '-'">-</p>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+                            <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded-full text-green-600"><i class="fa-solid fa-hard-drive text-xl"></i></div>
+                            <div>
+                                <p class="text-sm text-gray-500 uppercase font-bold">Host Storage</p>
+                                <p class="text-2xl font-bold text-gray-900 dark:text-white" x-text="hostStats.storage || '-'">-</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-end">
+                            <button @click="scanLimits()" class="px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 font-bold rounded-lg shadow-sm transition-colors text-sm">
+                                <i class="fa-solid fa-rotate mr-2"></i>REFRESH LIMITS
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <template x-for="jail in jails" :key="jail.Name">
+                            <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                                <div class="p-4 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 flex justify-between items-center">
+                                    <h3 class="font-bold text-gray-900 dark:text-white" x-text="jail.Name"></h3>
+                                    <template x-for="ip in (jail.IP || '').split(',')"><div x-text="ip.trim()"></div></template>
+                                            <!--<span class="text-xs font-mono text-gray-500" x-text="jail.IP"></span>-->
+                                </div>
+
+                                <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div class="flex flex-col h-full">
+                                        <div class="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 dark:border-slate-700">
+                                            <div class="p-1.5 rounded bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"><i class="fa-solid fa-gauge-high text-xs"></i></div>
+                                            <h4 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">CPU & RAM Limits</h4>
+                                        </div>
+
+                                        <div class="flex-1 space-y-2 mb-4 min-h-[60px]">
+                                            <template x-for="limit in resourcesData[jail.Name]?.limits">
+                                                <div class="flex justify-between items-center bg-gray-50 dark:bg-slate-900/50 p-2 rounded text-sm border border-gray-100 dark:border-slate-700">
+                                                    <span class="font-mono text-gray-700 dark:text-gray-300"><span class="font-bold" x-text="limit.resource"></span>: <span class="text-blue-600 dark:text-blue-400" x-text="limit.value"></span></span>
+                                                    <span class="text-xs text-gray-400 uppercase" x-text="limit.action"></span>
+                                                </div>
+                                            </template>
+
+                                            <div x-show="!resourcesData[jail.Name]?.limits?.length" class="h-full flex flex-col items-center justify-center text-center py-2 opacity-60">
+                                                <span class="px-3 py-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 rounded-full text-xs font-bold border border-yellow-200 dark:border-yellow-800">Unrestricted</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex gap-1 items-center mt-auto">
+                                            <select x-model="newLimit.resource" class="w-1/3 text-xs p-2 rounded-l border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 dark:text-white focus:ring-1 focus:ring-bastille-500 outline-none">
+                                                <option value="memoryuse">Memory</option>
+                                                <option value="pcpu">CPU %</option>
+                                                <option value="maxproc">Max Proc</option>
+                                            </select>
+                                            <input type="text" x-model="newLimit.value" placeholder="e.g. 1G" class="flex-1 w-full text-xs p-2 border-t border-b border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 dark:text-white font-mono focus:ring-1 focus:ring-bastille-500 outline-none">
+                                            <button @click="applyLimit(jail.Name)" class="px-3 py-2 bg-bastille-600 text-white rounded-r text-xs font-bold hover:bg-bastille-700 transition-colors">SET</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-col h-full border-l border-gray-100 dark:border-slate-700 pl-8">
+                                        <div class="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 dark:border-slate-700">
+                                            <div class="p-1.5 rounded bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400"><i class="fa-solid fa-hard-drive text-xs"></i></div>
+                                            <h4 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Storage Limits</h4>
+                                        </div>
+
+                                        <div class="flex-1 flex flex-col items-center justify-center mb-4 min-h-[60px]">
+                                            <p class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight flex items-baseline gap-2">
+                                                <span x-text="resourcesData[jail.Name]?.used || '0B'"></span>
+                                                <span class="text-xl text-gray-400 font-normal">/</span>
+                                                <span x-text="resourcesData[jail.Name]?.quota || '...'"></span>
+                                            </p>
+                                            <p class="text-[10px] text-gray-400 uppercase font-bold mt-1">Used / Limit</p>
+                                        </div>
+
+                                        <div class="flex gap-2 mt-auto">
+                                            <input type="text" placeholder="10G / none" class="flex-1 text-xs p-2 rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 dark:text-white font-mono focus:ring-1 focus:ring-bastille-500 outline-none"
+                                                   @keyup.enter="setDiskQuota(jail.Name, $el.value)">
+                                            <button class="px-3 py-2 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 rounded text-xs font-bold hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors border border-gray-200 dark:border-slate-600"
+                                                    @click="setDiskQuota(jail.Name, $el.previousElementSibling.value)">ENFORCE</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-gray-50 dark:bg-slate-900/30 p-2 text-center" x-show="resourcesData[jail.Name]?.loading">
+                                    <i class="fa-solid fa-circle-notch fa-spin text-bastille-500"></i>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                    <div x-show="currentView === 'services'" x-transition:enter.duration.300ms>
+                    <div class="mb-6 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Service Management</h3>
+                            <p class="text-sm text-gray-500">Manage rc.d services within jails.</p>
+                        </div>
+                        <button @click="scanServices()" class="px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 font-bold rounded-lg shadow-sm transition-colors text-sm">
+                            <i class="fa-solid fa-rotate mr-2"></i>REFRESH SERVICES
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        <template x-for="jail in jails" :key="jail.Name">
+                            <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col h-full">
+                                <div class="p-4 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 flex justify-between items-center">
+                                    <div>
+                                        <h3 class="font-bold text-gray-900 dark:text-white" x-text="jail.Name"></h3>
+                                        <div class="text-xs text-gray-500 font-mono">
+                                            <template x-for="ip in (jail.IP || '').split(',')"><div x-text="ip.trim()"></div></template>
+                                        </div>
+                                    </div>
+                                    <div class="text-xs font-bold px-2 py-1 rounded border" :class="jail.State === 'Up' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'" x-text="jail.State"></div>
+                                </div>
+
+                                <div class="flex-1 p-0 overflow-y-auto max-h-[400px]">
+                                    <div x-show="servicesData[jail.Name]?.loading && (!servicesData[jail.Name]?.services || servicesData[jail.Name]?.services.length === 0)" class="p-8 text-center text-gray-400">
+                                        <i class="fa-solid fa-circle-notch fa-spin mb-2"></i><p class="text-xs">Scanning rc.conf...</p>
+                                    </div>
+
+                                    <div x-show="!servicesData[jail.Name]?.loading && (!servicesData[jail.Name]?.services || servicesData[jail.Name]?.services.length === 0)" class="p-8 text-center text-gray-400 italic text-sm">
+                                        No enabled services found via sysrc.
+                                    </div>
+
+                                    <table x-show="(servicesData[jail.Name]?.services || []).length > 0" class="w-full text-sm text-left">
+                                        <thead class="bg-gray-50 dark:bg-slate-900/50 text-xs text-gray-500 uppercase border-b border-gray-200 dark:border-slate-700">
+                                            <tr>
+                                                <th class="px-4 py-2">Service</th>
+                                                <th class="px-4 py-2 text-center">Enabled</th>
+                                                <th class="px-4 py-2 text-center">Status</th>
+                                                <th class="px-4 py-2 text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
+                                            <template x-for="svc in servicesData[jail.Name]?.services" :key="svc.name">
+                                                <tr class="group hover:bg-gray-50 dark:hover:bg-slate-700/30">
+                                                    <td class="px-4 py-3 font-medium text-gray-900 dark:text-white" x-text="svc.name"></td>
+                                                    <td class="px-4 py-3 text-center">
+                                                        <button @click="controlService(jail.Name, svc.name, svc.isEnabled ? 'disable' : 'enable')" 
+                                                                class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none" 
+                                                                :class="svc.isEnabled ? 'bg-bastille-600' : 'bg-gray-200 dark:bg-slate-600'" title="Toggle Enable/Disable">
+                                                            <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" :class="svc.isEnabled ? 'translate-x-4' : 'translate-x-0'"></span>
+                                                        </button>
+                                                    </td>
+                                                    <td class="px-4 py-3 text-center">
+                                                        <span x-show="svc.loading" class="text-gray-400"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+                                                        <span x-show="!svc.loading && svc.running" :title="svc.statusOutput" class="cursor-help inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Running</span>
+                                                        <span x-show="!svc.loading && !svc.running" :title="svc.statusOutput" class="cursor-help inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-slate-700 dark:text-gray-400">Stopped</span>
+                                                     </td>
+                                                    </td>
+                                                    <td class="px-4 py-3 text-right flex justify-end gap-2">
+                                                        <button @click="controlService(jail.Name, svc.name, 'start')" x-show="!svc.running" :disabled="svc.loading" class="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded border border-transparent hover:border-green-200 disabled:opacity-50" title="Start"><i class="fa-solid fa-play"></i></button>
+                                                        <button @click="controlService(jail.Name, svc.name, 'stop')" x-show="svc.running" :disabled="svc.loading" class="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded border border-transparent hover:border-red-200 disabled:opacity-50" title="Stop"><i class="fa-solid fa-stop"></i></button>
+                                                        <button @click="controlService(jail.Name, svc.name, 'restart')" :disabled="svc.loading" class="p-1.5 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded border border-transparent hover:border-orange-200 disabled:opacity-50" title="Restart"><i class="fa-solid fa-rotate-right"></i></button>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+
+                <div x-show="currentView === 'firewall'" x-transition:enter.duration.300ms>
+                    <div class="mb-6 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Firewall & Port Forwarding</h3>
+                            <p class="text-sm text-gray-500">Manage Host-to-Jail <code>RDR</code> redirection rules.</p>
+                        </div>
+                        <button @click="scanFirewall()" class="px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 font-bold rounded-lg shadow-sm transition-colors text-sm">
+                            <i class="fa-solid fa-rotate mr-2"></i>REFRESH
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        <template x-for="jail in jails" :key="jail.Name">
+                            <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col h-full">
+                                
+                                <div class="p-4 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center"
+                                     :class="(firewallData[jail.Name]?.rules || []).length > 0 ? 'bg-orange-50 dark:bg-orange-900/10' : 'bg-gray-50 dark:bg-slate-800'">
+                                    <div>
+                                        <h3 class="font-bold text-gray-900 dark:text-white" x-text="jail.Name"></h3>
+                                        <div class="text-xs text-gray-500 font-mono">
+                                            <template x-for="ip in (jail.IP || '').split(',')"><div x-text="ip.trim()"></div></template>
+                                        </div>
+                                    </div>
+                                    <div x-show="firewallData[jail.Name]?.isVNET">
+                                        <span class="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200">VNET</span>
+                                    </div>
+                                    <div x-show="!firewallData[jail.Name]?.isVNET">
+                                        <span x-show="(firewallData[jail.Name]?.rules || []).length === 0" class="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400">
+                                            <i class="fa-solid fa-shield text-green-500"></i> Internal
+                                        </span>
+                                        <span x-show="(firewallData[jail.Name]?.rules || []).length > 0" class="flex items-center gap-2 text-xs font-bold text-orange-600 dark:text-orange-400">
+                                            <i class="fa-solid fa-globe"></i> Exposed
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="flex-1 p-0 overflow-y-auto max-h-64">
+                                    <div x-show="firewallData[jail.Name]?.loading" class="p-8 text-center text-gray-400">
+                                        <i class="fa-solid fa-circle-notch fa-spin mb-2"></i><p class="text-xs">Scanning...</p>
+                                    </div>
+
+                                    <div x-show="!firewallData[jail.Name]?.loading && !firewallData[jail.Name]?.isVNET && (firewallData[jail.Name]?.rules || []).length === 0" class="p-8 text-center text-gray-400 italic text-sm">
+                                        No active redirection rules.
+                                    </div>
+
+                                    <div x-show="firewallData[jail.Name]?.isVNET" class="p-8 text-center text-gray-400 text-sm">
+                                        VNET jails manage their own firewall stack. Bastille RDR not applicable.
+                                    </div>
+
+                                    <table x-show="(firewallData[jail.Name]?.rules || []).length > 0" class="w-full text-sm text-left">
+                                        <thead class="bg-gray-50 dark:bg-slate-900/50 text-xs text-gray-500 uppercase border-b border-gray-200 dark:border-slate-700">
+                                            <tr>
+                                                <th class="px-4 py-2">Protocol</th>
+                                                <th class="px-4 py-2">Host Port</th>
+                                                <th class="px-4 py-2">Jail Port</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
+                                            <template x-for="rule in firewallData[jail.Name]?.rules">
+                                                <tr class="group hover:bg-gray-50 dark:hover:bg-slate-700/30">
+                                                    <td class="px-4 py-2 font-mono text-xs uppercase" x-text="rule.protocol"></td>
+                                                    <td class="px-4 py-2 font-mono font-bold text-gray-800 dark:text-gray-200" x-text="rule.hostPort"></td>
+                                                    <td class="px-4 py-2 font-mono text-xs text-gray-500" x-text="rule.jailPort"></td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="p-3 bg-gray-50 dark:bg-slate-900/30 border-t border-gray-200 dark:border-slate-700 flex justify-between items-center" x-show="!firewallData[jail.Name]?.isVNET">
+                                    <div class="flex gap-2">
+                                        <button @click="firewallAction(jail.Name, 'clear')" class="px-2 py-1 text-xs text-gray-500 hover:text-red-500 transition-colors" title="Clear Rules (Runtime)"><i class="fa-solid fa-eraser"></i> Clear</button>
+                                        <button @click="firewallAction(jail.Name, 'reset')" class="px-2 py-1 text-xs text-gray-500 hover:text-red-500 transition-colors" title="Reset Config (Factory)"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                                    </div>
+                                    <button @click="openFirewallModal(jail.Name)" class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded text-xs font-bold text-gray-700 dark:text-gray-200 hover:border-bastille-500 hover:text-bastille-600 transition-colors shadow-sm"><i class="fa-solid fa-plus mr-1"></i> Add Rule</button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <div x-show="currentView === 'hardening'" x-transition:enter.duration.300ms>
+                    <div class="mb-6 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Security Score</h3>
+                            <p class="text-sm text-gray-500">Composite security metrics and compliance scoring.</p>
+                        </div>
+                        <button @click="scanHardening()" class="px-4 py-2 bg-bastille-600 hover:bg-bastille-700 text-white font-bold rounded-lg shadow-sm transition-colors text-sm">
+                            <i class="fa-solid fa-calculator mr-2"></i>CALCULATE SCORES
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        <template x-for="jail in jails" :key="jail.Name">
+                            <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6 shadow-sm relative overflow-hidden">
+                                
+                                <div x-show="hardeningData[jail.Name]?.loading" class="absolute inset-0 bg-white/90 dark:bg-slate-800/90 z-20 flex items-center justify-center backdrop-blur-sm">
+                                    <div class="flex flex-col items-center">
+                                        <i class="fa-solid fa-circle-notch fa-spin text-3xl text-bastille-600 mb-2"></i>
+                                        <span class="text-sm font-bold text-gray-600 dark:text-gray-300">Analyzing...</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-between items-start mb-6">
+                                    <div>
+                                        <h3 class="font-bold text-lg text-gray-900 dark:text-white" x-text="jail.Name"></h3>
+                                        <p class="text-xs text-gray-500 font-mono truncate max-w-[180px]" :title="jail.IP" x-text="jail.IP"></p>
+                                    </div>
+                                    
+                                    <div class="relative w-16 h-16 flex items-center justify-center rounded-full border-4"
+                                         :class="{
+                                            'border-green-500 text-green-600': (hardeningData[jail.Name]?.score || 0) >= 90,
+                                            'border-blue-500 text-blue-600': (hardeningData[jail.Name]?.score || 0) >= 70 && (hardeningData[jail.Name]?.score || 0) < 90,
+                                            'border-yellow-500 text-yellow-600': (hardeningData[jail.Name]?.score || 0) >= 50 && (hardeningData[jail.Name]?.score || 0) < 70,
+                                            'border-red-500 text-red-600': (hardeningData[jail.Name]?.score || 0) < 50
+                                         }">
+                                        <span class="text-xl font-bold" x-text="hardeningData[jail.Name]?.score || '-'"></span>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-center text-sm p-2 rounded bg-gray-50 dark:bg-slate-900/50">
+                                        <span class="text-gray-600 dark:text-gray-400"><i class="fa-solid fa-bug w-5"></i> PKG Vulnerabilities</span>
+                                        <span class="font-mono font-bold" 
+                                              :class="(hardeningData[jail.Name]?.details?.vulns || 0) === 0 ? 'text-green-500' : 'text-red-500'"
+                                              x-text="hardeningData[jail.Name]?.details?.vulns ?? '-'"></span>
+                                    </div>
+
+                                    <div class="flex justify-between items-center text-sm p-2 rounded bg-gray-50 dark:bg-slate-900/50">
+                                        <span class="text-gray-600 dark:text-gray-400"><i class="fa-solid fa-shield-cat w-5"></i> Jail Securelevel</span>
+                                        <span class="font-mono font-bold" 
+                                              :class="(hardeningData[jail.Name]?.details?.securelevel || 0) >= 2 ? 'text-green-500' : 'text-orange-500'"
+                                              x-text="hardeningData[jail.Name]?.details?.securelevel ?? '-'"></span>
+                                    </div>
+
+                                    <div class="flex justify-between items-center text-sm p-2 rounded bg-gray-50 dark:bg-slate-900/50">
+                                        <span class="text-gray-600 dark:text-gray-400"><i class="fa-solid fa-ethernet w-5"></i> Raw Network Sockets</span>
+                                        <span class="font-mono font-bold" 
+                                              :class="(hardeningData[jail.Name]?.details?.rawSockets || 0) === 0 ? 'text-green-500' : 'text-red-500'"
+                                              x-text="(hardeningData[jail.Name]?.details?.rawSockets === 0) ? 'Disabled' : ((hardeningData[jail.Name]?.details?.rawSockets === 1) ? 'Enabled' : '-')"></span>
+                                    </div>
+
+                                    <div class="flex justify-between items-center text-sm p-2 rounded bg-gray-50 dark:bg-slate-900/50">
+                                        <span class="text-gray-600 dark:text-gray-400"><i class="fa-solid fa-box-open w-5"></i> Host Isolation (MNT/SYSVIPC)</span>
+                                        <span class="font-mono font-bold"
+                                              :class="(hardeningData[jail.Name]?.details?.isolation?.mount === 0 && hardeningData[jail.Name]?.details?.isolation?.ipc === 0) ? 'text-green-500' : 'text-red-500'">
+                                            <span x-show="hardeningData[jail.Name]?.details?.isolation?.mount === 1" title="allow.mount enabled">MNT </span>
+                                            <span x-show="hardeningData[jail.Name]?.details?.isolation?.ipc === 1" title="allow.sysvipc enabled">IPC </span>
+                                            <span x-show="hardeningData[jail.Name]?.details?.isolation?.mount === 0 && hardeningData[jail.Name]?.details?.isolation?.ipc === 0">Secure</span>
+                                        </span>
+                                    </div>
+
+                                    <div class="flex justify-between items-center text-sm p-2 rounded bg-gray-50 dark:bg-slate-900/50">
+                                        <span class="text-gray-600 dark:text-gray-400"><i class="fa-solid fa-key w-5"></i> SSH Config Audit</span>
+                                        <div class="text-right">
+                                            <template x-if="!hardeningData[jail.Name]?.details?.ssh?.enabled">
+                                                <span class="font-mono font-bold text-green-500">Disabled</span>
+                                            </template>
+                                            <template x-if="hardeningData[jail.Name]?.details?.ssh?.enabled">
+                                                <span>
+                                                    <span class="font-mono font-bold text-orange-500">Enabled</span>
+                                                    <span x-show="hardeningData[jail.Name]?.details?.ssh?.rootLogin" class="text-[10px] bg-red-100 text-red-600 px-1 rounded ml-1 border border-red-200">ROOT</span>
+                                                </span>
+                                            </template>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex justify-between items-center text-sm p-2 rounded bg-gray-50 dark:bg-slate-900/50">
+                                        <span class="text-gray-600 dark:text-gray-400"><i class="fa-solid fa-envelope w-5"></i> Sendmail</span>
+                                        <span class="font-mono font-bold"
+                                              :class="!hardeningData[jail.Name]?.details?.sendmail ? 'text-green-500' : 'text-orange-500'"
+                                              x-text="!hardeningData[jail.Name]?.details?.sendmail ? 'Disabled' : 'Enabled'"></span>
+                                    </div>
+
+                                    <div class="flex justify-between items-center text-sm p-2 rounded bg-gray-50 dark:bg-slate-900/50">
+                                        <span class="text-gray-600 dark:text-gray-400"><i class="fa-solid fa-door-open w-5"></i> RDR Ports</span>
+                                            <div class="text-right">
+                                            <template x-if="hardeningData[jail.Name]?.details?.isVNET">
+                                                <span class="font-mono font-bold text-blue-500">VNET</span>
+                                            </template>
+                                            <template x-if="!hardeningData[jail.Name]?.details?.isVNET && (hardeningData[jail.Name]?.details?.openPorts || []).length === 0">
+                                                <span class="font-mono font-bold text-green-500">None</span>
+                                            </template>
+                                            <template x-if="!hardeningData[jail.Name]?.details?.isVNET && (hardeningData[jail.Name]?.details?.openPorts || []).length > 0">
+                                                <div class="flex flex-col items-end">
+                                                    <template x-for="port in hardeningData[jail.Name]?.details?.openPorts">
+                                                        <span class="font-mono font-bold text-orange-500 text-xs block" x-text="port"></span>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+
+                <!-- SETTINGS -->
+                <div x-show="currentView === 'settings'" x-transition:enter.duration.300ms>
+                    <div class="max-w-4xl bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                        <div class="p-6 border-b border-gray-200 dark:border-slate-700">
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Bastille Configuration</h3>
+                            <p class="text-sm text-gray-500">Read-only view of /usr/local/etc/bastille/bastille.conf</p>
+                        </div>
+                        <div class="p-0">
+                            <table class="w-full text-left">
+                                <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
+                                    <template x-for="(value, key) in config" :key="key">
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                                            <td class="p-4 w-1/3 font-medium text-gray-700 dark:text-gray-300 font-mono text-sm" x-text="key"></td>
+                                            <td class="p-4 text-gray-600 dark:text-gray-400 font-mono text-sm" x-text="value"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <div x-show="toast.visible"
+                 x-transition:enter="transform ease-out duration-300 transition"
+                 x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+                 x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="absolute bottom-6 right-6 z-50">
+                <div class="flex items-center gap-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-3 rounded-lg shadow-lg border border-gray-700 dark:border-gray-200">
+                    <i class="fa-solid fa-circle-info text-bastille-500"></i>
+                    <span x-text="toast.message" class="text-sm font-medium"></span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="bastilleapi.js"></script>
+</body>
+</html>
