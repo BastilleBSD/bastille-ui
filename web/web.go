@@ -7,8 +7,8 @@ import (
 	"os"
 )
 
-var webDir = "/usr/local/share/bastille-api/"
-var configFile = (webDir + "config.json")
+var webDir = "/usr/local/share/bastille-ui/"
+var configFile = ("/usr/local/etc/bastille-ui/config.json")
 
 func Start(webPath string) {
 
@@ -16,7 +16,6 @@ func Start(webPath string) {
 
 	if webPath != "" {
 		webDir = (webPath + "/")
-		configFile = (webDir + "config.json")
 	}
 
 	_, err := loadConfig()
@@ -42,6 +41,6 @@ func Start(webPath string) {
 		activeNode = nil
 	}
 
-	log.Println("Starting BastilleBSD WebUI server on", addr)
+	log.Println("Starting BastilleBSD UI server on", addr)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
