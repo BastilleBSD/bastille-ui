@@ -20,9 +20,14 @@ To use the console on the homepage, you need to `pkg install ttyd` on the API se
 
 ## Dependencies
 
+The API server is required for the UI to be able
+to execute commands.
+
+[BastilleBSD API Server](https://github.com/BastilleBSD/bastille-api)
+
 ```
 bastille
 rocinante (optional)
 go
-ttyd
+ttyd (optional)
 ```
