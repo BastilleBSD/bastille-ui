@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# BastilleBSD UI Service Script
+#
+# PROVIDE: bastille_ui
+# REQUIRE: DAEMON NETWORKING
+# KEYWORD: shutdown
+#
+
+. /etc/rc.subr
+
+name=bastille_ui
+desc="BastilleBSD UI Server"
+rcvar=bastille_ui_enable
+
+load_rc_config $name
+
+pidfile="/var/run/${name}/${name}.pid"
+command=/usr/sbin/daemon
+command_args="-P ${pidfile} -H -o /var/log/${name}/${name}.log /usr/local/bin/bastille-ui"
+
+start_precmd=bastille_ui_startprecmd
+
+bastille_ui_startprecmd()
+{
+    mkdir -p /var/run/${name}
+    mkdir -p /var/log/${name}
+}
+
+run_rc_command "$1"
