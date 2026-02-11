@@ -6,6 +6,8 @@ install:
 	@echo
 	@echo "Installing BastilleBSD UI..."
 	@go build -o /usr/local/bin/bastille-ui main.go
+	@mkdir -p /usr/local/share/bastille-ui
+	@cp -Rv web /usr/local/share/bastille-ui/
 	@mkdir -p /usr/local/etc/rc.d
 	@cp -Rv etc/rc.d/* /usr/local/etc/rc.d/
 	@echo
@@ -19,7 +21,6 @@ uninstall:
 	@echo
 	@echo "Removing BastilleBSD UI..."
 	@rm -vf /usr/local/bin/bastille-ui
-	@echo
-	@echo "Removing startup script..."
+	@rm -vf /usr/local/share/bastille-ui/web
 	@rm -vf /usr/local/etc/rc.d/bastille-ui
 	@echo

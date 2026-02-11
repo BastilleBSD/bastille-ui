@@ -1,20 +1,22 @@
 package web
 
 import (
-	"embed"
-	"net/http"
 	"log"
+	"net/http"
 )
 
-//go:embed index.html bastilleapi.js
-var folder embed.FS
+var webDir = "/usr/local/share/bastille-ui/web/"
 
-func Start() {
-	handler := http.FileServer(http.FS(folder))
+func Start(webPath string) {
 
-	log.Println("Starting BastilleBSD UI server on :8080")
-	
-	if err := http.ListenAndServe(":8080", handler); err != nil {
-		log.Fatalf("Failed to start web server: %v", err)
+	if webPath != "" {
+		webDir = webPath
 	}
+
+	http.Handle("/", http.FileServer(http.Dir(webDir)))
+
+	addr := ":8080" 
+	log.Println("Starting BastilleBSD UI server on", addr)
+	
+	log.Fatal(http.ListenAndServe(addr, nil))
 }
