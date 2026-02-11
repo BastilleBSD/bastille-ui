@@ -7,7 +7,7 @@ install:
 	@echo "Installing BastilleBSD UI..."
 	@go build -o /usr/local/bin/bastille-ui main.go
 	@mkdir -p /usr/local/share/bastille-ui
-	@cp -Rv web /usr/local/share/bastille-ui/
+	@cp -Rv  web /usr/local/share/bastille-ui/
 	@mkdir -p /usr/local/etc/rc.d
 	@cp -Rv etc/rc.d/* /usr/local/etc/rc.d/
 	@echo

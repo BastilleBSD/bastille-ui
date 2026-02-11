@@ -10,7 +10,7 @@
 #
 
 : ${bastille_ui_enable:="NO"}
-: ${bastille_ui_webdir:="/usr/local/share/bastille-ui"}
+: ${bastille_ui_webdir:="/usr/local/share/bastille-ui/web"}
 
 . /etc/rc.subr
 
