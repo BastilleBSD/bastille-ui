@@ -5,13 +5,12 @@
 # PROVIDE: bastille_ui
 # REQUIRE: DAEMON NETWORKING
 # KEYWORD: shutdown
+# bastille_ui_enable (YES/NO): Enable or disable the service.
 #
 
-. /etc/rc.subr
+: ${bastille_ui_enable:="NO"}
 
-name=bastille_ui
-desc="BastilleBSD UI Server"
-rcvar=bastille_ui_enable
+. /etc/rc.subr
 
 load_rc_config $name
 
